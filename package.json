@@ -1,6 +1,6 @@
 {
   "name": "rins_hooks",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Universal Claude Code hooks collection with cross-platform installer",
   "main": "src/cli.js",
   "bin": {
