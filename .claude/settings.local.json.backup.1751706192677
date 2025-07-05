@@ -1,0 +1,26 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/usr/lib/node_modules/rins_hooks/hooks/code-formatter/index.js\"",
+            "timeout": 30
+          }
+        ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/usr/lib/node_modules/rins_hooks/hooks/notification/index.js\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

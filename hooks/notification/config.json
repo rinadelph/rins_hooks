@@ -1,0 +1,58 @@
+{
+  "name": "notification",
+  "description": "Enhanced notifications for Claude Code events",
+  "version": "1.0.0",
+  "tags": ["notification", "desktop", "alerts"],
+  "requirements": [],
+  "platforms": ["linux", "darwin", "win32"],
+  "matcher": "",
+  "timeout": 10,
+  "defaultConfig": {
+    "enabled": true,
+    "desktopNotifications": true,
+    "soundEnabled": false,
+    "iconPath": "",
+    "notificationTypes": {
+      "task_completed": {
+        "enabled": true,
+        "title": "Claude Code Task Completed",
+        "message": "Task has been completed successfully"
+      },
+      "permission_required": {
+        "enabled": true,
+        "title": "Claude Code Permission Required",
+        "message": "Claude Code is waiting for your permission"
+      },
+      "error": {
+        "enabled": true,
+        "title": "Claude Code Error",
+        "message": "An error occurred during task execution"
+      },
+      "idle": {
+        "enabled": false,
+        "title": "Claude Code Idle",
+        "message": "Claude Code is waiting for input"
+      }
+    },
+    "integrations": {
+      "slack": {
+        "enabled": false,
+        "webhook": "",
+        "channel": "#general"
+      },
+      "discord": {
+        "enabled": false,
+        "webhook": ""
+      },
+      "teams": {
+        "enabled": false,
+        "webhook": ""
+      }
+    },
+    "customCommands": {
+      "onTaskCompleted": "",
+      "onError": "",
+      "onIdle": ""
+    }
+  }
+}

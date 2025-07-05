@@ -1,0 +1,42 @@
+{
+  "name": "code-formatter",
+  "description": "Automatically format code after file modifications",
+  "version": "1.0.0",
+  "tags": ["formatting", "code-quality", "automation"],
+  "requirements": [],
+  "platforms": ["linux", "darwin", "win32"],
+  "matcher": "Edit|Write|MultiEdit",
+  "timeout": 30,
+  "defaultConfig": {
+    "enabled": true,
+    "formatters": {
+      ".js": "prettier --write",
+      ".jsx": "prettier --write",
+      ".ts": "prettier --write", 
+      ".tsx": "prettier --write",
+      ".json": "prettier --write",
+      ".css": "prettier --write",
+      ".scss": "prettier --write",
+      ".html": "prettier --write",
+      ".md": "prettier --write",
+      ".py": "black",
+      ".go": "gofmt -w",
+      ".rs": "rustfmt",
+      ".java": "google-java-format --replace",
+      ".c": "clang-format -i",
+      ".cpp": "clang-format -i",
+      ".h": "clang-format -i"
+    },
+    "excludePatterns": [
+      "node_modules/**",
+      ".git/**",
+      "dist/**",
+      "build/**",
+      "*.min.js",
+      "*.min.css"
+    ],
+    "useProjectConfig": true,
+    "failOnError": false,
+    "showOutput": false
+  }
+}

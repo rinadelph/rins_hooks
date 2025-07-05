@@ -1,0 +1,66 @@
+{
+  "name": "rins_hooks",
+  "version": "1.0.0",
+  "description": "Universal Claude Code hooks collection with cross-platform installer",
+  "main": "src/cli.js",
+  "bin": {
+    "rins_hooks": "./bin/rins_hooks"
+  },
+  "scripts": {
+    "start": "node src/cli.js",
+    "test": "jest",
+    "build": "npm run build:hooks",
+    "build:hooks": "node scripts/build-hooks.js",
+    "lint": "eslint src/ hooks/ --fix",
+    "test:package": "./scripts/test-package.sh",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "claude-code",
+    "hooks",
+    "automation",
+    "git",
+    "formatting",
+    "productivity",
+    "ai",
+    "development"
+  ],
+  "author": "rinadelph <alejandro@rinconnect.org>",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "dependencies": {
+    "commander": "^11.0.0",
+    "inquirer": "^9.0.0",
+    "chalk": "^4.1.2",
+    "cross-spawn": "^7.0.3",
+    "fs-extra": "^11.0.0",
+    "glob": "^10.0.0",
+    "semver": "^7.5.0"
+  },
+  "optionalDependencies": {
+    "node-notifier": "^10.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "hooks/",
+    "templates/",
+    "scripts/",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rinadelph/rins_hooks.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rinadelph/rins_hooks/issues"
+  },
+  "homepage": "https://github.com/rinadelph/rins_hooks#readme"
+}

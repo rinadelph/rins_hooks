@@ -1,0 +1,32 @@
+{
+  "name": "auto-commit",
+  "description": "Automatically commit file changes with contextual messages",
+  "version": "1.0.0",
+  "tags": ["git", "automation", "commit"],
+  "requirements": ["git"],
+  "platforms": ["linux", "darwin", "win32"],
+  "matcher": "Edit|Write|MultiEdit",
+  "timeout": 30,
+  "defaultConfig": {
+    "enabled": true,
+    "commitMessageTemplate": "Auto-commit: {{toolName}} modified {{fileName}}\n\n- File: {{filePath}}\n- Tool: {{toolName}}\n- Session: {{sessionId}}\n\n🤖 Generated with Claude Code via rins_hooks\nCo-Authored-By: Claude <noreply@anthropic.com>",
+    "excludePatterns": [
+      "*.log",
+      "*.tmp",
+      "*.temp",
+      ".env*",
+      "*.key",
+      "*.pem",
+      "*.p12",
+      "*.pfx",
+      "node_modules/**",
+      ".git/**",
+      "*.pyc",
+      "__pycache__/**"
+    ],
+    "skipEmptyCommits": true,
+    "addAllFiles": false,
+    "branchRestrictions": [],
+    "maxCommitMessageLength": 500
+  }
+}
