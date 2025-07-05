@@ -2,9 +2,6 @@
 
 const { Command } = require('commander');
 const chalk = require('chalk');
-const inquirer = require('inquirer');
-const fs = require('fs-extra');
-const path = require('path');
 const { version } = require('../package.json');
 
 const Installer = require('./installer');
@@ -35,7 +32,7 @@ program
       console.log();
 
       const installer = new Installer();
-      
+
       if (options.interactive) {
         await installer.interactiveInstall(options);
       } else if (options.all) {
@@ -67,10 +64,10 @@ program
     try {
       const installer = new Installer();
       const hooks = await installer.getAvailableHooks();
-      
+
       console.log(chalk.blue('📋 Available Claude Code Hooks'));
       console.log();
-      
+
       hooks.forEach(hook => {
         console.log(chalk.green(`📌 ${hook.name}`));
         console.log(chalk.gray(`   ${hook.description}`));
@@ -93,10 +90,10 @@ program
     try {
       const configManager = new ConfigManager();
       const status = await configManager.getInstallationStatus();
-      
+
       console.log(chalk.blue('📊 Installation Status'));
       console.log();
-      
+
       if (status.user.length > 0) {
         console.log(chalk.green('👤 User Level Hooks:'));
         status.user.forEach(hook => {
@@ -104,7 +101,7 @@ program
         });
         console.log();
       }
-      
+
       if (status.project.length > 0) {
         console.log(chalk.green('📁 Project Level Hooks:'));
         status.project.forEach(hook => {
@@ -112,7 +109,7 @@ program
         });
         console.log();
       }
-      
+
       if (status.local.length > 0) {
         console.log(chalk.green('🔒 Local Level Hooks:'));
         status.local.forEach(hook => {
@@ -120,7 +117,7 @@ program
         });
         console.log();
       }
-      
+
       if (status.user.length === 0 && status.project.length === 0 && status.local.length === 0) {
         console.log(chalk.yellow('ℹ️  No hooks installed.'));
         console.log(chalk.cyan('Run `rins_hooks install --interactive` to get started.'));
@@ -142,7 +139,7 @@ program
   .action(async (hook, options) => {
     try {
       const configManager = new ConfigManager();
-      
+
       if (options.show) {
         await configManager.showConfig(hook);
       } else if (options.edit) {
@@ -209,7 +206,7 @@ program
   .action(async (hooks, options) => {
     try {
       const installer = new Installer();
-      
+
       if (options.all) {
         await installer.uninstallAll(options);
       } else if (hooks.length > 0) {
@@ -231,15 +228,15 @@ program
     try {
       console.log(chalk.blue('🔍 Rins Hooks Doctor'));
       console.log();
-      
+
       const utils = new Utils();
       const diagnostics = await utils.runDiagnostics();
-      
+
       diagnostics.forEach(diagnostic => {
         const icon = diagnostic.status === 'ok' ? '✅' : diagnostic.status === 'warning' ? '⚠️' : '❌';
         console.log(`${icon} ${diagnostic.check}: ${diagnostic.message}`);
       });
-      
+
       console.log();
       const hasErrors = diagnostics.some(d => d.status === 'error');
       if (hasErrors) {

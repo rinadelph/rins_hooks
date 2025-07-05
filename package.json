@@ -9,6 +9,7 @@
   "scripts": {
     "start": "node src/cli.js",
     "test": "jest",
+    "test:cross-platform": "node scripts/test-cross-platform.js",
     "build": "npm run build:hooks",
     "build:hooks": "node scripts/build-hooks.js",
     "lint": "eslint src/ hooks/ --fix",

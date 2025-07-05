@@ -13,34 +13,34 @@ class CodeFormatterHook extends HookBase {
   getDefaultConfig() {
     return {
       enabled: true,
-      matcher: "Edit|Write|MultiEdit",
+      matcher: 'Edit|Write|MultiEdit',
       timeout: 30,
-      description: "Automatically format code after file modifications",
+      description: 'Automatically format code after file modifications',
       formatters: {
-        ".js": "prettier --write",
-        ".jsx": "prettier --write",
-        ".ts": "prettier --write", 
-        ".tsx": "prettier --write",
-        ".json": "prettier --write",
-        ".css": "prettier --write",
-        ".scss": "prettier --write",
-        ".html": "prettier --write",
-        ".md": "prettier --write",
-        ".py": "black",
-        ".go": "gofmt -w",
-        ".rs": "rustfmt",
-        ".java": "google-java-format --replace",
-        ".c": "clang-format -i",
-        ".cpp": "clang-format -i",
-        ".h": "clang-format -i"
+        '.js': 'prettier --write',
+        '.jsx': 'prettier --write',
+        '.ts': 'prettier --write',
+        '.tsx': 'prettier --write',
+        '.json': 'prettier --write',
+        '.css': 'prettier --write',
+        '.scss': 'prettier --write',
+        '.html': 'prettier --write',
+        '.md': 'prettier --write',
+        '.py': 'black',
+        '.go': 'gofmt -w',
+        '.rs': 'rustfmt',
+        '.java': 'google-java-format --replace',
+        '.c': 'clang-format -i',
+        '.cpp': 'clang-format -i',
+        '.h': 'clang-format -i'
       },
       excludePatterns: [
-        "node_modules/**",
-        ".git/**",
-        "dist/**",
-        "build/**",
-        "*.min.js",
-        "*.min.css"
+        'node_modules/**',
+        '.git/**',
+        'dist/**',
+        'build/**',
+        '*.min.js',
+        '*.min.css'
       ],
       useProjectConfig: true,
       failOnError: false,
@@ -50,11 +50,11 @@ class CodeFormatterHook extends HookBase {
 
   async execute(input) {
     try {
-      const { tool_name, tool_input } = input;
-      
+      const { tool_input } = input;
+
       // Extract file path from tool input
       const filePath = tool_input.file_path || tool_input.filePath;
-      
+
       if (!filePath) {
         return this.error('No file path found in tool input');
       }
@@ -71,7 +71,7 @@ class CodeFormatterHook extends HookBase {
 
       // Get file extension
       const ext = path.extname(filePath);
-      
+
       // Check if we have a formatter for this file type
       const formatter = this.config.formatters[ext];
       if (!formatter) {
@@ -90,9 +90,9 @@ class CodeFormatterHook extends HookBase {
 
       // Format the file
       const result = await this.formatFile(filePath, formatter);
-      
+
       if (result.success) {
-        return this.success({ 
+        return this.success({
           message: `Successfully formatted ${path.basename(filePath)}`,
           filePath: filePath,
           formatter: formatterCommand,
@@ -102,7 +102,7 @@ class CodeFormatterHook extends HookBase {
         if (this.config.failOnError) {
           return this.error(`Formatting failed: ${result.error}`);
         } else {
-          return this.success({ 
+          return this.success({
             message: `Formatting failed but continuing: ${result.error}`,
             filePath: filePath
           });
@@ -125,25 +125,25 @@ class CodeFormatterHook extends HookBase {
     });
   }
 
-  async isCommandAvailable(command) {
+  isCommandAvailable(command) {
     return new Promise((resolve) => {
       const checkCommand = process.platform === 'win32' ? 'where' : 'which';
-      
+
       const child = spawn(checkCommand, [command], {
         stdio: ['pipe', 'pipe', 'pipe']
       });
-      
+
       child.on('close', (code) => {
         resolve(code === 0);
       });
-      
+
       child.on('error', () => {
         resolve(false);
       });
     });
   }
 
-  async formatFile(filePath, formatter) {
+  formatFile(filePath, formatter) {
     return new Promise((resolve) => {
       // Parse formatter command and arguments
       const parts = formatter.split(' ');
@@ -186,7 +186,7 @@ class CodeFormatterHook extends HookBase {
     });
   }
 
-  async findProjectConfig(filePath, configFiles) {
+  findProjectConfig(filePath, configFiles) {
     let dir = path.dirname(filePath);
     const root = path.parse(dir).root;
 
