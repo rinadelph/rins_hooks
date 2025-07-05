@@ -8,6 +8,7 @@ const HookBase = require('../../src/hook-base');
 class AutoCommitHook extends HookBase {
   constructor(config = {}) {
     super('auto-commit', config);
+    this.toolLogFile = path.join(process.cwd(), 'claude-tool-events.log');
   }
 
   getDefaultConfig() {
