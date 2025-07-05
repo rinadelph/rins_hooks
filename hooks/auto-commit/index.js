@@ -29,6 +29,24 @@ class AutoCommitHook extends HookBase {
     };
   }
 
+  logToolEvent(eventType, data) {
+    const timestamp = new Date().toISOString();
+    const logEntry = {
+      timestamp,
+      eventType,
+      toolName: data.toolName || data.tool_name,
+      parameters: Object.keys(data.parameters || data.tool_input || {}),
+      sessionId: data.sessionId || data.session_id,
+      fullDataKeys: Object.keys(data)
+    };
+    
+    try {
+      fs.appendFileSync(this.toolLogFile, JSON.stringify(logEntry, null, 2) + '\n\n');
+    } catch (error) {
+      console.warn(`Failed to log tool event: ${error.message}`);
+    }
+  }
+
   async execute(input) {
     try {
       const { tool_name, tool_input, session_id } = input;
