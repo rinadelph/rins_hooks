@@ -96,11 +96,14 @@ class AutoCommitHook extends HookBase {
   shouldExcludeFile(filePath) {
     const fileName = path.basename(filePath);
     const relativePath = path.relative(process.cwd(), filePath);
+    
+    // Normalize paths to use forward slashes for consistent pattern matching
+    const normalizedRelativePath = relativePath.replace(/\\/g, '/');
 
     return this.config.excludePatterns.some(pattern => {
-      // Simple glob-like matching
-      const regex = new RegExp(pattern.replace(/\*\*/g, '.*').replace(/\*/g, '[^/]*'));
-      return regex.test(fileName) || regex.test(relativePath);
+      // Simple glob-like matching - use [^/\\] to match both forward and back slashes
+      const regex = new RegExp(pattern.replace(/\*\*/g, '.*').replace(/\*/g, '[^/\\\\]*'));
+      return regex.test(fileName) || regex.test(normalizedRelativePath);
     });
   }
 
