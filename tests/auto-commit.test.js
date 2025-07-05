@@ -41,6 +41,11 @@ describe('AutoCommitHook', () => {
       expect(hook.shouldExcludeFile('/path/to/test.env')).toBe(true);
       expect(hook.shouldExcludeFile('/path/to/node_modules/file.js')).toBe(true);
       expect(hook.shouldExcludeFile('/path/to/regular.js')).toBe(false);
+      
+      // Test Windows-style paths
+      expect(hook.shouldExcludeFile('C:\\path\\to\\test.log')).toBe(true);
+      expect(hook.shouldExcludeFile('C:\\path\\to\\node_modules\\file.js')).toBe(true);
+      expect(hook.shouldExcludeFile('C:\\path\\to\\regular.js')).toBe(false);
     });
   });
 
