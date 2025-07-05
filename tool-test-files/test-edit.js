@@ -1,6 +1,6 @@
 // Test file for Edit tool
-function testFunction() {
-  console.log('Modified function');
+function modifiedTestFunction() {
+  console.log('MultiEdit modified this function');
 }
 
 module.exports = testFunction;
