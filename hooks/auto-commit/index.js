@@ -13,13 +13,13 @@ class AutoCommitHook extends HookBase {
   getDefaultConfig() {
     return {
       enabled: true,
-      matcher: "Edit|Write|MultiEdit",
+      matcher: 'Edit|Write|MultiEdit',
       timeout: 30,
-      description: "Automatically commit file changes with contextual messages",
-      commitMessageTemplate: "Auto-commit: {{toolName}} modified {{fileName}}\n\n- File: {{filePath}}\n- Tool: {{toolName}}\n- Session: {{sessionId}}\n\n🤖 Generated with Claude Code via rins_hooks\nCo-Authored-By: Claude <noreply@anthropic.com>",
+      description: 'Automatically commit file changes with contextual messages',
+      commitMessageTemplate: 'Auto-commit: {{toolName}} modified {{fileName}}\n\n- File: {{filePath}}\n- Tool: {{toolName}}\n- Session: {{sessionId}}\n\n🤖 Generated with Claude Code via rins_hooks\nCo-Authored-By: Claude <noreply@anthropic.com>',
       excludePatterns: [
-        "*.log", "*.tmp", "*.temp", ".env*", "*.key", "*.pem", "*.p12", "*.pfx",
-        "node_modules/**", ".git/**", "*.pyc", "__pycache__/**"
+        '*.log', '*.tmp', '*.temp', '.env*', '*.key', '*.pem', '*.p12', '*.pfx',
+        'node_modules/**', '.git/**', '*.pyc', '__pycache__/**'
       ],
       skipEmptyCommits: true,
       addAllFiles: false,
@@ -31,10 +31,10 @@ class AutoCommitHook extends HookBase {
   async execute(input) {
     try {
       const { tool_name, tool_input, session_id } = input;
-      
+
       // Extract file path from tool input
       const filePath = tool_input.file_path || tool_input.filePath;
-      
+
       if (!filePath) {
         return this.error('No file path found in tool input');
       }
@@ -73,7 +73,7 @@ class AutoCommitHook extends HookBase {
       // Create commit
       await this.runGitCommand(['commit', '-m', commitMessage]);
 
-      return this.success({ 
+      return this.success({
         message: `Successfully committed ${path.basename(filePath)}`,
         filePath: filePath,
         commitMessage: commitMessage
@@ -96,11 +96,14 @@ class AutoCommitHook extends HookBase {
   shouldExcludeFile(filePath) {
     const fileName = path.basename(filePath);
     const relativePath = path.relative(process.cwd(), filePath);
+    
+    // Normalize paths to use forward slashes for consistent pattern matching
+    const normalizedRelativePath = relativePath.replace(/\\/g, '/');
 
     return this.config.excludePatterns.some(pattern => {
-      // Simple glob-like matching
-      const regex = new RegExp(pattern.replace(/\*\*/g, '.*').replace(/\*/g, '[^/]*'));
-      return regex.test(fileName) || regex.test(relativePath);
+      // Simple glob-like matching - use [^/\\] to match both forward and back slashes
+      const regex = new RegExp(pattern.replace(/\*\*/g, '.*').replace(/\*/g, '[^/\\\\]*'));
+      return regex.test(fileName) || regex.test(normalizedRelativePath);
     });
   }
 
@@ -129,7 +132,7 @@ class AutoCommitHook extends HookBase {
   generateCommitMessage(toolName, filePath, sessionId) {
     const fileName = path.basename(filePath);
     const template = this.config.commitMessageTemplate;
-    
+
     let message = template
       .replace(/\{\{toolName\}\}/g, toolName)
       .replace(/\{\{fileName\}\}/g, fileName)
@@ -138,15 +141,15 @@ class AutoCommitHook extends HookBase {
 
     // Truncate if too long
     if (message.length > this.config.maxCommitMessageLength) {
-      message = message.substring(0, this.config.maxCommitMessageLength - 3) + '...';
+      message = `${message.substring(0, this.config.maxCommitMessageLength - 3)}...`;
     }
 
     return message;
   }
 
-  async runGitCommand(args) {
+  runGitCommand(args) {
     return new Promise((resolve, reject) => {
-      const git = spawn('git', args, { 
+      const git = spawn('git', args, {
         stdio: ['pipe', 'pipe', 'pipe'],
         cwd: process.cwd()
       });

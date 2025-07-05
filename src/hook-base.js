@@ -16,9 +16,9 @@ class HookBase {
   getDefaultConfig() {
     return {
       enabled: true,
-      matcher: "",
+      matcher: '',
       timeout: 60,
-      description: "A Claude Code hook"
+      description: 'A Claude Code hook'
     };
   }
 
@@ -27,7 +27,7 @@ class HookBase {
    * @param {Object} input - Hook input data from Claude Code
    * @returns {Promise<Object>} Hook result
    */
-  async execute(input) {
+  execute(_input) {
     throw new Error('execute() method must be implemented by subclass');
   }
 
@@ -66,7 +66,7 @@ class HookBase {
     try {
       const configPath = path.join(this.hookDir, 'config.json');
       const config = await fs.readJson(configPath);
-      
+
       return {
         name: this.name,
         description: config.description || this.config.description,
@@ -97,14 +97,14 @@ class HookBase {
    * @param {string} eventType - Hook event type (PreToolUse, PostToolUse, etc.)
    * @returns {Object} Claude Code hook configuration
    */
-  generateHookConfig(eventType = 'PostToolUse') {
+  generateHookConfig() {
     const hookScript = path.join(this.hookDir, 'index.js');
-    
+
     return {
       matcher: this.config.matcher,
       hooks: [
         {
-          type: "command",
+          type: 'command',
           command: `node "${hookScript}"`,
           timeout: this.config.timeout
         }
@@ -147,7 +147,7 @@ class HookBase {
    */
   block(reason) {
     return {
-      decision: "block",
+      decision: 'block',
       reason: reason,
       hook: this.name
     };
@@ -160,7 +160,7 @@ class HookBase {
    */
   approve(reason) {
     return {
-      decision: "approve",
+      decision: 'approve',
       reason: reason,
       hook: this.name
     };
@@ -170,14 +170,14 @@ class HookBase {
    * Parse JSON input from stdin
    * @returns {Promise<Object>} Parsed input
    */
-  static async parseInput() {
+  static parseInput() {
     return new Promise((resolve, reject) => {
       let input = '';
-      
+
       process.stdin.on('data', (chunk) => {
         input += chunk.toString();
       });
-      
+
       process.stdin.on('end', () => {
         try {
           const data = JSON.parse(input);
@@ -186,7 +186,7 @@ class HookBase {
           reject(new Error(`Invalid JSON input: ${error.message}`));
         }
       });
-      
+
       process.stdin.on('error', (error) => {
         reject(error);
       });

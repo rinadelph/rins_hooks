@@ -2,6 +2,16 @@
 
 Universal Claude Code hooks collection with cross-platform installer
 
+> 🤖 **Interested in AI Multi-Agent workflows?** Join the [Swarm Community](https://discord.gg/7Jm7nrhjGn) to discuss agentic development, share tools, and collaborate on building better AI workflows!
+
+## 🌐 Cross-Platform Support
+
+Works universally across all devices and operating systems:
+- ✅ **Windows** (10, 11) - Native PowerShell integration
+- ✅ **macOS** (Intel & Apple Silicon) - Native osascript notifications  
+- ✅ **Linux** (Ubuntu, CentOS, Arch) - Native notify-send support
+- ✅ **Node.js** 16+ - Tested on LTS versions
+
 ## 🚀 Quick Start
 
 Install globally with npm:

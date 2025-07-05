@@ -2,7 +2,6 @@ const { spawn } = require('child_process');
 const fs = require('fs-extra');
 const path = require('path');
 const os = require('os');
-const chalk = require('chalk');
 
 class Utils {
   constructor() {
@@ -15,18 +14,18 @@ class Utils {
    * @param {string} command - Command to check
    * @returns {Promise<boolean>} True if command is available
    */
-  async checkCommandAvailable(command) {
+  checkCommandAvailable(command) {
     return new Promise((resolve) => {
       const checkCommand = this.platform === 'win32' ? 'where' : 'which';
-      
+
       const child = spawn(checkCommand, [command], {
         stdio: ['pipe', 'pipe', 'pipe']
       });
-      
+
       child.on('close', (code) => {
         resolve(code === 0);
       });
-      
+
       child.on('error', () => {
         resolve(false);
       });
@@ -40,7 +39,7 @@ class Utils {
    * @param {Object} options - Spawn options
    * @returns {Promise<Object>} Command result
    */
-  async executeCommand(command, args = [], options = {}) {
+  executeCommand(command, args = [], options = {}) {
     return new Promise((resolve, reject) => {
       const child = spawn(command, args, {
         stdio: ['pipe', 'pipe', 'pipe'],
@@ -207,7 +206,7 @@ class Utils {
     // Check Node.js version
     const nodeVersion = process.version;
     const majorVersion = parseInt(nodeVersion.slice(1).split('.')[0]);
-    
+
     if (majorVersion >= 16) {
       diagnostics.push({
         check: 'Node.js Version',
@@ -274,7 +273,7 @@ class Utils {
     // Check Claude settings directory
     const settingsDir = this.getClaudeSettingsDir();
     const settingsDirExists = await fs.pathExists(settingsDir);
-    
+
     if (settingsDirExists) {
       const isWritable = await this.isDirectoryWritable(settingsDir);
       if (isWritable) {
@@ -310,7 +309,7 @@ class Utils {
     // Check for existing Claude settings
     const userSettingsPath = path.join(settingsDir, 'settings.json');
     const userSettingsExists = await fs.pathExists(userSettingsPath);
-    
+
     if (userSettingsExists) {
       try {
         await fs.readJson(userSettingsPath);
@@ -337,7 +336,7 @@ class Utils {
     // Check project settings
     const projectSettingsPath = path.join(process.cwd(), '.claude', 'settings.json');
     const projectSettingsExists = await fs.pathExists(projectSettingsPath);
-    
+
     if (projectSettingsExists) {
       try {
         await fs.readJson(projectSettingsPath);

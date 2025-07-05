@@ -2,7 +2,6 @@
 
 const { spawn } = require('child_process');
 const fs = require('fs');
-const path = require('path');
 const https = require('https');
 const HookBase = require('../../src/hook-base');
 
@@ -14,53 +13,53 @@ class NotificationHook extends HookBase {
   getDefaultConfig() {
     return {
       enabled: true,
-      matcher: "",
+      matcher: '',
       timeout: 10,
-      description: "Enhanced notifications for Claude Code events",
+      description: 'Enhanced notifications for Claude Code events',
       desktopNotifications: true,
       soundEnabled: false,
-      iconPath: "",
+      iconPath: '',
       notificationTypes: {
-        "task_completed": {
-          "enabled": true,
-          "title": "Claude Code Task Completed",
-          "message": "Task has been completed successfully"
+        'task_completed': {
+          'enabled': true,
+          'title': 'Claude Code Task Completed',
+          'message': 'Task has been completed successfully'
         },
-        "permission_required": {
-          "enabled": true,
-          "title": "Claude Code Permission Required",
-          "message": "Claude Code is waiting for your permission"
+        'permission_required': {
+          'enabled': true,
+          'title': 'Claude Code Permission Required',
+          'message': 'Claude Code is waiting for your permission'
         },
-        "error": {
-          "enabled": true,
-          "title": "Claude Code Error",
-          "message": "An error occurred during task execution"
+        'error': {
+          'enabled': true,
+          'title': 'Claude Code Error',
+          'message': 'An error occurred during task execution'
         },
-        "idle": {
-          "enabled": false,
-          "title": "Claude Code Idle",
-          "message": "Claude Code is waiting for input"
+        'idle': {
+          'enabled': false,
+          'title': 'Claude Code Idle',
+          'message': 'Claude Code is waiting for input'
         }
       },
       integrations: {
-        "slack": {
-          "enabled": false,
-          "webhook": "",
-          "channel": "#general"
+        'slack': {
+          'enabled': false,
+          'webhook': '',
+          'channel': '#general'
         },
-        "discord": {
-          "enabled": false,
-          "webhook": ""
+        'discord': {
+          'enabled': false,
+          'webhook': ''
         },
-        "teams": {
-          "enabled": false,
-          "webhook": ""
+        'teams': {
+          'enabled': false,
+          'webhook': ''
         }
       },
       customCommands: {
-        "onTaskCompleted": "",
-        "onError": "",
-        "onIdle": ""
+        'onTaskCompleted': '',
+        'onError': '',
+        'onIdle': ''
       }
     };
   }
@@ -68,14 +67,14 @@ class NotificationHook extends HookBase {
   async execute(input) {
     try {
       const { message, title } = input;
-      
+
       if (!message && !title) {
         return this.success({ message: 'No notification data provided' });
       }
 
       // Determine notification type based on message content
       const notificationType = this.determineNotificationType(message, title);
-      
+
       // Check if this notification type is enabled
       const typeConfig = this.config.notificationTypes[notificationType];
       if (!typeConfig || !typeConfig.enabled) {
@@ -118,7 +117,7 @@ class NotificationHook extends HookBase {
         results.push({ type: 'custom', ...customResult });
       }
 
-      return this.success({ 
+      return this.success({
         message: `Notification sent: ${notificationTitle}`,
         type: notificationType,
         results: results
@@ -130,24 +129,24 @@ class NotificationHook extends HookBase {
   }
 
   determineNotificationType(message, title) {
-    const content = (message + ' ' + title).toLowerCase();
-    
+    const content = (`${message} ${title}`).toLowerCase();
+
     if (content.includes('permission') || content.includes('waiting') || content.includes('approve')) {
       return 'permission_required';
     }
-    
+
     if (content.includes('error') || content.includes('failed') || content.includes('fail')) {
       return 'error';
     }
-    
+
     if (content.includes('completed') || content.includes('finished') || content.includes('done')) {
       return 'task_completed';
     }
-    
+
     if (content.includes('idle') || content.includes('input')) {
       return 'idle';
     }
-    
+
     return 'task_completed'; // Default
   }
 
@@ -156,7 +155,7 @@ class NotificationHook extends HookBase {
       // Try to use node-notifier if available
       try {
         const notifier = require('node-notifier');
-        
+
         const options = {
           title: title,
           message: message,
@@ -169,7 +168,7 @@ class NotificationHook extends HookBase {
         }
 
         notifier.notify(options);
-        
+
         return { success: true, message: 'Desktop notification sent via node-notifier' };
       } catch (nodeNotifierError) {
         // Fallback to platform-specific commands
@@ -182,34 +181,34 @@ class NotificationHook extends HookBase {
 
   async sendPlatformNotification(title, message) {
     const platform = process.platform;
-    
+
     try {
       let command, args;
-      
+
       switch (platform) {
         case 'darwin': // macOS
           command = 'osascript';
           args = ['-e', `display notification "${message}" with title "${title}"`];
           break;
-          
+
         case 'linux':
           command = 'notify-send';
           args = [title, message];
           break;
-          
+
         case 'win32':
           // Use PowerShell for Windows notifications
           command = 'powershell';
           args = ['-Command', `[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] > $null; $template = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText02); $template.GetElementsByTagName('text')[0].InnerText = '${title}'; $template.GetElementsByTagName('text')[1].InnerText = '${message}'; $toast = [Windows.UI.Notifications.ToastNotification]::new($template); [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('Claude Code').Show($toast)`];
           break;
-          
+
         default:
           throw new Error(`Unsupported platform: ${platform}`);
       }
-      
+
       await this.executeCommand(command, args);
       return { success: true, message: `Desktop notification sent via ${command}` };
-      
+
     } catch (error) {
       return { success: false, error: error.message };
     }
@@ -219,7 +218,7 @@ class NotificationHook extends HookBase {
     try {
       const webhook = this.config.integrations.slack.webhook;
       const channel = this.config.integrations.slack.channel;
-      
+
       if (!webhook) {
         throw new Error('Slack webhook URL not configured');
       }
@@ -233,7 +232,7 @@ class NotificationHook extends HookBase {
 
       await this.sendWebhook(webhook, payload);
       return { success: true, message: 'Slack notification sent' };
-      
+
     } catch (error) {
       return { success: false, error: error.message };
     }
@@ -242,7 +241,7 @@ class NotificationHook extends HookBase {
   async sendDiscordNotification(title, message) {
     try {
       const webhook = this.config.integrations.discord.webhook;
-      
+
       if (!webhook) {
         throw new Error('Discord webhook URL not configured');
       }
@@ -261,7 +260,7 @@ class NotificationHook extends HookBase {
 
       await this.sendWebhook(webhook, payload);
       return { success: true, message: 'Discord notification sent' };
-      
+
     } catch (error) {
       return { success: false, error: error.message };
     }
@@ -270,38 +269,38 @@ class NotificationHook extends HookBase {
   async sendTeamsNotification(title, message) {
     try {
       const webhook = this.config.integrations.teams.webhook;
-      
+
       if (!webhook) {
         throw new Error('Teams webhook URL not configured');
       }
 
       const payload = {
-        "@type": "MessageCard",
-        "@context": "http://schema.org/extensions",
-        "themeColor": "0076D7",
-        "summary": title,
-        "sections": [{
-          "activityTitle": title,
-          "activitySubtitle": "Claude Code Notification",
-          "activityImage": "https://claude.ai/favicon.ico",
-          "text": message,
-          "markdown": true
+        '@type': 'MessageCard',
+        '@context': 'http://schema.org/extensions',
+        'themeColor': '0076D7',
+        'summary': title,
+        'sections': [{
+          'activityTitle': title,
+          'activitySubtitle': 'Claude Code Notification',
+          'activityImage': 'https://claude.ai/favicon.ico',
+          'text': message,
+          'markdown': true
         }]
       };
 
       await this.sendWebhook(webhook, payload);
       return { success: true, message: 'Teams notification sent' };
-      
+
     } catch (error) {
       return { success: false, error: error.message };
     }
   }
 
-  async sendWebhook(url, payload) {
+  sendWebhook(url, payload) {
     return new Promise((resolve, reject) => {
       const data = JSON.stringify(payload);
       const urlObj = new URL(url);
-      
+
       const options = {
         hostname: urlObj.hostname,
         port: urlObj.port || 443,
@@ -315,11 +314,11 @@ class NotificationHook extends HookBase {
 
       const req = https.request(options, (res) => {
         let responseData = '';
-        
+
         res.on('data', (chunk) => {
           responseData += chunk;
         });
-        
+
         res.on('end', () => {
           if (res.statusCode >= 200 && res.statusCode < 300) {
             resolve(responseData);
@@ -346,9 +345,9 @@ class NotificationHook extends HookBase {
         .replace(/\{\{message\}\}/g, message);
 
       const result = await this.executeCommand('sh', ['-c', processedCommand]);
-      
-      return { 
-        success: result.success, 
+
+      return {
+        success: result.success,
         message: result.success ? 'Custom command executed' : 'Custom command failed',
         output: result.output,
         error: result.error
@@ -358,7 +357,7 @@ class NotificationHook extends HookBase {
     }
   }
 
-  async executeCommand(command, args) {
+  executeCommand(command, args) {
     return new Promise((resolve) => {
       const child = spawn(command, args, {
         stdio: ['pipe', 'pipe', 'pipe']

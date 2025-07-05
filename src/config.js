@@ -27,10 +27,10 @@ class ConfigManager {
   async ensureSettingsFileExists(scope) {
     const settingsPath = this.getSettingsPath(scope);
     const settingsDir = path.dirname(settingsPath);
-    
+
     // Create .claude directory if it doesn't exist
     await fs.ensureDir(settingsDir);
-    
+
     // Create settings file if it doesn't exist
     if (!await fs.pathExists(settingsPath)) {
       await fs.writeJson(settingsPath, {}, { spaces: 2 });
@@ -40,11 +40,11 @@ class ConfigManager {
   async loadSettings(scope) {
     try {
       const settingsPath = this.getSettingsPath(scope);
-      
+
       if (!await fs.pathExists(settingsPath)) {
         return {};
       }
-      
+
       return await fs.readJson(settingsPath);
     } catch (error) {
       throw new Error(`Failed to load settings: ${error.message}`);
@@ -64,21 +64,21 @@ class ConfigManager {
   async addHook(eventType, hookConfig, scope) {
     try {
       const settings = await this.loadSettings(scope);
-      
+
       // Initialize hooks structure if it doesn't exist
       if (!settings.hooks) {
         settings.hooks = {};
       }
-      
+
       if (!settings.hooks[eventType]) {
         settings.hooks[eventType] = [];
       }
-      
+
       // Check if hook already exists
       const existingHookIndex = settings.hooks[eventType].findIndex(
         h => h.matcher === hookConfig.matcher
       );
-      
+
       if (existingHookIndex !== -1) {
         // Update existing hook
         settings.hooks[eventType][existingHookIndex] = hookConfig;
@@ -86,7 +86,7 @@ class ConfigManager {
         // Add new hook
         settings.hooks[eventType].push(hookConfig);
       }
-      
+
       await this.saveSettings(scope, settings);
     } catch (error) {
       throw new Error(`Failed to add hook: ${error.message}`);
@@ -96,29 +96,29 @@ class ConfigManager {
   async removeHook(hookName, scope) {
     try {
       const settings = await this.loadSettings(scope);
-      
+
       if (!settings.hooks) {
         return;
       }
-      
+
       // Remove hook from all event types
       for (const eventType of Object.keys(settings.hooks)) {
         settings.hooks[eventType] = settings.hooks[eventType].filter(hook => {
           // Check if this hook belongs to the specified hook name
           return !hook.hooks?.some(h => h.command?.includes(hookName));
         });
-        
+
         // Clean up empty arrays
         if (settings.hooks[eventType].length === 0) {
           delete settings.hooks[eventType];
         }
       }
-      
+
       // Clean up empty hooks object
       if (Object.keys(settings.hooks).length === 0) {
         delete settings.hooks;
       }
-      
+
       await this.saveSettings(scope, settings);
     } catch (error) {
       throw new Error(`Failed to remove hook: ${error.message}`);
@@ -132,10 +132,10 @@ class ConfigManager {
         project: [],
         local: []
       };
-      
+
       for (const scope of ['user', 'project', 'local']) {
         const settings = await this.loadSettings(scope);
-        
+
         if (settings.hooks) {
           for (const [eventType, hooks] of Object.entries(settings.hooks)) {
             for (const hook of hooks) {
@@ -143,7 +143,7 @@ class ConfigManager {
                 for (const hookCommand of hook.hooks) {
                   if (hookCommand.command) {
                     // Extract hook name from command
-                    const match = hookCommand.command.match(/\/([^\/]+)\/index\.js/);
+                    const match = hookCommand.command.match(/\/([^/]+)\/index\.js/);
                     if (match) {
                       const hookName = match[1];
                       status[scope].push({
@@ -160,7 +160,7 @@ class ConfigManager {
           }
         }
       }
-      
+
       return status;
     } catch (error) {
       throw new Error(`Failed to get installation status: ${error.message}`);
@@ -170,14 +170,14 @@ class ConfigManager {
   async createBackup(scope) {
     try {
       const settingsPath = this.getSettingsPath(scope);
-      
+
       if (!await fs.pathExists(settingsPath)) {
         return;
       }
-      
+
       const backupPath = `${settingsPath}.backup.${Date.now()}`;
       await fs.copy(settingsPath, backupPath);
-      
+
       console.log(chalk.blue(`📋 Backup created: ${backupPath}`));
     } catch (error) {
       console.warn(chalk.yellow(`⚠️  Failed to create backup: ${error.message}`));
@@ -188,13 +188,13 @@ class ConfigManager {
     try {
       console.log(chalk.blue('📋 Configuration Status'));
       console.log();
-      
+
       for (const scope of ['user', 'project', 'local']) {
         const settings = await this.loadSettings(scope);
         const scopeTitle = scope.charAt(0).toUpperCase() + scope.slice(1);
-        
+
         console.log(chalk.green(`${scopeTitle} Level:`));
-        
+
         if (settings.hooks) {
           let found = false;
           for (const [eventType, hooks] of Object.entries(settings.hooks)) {
@@ -221,7 +221,7 @@ class ConfigManager {
               }
             }
           }
-          
+
           if (!found) {
             if (hookName) {
               console.log(chalk.gray(`  No configuration found for ${hookName}`));
@@ -232,7 +232,7 @@ class ConfigManager {
         } else {
           console.log(chalk.gray('  No hooks configured'));
         }
-        
+
         console.log();
       }
     } catch (error) {
@@ -247,7 +247,7 @@ class ConfigManager {
       console.log(chalk.yellow('ℹ️  Configuration editing not yet implemented.'));
       console.log('Current configuration:');
       console.log();
-      
+
       await this.showConfig(hookName);
     } catch (error) {
       throw new Error(`Failed to edit configuration: ${error.message}`);
@@ -272,7 +272,7 @@ class ConfigManager {
             default: false
           }
         ]);
-        
+
         if (confirm) {
           for (const scope of ['user', 'project', 'local']) {
             const settings = await this.loadSettings(scope);
@@ -295,17 +295,17 @@ class ConfigManager {
     try {
       console.log(chalk.blue('🔍 Validating Configuration'));
       console.log();
-      
+
       let isValid = true;
-      
+
       for (const scope of ['user', 'project', 'local']) {
         const settings = await this.loadSettings(scope);
         const scopeTitle = scope.charAt(0).toUpperCase() + scope.slice(1);
-        
+
         console.log(chalk.green(`${scopeTitle} Level:`));
-        
+
         if (settings.hooks) {
-          for (const [eventType, hooks] of Object.entries(settings.hooks)) {
+          for (const [, hooks] of Object.entries(settings.hooks)) {
             for (const hook of hooks) {
               if (hookName) {
                 // Validate specific hook
@@ -325,9 +325,9 @@ class ConfigManager {
                 // Validate all hooks
                 const validation = await this.validateHookConfig(hook);
                 if (validation.isValid) {
-                  console.log(chalk.green(`  ✅ Hook configuration is valid`));
+                  console.log(chalk.green('  ✅ Hook configuration is valid'));
                 } else {
-                  console.log(chalk.red(`  ❌ Hook configuration is invalid:`));
+                  console.log(chalk.red('  ❌ Hook configuration is invalid:'));
                   validation.errors.forEach(error => {
                     console.log(chalk.red(`     ${error}`));
                   });
@@ -339,16 +339,16 @@ class ConfigManager {
         } else {
           console.log(chalk.gray('  No hooks configured'));
         }
-        
+
         console.log();
       }
-      
+
       if (isValid) {
         console.log(chalk.green('✅ All configurations are valid'));
       } else {
         console.log(chalk.red('❌ Some configurations have errors'));
       }
-      
+
     } catch (error) {
       throw new Error(`Failed to validate configuration: ${error.message}`);
     }
@@ -356,22 +356,22 @@ class ConfigManager {
 
   async validateHookConfig(hook) {
     const errors = [];
-    
+
     // Check required fields
     if (!hook.hooks || !Array.isArray(hook.hooks)) {
       errors.push('Missing or invalid hooks array');
     }
-    
+
     if (hook.hooks) {
       for (const hookCommand of hook.hooks) {
         if (!hookCommand.command) {
           errors.push('Missing command');
         }
-        
+
         if (hookCommand.timeout && (typeof hookCommand.timeout !== 'number' || hookCommand.timeout < 0)) {
           errors.push('Invalid timeout value');
         }
-        
+
         // Check if command file exists
         if (hookCommand.command) {
           const commandMatch = hookCommand.command.match(/node\s+"([^"]+)"/);
@@ -384,21 +384,21 @@ class ConfigManager {
         }
       }
     }
-    
+
     return {
       isValid: errors.length === 0,
       errors: errors
     };
   }
 
-  async enableHook(hookName, options) {
+  enableHook(_hookName, _options) {
     // This would enable a disabled hook
     // For now, we'll just show a message
     console.log(chalk.yellow('ℹ️  Hook enable/disable functionality not yet implemented.'));
     console.log('Use `rins_hooks install` to add hooks or `rins_hooks uninstall` to remove them.');
   }
 
-  async disableHook(hookName, options) {
+  disableHook(_hookName, _options) {
     // This would disable an enabled hook
     // For now, we'll just show a message
     console.log(chalk.yellow('ℹ️  Hook enable/disable functionality not yet implemented.'));

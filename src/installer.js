@@ -3,7 +3,6 @@ const path = require('path');
 const os = require('os');
 const chalk = require('chalk');
 const inquirer = require('inquirer');
-const glob = require('glob');
 
 const Utils = require('./utils');
 const ConfigManager = require('./config');
@@ -23,10 +22,10 @@ class Installer {
       for (const hookDir of hookDirs) {
         const hookPath = path.join(this.hooksDir, hookDir);
         const stat = await fs.stat(hookPath);
-        
+
         if (stat.isDirectory()) {
           const configPath = path.join(hookPath, 'config.json');
-          
+
           if (await fs.pathExists(configPath)) {
             try {
               const config = await fs.readJson(configPath);
@@ -60,7 +59,7 @@ class Installer {
 
       // Get available hooks
       const availableHooks = await this.getAvailableHooks();
-      
+
       if (availableHooks.length === 0) {
         console.log(chalk.red('❌ No hooks available for installation.'));
         return;
@@ -154,16 +153,16 @@ class Installer {
 
       // Check platform compatibility
       const currentPlatform = os.platform();
-      const incompatibleHooks = hooksToInstall.filter(hook => 
+      const incompatibleHooks = hooksToInstall.filter(hook =>
         hook.platforms && !hook.platforms.includes(currentPlatform)
       );
 
       if (incompatibleHooks.length > 0) {
-        console.warn(chalk.yellow(`⚠️  Platform compatibility warning:`));
+        console.warn(chalk.yellow('⚠️  Platform compatibility warning:'));
         incompatibleHooks.forEach(hook => {
           console.warn(chalk.yellow(`   ${hook.name} supports: ${hook.platforms.join(', ')}`));
         });
-        
+
         const { continueInstall } = await inquirer.prompt([
           {
             type: 'confirm',
@@ -190,7 +189,7 @@ class Installer {
       if (options.dryRun) {
         console.log(chalk.yellow('🔍 DRY RUN - No changes will be made'));
         console.log();
-        
+
         for (const hook of hooksToInstall) {
           console.log(chalk.cyan(`Would install: ${hook.name}`));
           console.log(chalk.gray(`  Description: ${hook.description}`));
@@ -221,7 +220,7 @@ class Installer {
     try {
       const availableHooks = await this.getAvailableHooks();
       const hookNames = availableHooks.map(hook => hook.name);
-      
+
       if (hookNames.length === 0) {
         console.log(chalk.yellow('ℹ️  No hooks available to install.'));
         return;
@@ -233,28 +232,28 @@ class Installer {
     }
   }
 
-  async installSingleHook(hook, scope, options = {}) {
+  async installSingleHook(hook, scope) {
     try {
       console.log(chalk.blue(`🔧 Installing ${hook.name}...`));
 
       // Load hook configuration
-      const hookConfig = await this.loadHookConfig(hook.name);
-      
+      await this.loadHookConfig(hook.name);
+
       // Generate absolute path to hook script
       const hookScriptPath = path.resolve(this.hooksDir, hook.name, 'index.js');
-      
+
       // Determine event type based on hook name and config
       let eventType = 'PostToolUse'; // Default
       if (hook.name === 'notification') {
         eventType = 'Notification';
       }
-      
+
       // Generate Claude Code hook configuration
       const claudeConfig = {
         matcher: hook.matcher || '',
         hooks: [
           {
-            type: "command",
+            type: 'command',
             command: `node "${hookScriptPath}"`,
             timeout: hook.timeout || 30
           }
@@ -285,21 +284,21 @@ class Installer {
 
   async checkRequirements(hooks) {
     const allRequirements = [...new Set(hooks.flatMap(hook => hook.requirements))];
-    
+
     if (allRequirements.length === 0) {
       return;
     }
 
     console.log(chalk.blue('🔍 Checking requirements...'));
-    
+
     for (const requirement of allRequirements) {
       const isAvailable = await this.utils.checkCommandAvailable(requirement);
-      
+
       if (isAvailable) {
         console.log(chalk.green(`  ✅ ${requirement} is available`));
       } else {
         console.log(chalk.red(`  ❌ ${requirement} is not available`));
-        
+
         // Provide installation suggestions
         const suggestion = this.getInstallationSuggestion(requirement);
         if (suggestion) {
@@ -307,7 +306,7 @@ class Installer {
         }
       }
     }
-    
+
     console.log();
   }
 
@@ -328,7 +327,7 @@ class Installer {
     if (options.user) return 'user';
     if (options.project) return 'project';
     if (options.local) return 'local';
-    
+
     // Default to project level
     return 'project';
   }
@@ -339,11 +338,11 @@ class Installer {
       console.log();
 
       const scope = this.determineScope(options);
-      
+
       if (options.dryRun) {
         console.log(chalk.yellow('🔍 DRY RUN - No changes will be made'));
         console.log();
-        
+
         for (const hookName of hookNames) {
           console.log(chalk.cyan(`Would uninstall: ${hookName} from ${scope} level`));
         }
@@ -371,9 +370,9 @@ class Installer {
     try {
       const status = await this.configManager.getInstallationStatus();
       const scope = this.determineScope(options);
-      
+
       let installedHooks = [];
-      
+
       switch (scope) {
         case 'user':
           installedHooks = status.user.map(h => h.name);
