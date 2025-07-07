@@ -1,0 +1,31 @@
+{
+  "name": "file-locking",
+  "description": "File-level locking system for multi-agent collaboration",
+  "version": "1.0.0",
+  "tags": ["locking", "collaboration", "conflict-prevention"],
+  "requirements": ["node"],
+  "platforms": ["linux", "darwin", "win32"],
+  "matcher": "Edit|Write|MultiEdit",
+  "timeout": 30,
+  "defaultConfig": {
+    "enabled": true,
+    "lockTimeout": 600,
+    "lockDirectory": ".agent-locks",
+    "activityDirectory": ".agent-activity",
+    "excludePatterns": [
+      "*.log",
+      "*.tmp", 
+      "*.temp",
+      "*.lock",
+      ".env*",
+      ".git/**",
+      ".agent-*/**",
+      "node_modules/**",
+      "*.pyc",
+      "__pycache__/**"
+    ],
+    "debugLogging": false,
+    "cleanupExpiredLocks": true,
+    "maxLockDuration": 600
+  }
+}

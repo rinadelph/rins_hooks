@@ -1,0 +1,9 @@
+{
+  "agent_id": "494bb743-69dd-45ea-a0d9-a08e67d545db",
+  "file_path": "/home/alejandro/Code/MCP/Agent-MCP/rins_hooks/test_enhanced_commit.md",
+  "locked_at": "2025-07-07T08:10:05.169Z",
+  "operation": "write",
+  "session_id": "494bb743-69dd-45ea-a0d9-a08e67d545db",
+  "expires_at": "2025-07-07T08:20:05.169Z",
+  "lock_id": "05db98ad-628a-4ad5-97af-3a6f024c4ab9"
+}
