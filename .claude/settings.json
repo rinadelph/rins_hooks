@@ -6,6 +6,11 @@
         "hooks": [
           {
             "type": "command",
+            "command": "node \"/home/alejandro/Code/MCP/Agent-MCP/rins_hooks/debug-hook.js\"",
+            "timeout": 5
+          },
+          {
+            "type": "command",
             "command": "node \"/home/alejandro/Code/MCP/Agent-MCP/rins_hooks/hooks/agent-registry/index.js\"",
             "timeout": 10
           },
