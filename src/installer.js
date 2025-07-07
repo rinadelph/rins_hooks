@@ -246,6 +246,12 @@ class Installer {
       let eventType = 'PostToolUse'; // Default
       if (hook.name === 'notification') {
         eventType = 'Notification';
+      } else if (hook.name === 'file-locking') {
+        eventType = 'PreToolUse';
+      } else if (hook.name === 'git-agentmcp') {
+        eventType = 'PostToolUse';
+      } else if (hook.name === 'agent-registry') {
+        eventType = 'PostToolUse';
       }
 
       // Generate Claude Code hook configuration
