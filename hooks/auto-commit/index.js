@@ -39,9 +39,9 @@ class AutoCommitHook extends HookBase {
       sessionId: data.sessionId || data.session_id,
       fullDataKeys: Object.keys(data)
     };
-    
+
     try {
-      fs.appendFileSync(this.toolLogFile, JSON.stringify(logEntry, null, 2) + '\n\n');
+      fs.appendFileSync(this.toolLogFile, `${JSON.stringify(logEntry, null, 2)}\n\n`);
     } catch (error) {
       console.warn(`Failed to log tool event: ${error.message}`);
     }
@@ -115,7 +115,7 @@ class AutoCommitHook extends HookBase {
   shouldExcludeFile(filePath) {
     const fileName = path.basename(filePath);
     const relativePath = path.relative(process.cwd(), filePath);
-    
+
     // Normalize paths to use forward slashes for consistent pattern matching
     const normalizedRelativePath = relativePath.replace(/\\/g, '/');
 
