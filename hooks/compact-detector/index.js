@@ -131,6 +131,8 @@ class CompactDetectorHook extends HookBase {
         } catch (error) {
           stats[dir] = { error: error.message };
         }
+      } catch (error) {
+        stats[dir] = { error: error.message };
       }
     }
     
