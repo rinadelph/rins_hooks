@@ -17,8 +17,8 @@ class ToolAnalyzer {
       parameters: Object.keys(data.parameters || {}),
       fullData: data
     }, null, 2);
-    
-    fs.appendFileSync(this.logFile, logEntry + '\n\n');
+
+    fs.appendFileSync(this.logFile, `${logEntry}\n\n`);
   }
 }
 
