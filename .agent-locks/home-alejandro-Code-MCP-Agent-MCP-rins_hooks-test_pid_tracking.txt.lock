@@ -1,9 +1,0 @@
-{
-  "agent_id": "5edb81ee-4145-432f-8efb-09d5e120ccc0",
-  "file_path": "/home/alejandro/Code/MCP/Agent-MCP/rins_hooks/test_pid_tracking.txt",
-  "locked_at": "2025-07-07T08:13:48.066Z",
-  "operation": "write",
-  "session_id": "5edb81ee-4145-432f-8efb-09d5e120ccc0",
-  "expires_at": "2025-07-07T08:23:48.066Z",
-  "lock_id": "c41e26ad-beff-49dc-a5eb-b069989adda5"
-}
