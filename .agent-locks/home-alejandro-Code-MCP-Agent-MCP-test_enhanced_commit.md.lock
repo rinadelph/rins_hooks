@@ -1,9 +1,0 @@
-{
-  "agent_id": "494bb743-69dd-45ea-a0d9-a08e67d545db",
-  "file_path": "/home/alejandro/Code/MCP/Agent-MCP/test_enhanced_commit.md",
-  "locked_at": "2025-07-07T08:09:14.363Z",
-  "operation": "write",
-  "session_id": "494bb743-69dd-45ea-a0d9-a08e67d545db",
-  "expires_at": "2025-07-07T08:19:14.363Z",
-  "lock_id": "e58b511f-5b0a-4a0e-9035-29cda458530e"
-}
