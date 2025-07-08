@@ -105,31 +105,28 @@ class CompactDetectorHook extends HookBase {
     const stats = {};
     
     for (const dir of this.claudeDirectories) {
-      if (fs.existsSync(dir)) {
-        try {
-          const files = fs.readdirSync(dir, { recursive: true });
-          stats[dir] = {
-            count: files.length,
-            files: files.filter(f => {
-              const fullPath = path.join(dir, f);
-              try {
-                return fs.statSync(fullPath).isFile();
-              } catch {
-                return false;
-              }
-            }).map(f => {
-              const fullPath = path.join(dir, f);
-              try {
-                const stat = fs.statSync(fullPath);
-                return {
+      try {
+        await fs.promises.access(dir);
+        const files = await fs.promises.readdir(dir, { recursive: true });
+          const fileStats = [];
+          for (const f of files) {
+            const fullPath = path.join(dir, f);
+            try {
+              const stat = await fs.promises.stat(fullPath);
+              if (stat.isFile()) {
+                fileStats.push({
                   name: f,
                   size: stat.size,
                   mtime: stat.mtime.getTime()
-                };
-              } catch {
-                return null;
+                });
               }
-            }).filter(Boolean)
+            } catch {
+              // Skip files that can't be accessed
+            }
+          }
+          stats[dir] = {
+            count: fileStats.length,
+            files: fileStats
           };
         } catch (error) {
           stats[dir] = { error: error.message };
@@ -143,7 +140,7 @@ class CompactDetectorHook extends HookBase {
   async getTempFiles() {
     try {
       const tempDir = '/tmp';
-      const files = fs.readdirSync(tempDir);
+      const files = await fs.promises.readdir(tempDir);
       return files.filter(f => 
         f.includes('claude') || 
         f.includes('anthropic') ||
@@ -288,7 +285,7 @@ class CompactDetectorHook extends HookBase {
   async execute(input) {
     try {
       // This gets called on every tool use
-      const { tool_name, tool_input } = input;
+      const { tool_name } = input;
       
       // Take a snapshot after any tool use to detect changes
       const snapshot = await this.takeMemorySnapshot();
