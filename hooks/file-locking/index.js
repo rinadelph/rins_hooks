@@ -50,7 +50,7 @@ function ensureDirectories() {
 function pathToLockName(filePath) {
   return filePath
     .replace(/^\.?\/+/, '')
-    .replace(/[\/\\]/g, '-')
+    .replace(/[/\\]/g, '-')
     .replace(/[<>:"|?*]/g, '_')
     + '.lock';
 }
