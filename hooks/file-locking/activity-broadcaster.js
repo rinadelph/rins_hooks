@@ -19,7 +19,7 @@ class ActivityBroadcaster {
    * Parse input from Claude Code hook
    * @returns {Promise<Object>} Parsed hook input
    */
-  async parseInput() {
+  parseInput() {
     return new Promise((resolve, reject) => {
       let input = '';
       
