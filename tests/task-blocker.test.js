@@ -55,9 +55,12 @@ describe('TaskBlockerHook', () => {
     });
 
     it('should handle execution errors', () => {
-      // Mock logActivity to throw an error
-      const originalLogActivity = hook.logActivity;
-      hook.logActivity = () => {
+      // Create a hook with invalid config to force an error
+      const brokenHook = new TaskBlockerHook();
+      
+      // Mock the success method to throw an error
+      const originalSuccess = brokenHook.success;
+      brokenHook.success = () => {
         throw new Error('Test error');
       };
 
@@ -67,14 +70,14 @@ describe('TaskBlockerHook', () => {
         session_id: 'test-session'
       };
 
-      const result = hook.execute(input);
+      const result = brokenHook.execute(input);
       
       expect(result.success).toBe(false);
       expect(result.error).toBe('Task blocker failed: Test error');
       expect(result.hook).toBe('task-blocker');
 
       // Restore original method
-      hook.logActivity = originalLogActivity;
+      brokenHook.success = originalSuccess;
     });
   });
 
