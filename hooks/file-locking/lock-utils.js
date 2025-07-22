@@ -36,7 +36,7 @@ class LockUtils {
     // Convert path separators to dashes and remove leading slashes/dots
     return filePath
       .replace(/^\.?\/+/, '') // Remove leading ./ or /
-      .replace(/[\/\\]/g, '-') // Replace slashes with dashes
+      .replace(/[/\\]/g, '-') // Replace slashes with dashes
       .replace(/[<>:"|?*]/g, '_') // Replace invalid filename chars
       + '.lock';
   }
