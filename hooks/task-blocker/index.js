@@ -39,7 +39,7 @@ class TaskBlockerHook extends HookBase {
     }
   }
 
-  async execute(input) {
+  execute(input) {
     try {
       // This hook is primarily for installation/configuration
       // The actual blocking is done via Claude Code permissions
