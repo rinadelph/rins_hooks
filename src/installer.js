@@ -237,7 +237,13 @@ class Installer {
       console.log(chalk.blue(`🔧 Installing ${hook.name}...`));
 
       // Load hook configuration
-      await this.loadHookConfig(hook.name);
+      const hookConfig = await this.loadHookConfig(hook.name);
+
+      // Check if this is a permission-based hook
+      if (hookConfig.installationType === 'permissions') {
+        await this.installPermissionHook(hook, scope);
+        return;
+      }
 
       // Generate absolute path to hook script
       const hookScriptPath = path.resolve(this.hooksDir, hook.name, 'index.js');
@@ -245,6 +251,10 @@ class Installer {
       // Determine event type based on hook name and config
       let eventType = 'PostToolUse'; // Default
       if (hook.name === 'notification') {
+        eventType = 'Notification';
+      } else if (hook.name === 'subagent-controller') {
+        eventType = 'PreToolUse';
+      } else if (hook.name === 'task-blocker') {
         eventType = 'Notification';
       }
 
@@ -270,6 +280,21 @@ class Installer {
 
     } catch (error) {
       console.error(chalk.red(`  ❌ Failed to install ${hook.name}: ${error.message}`));
+    }
+  }
+
+  async installPermissionHook(hook, scope) {
+    try {
+      // For task-blocker, add Task tool to deny list
+      if (hook.name === 'task-blocker') {
+        await this.configManager.addPermissionDeny('Task', scope);
+        console.log(chalk.green(`  ✅ ${hook.name} installed successfully`));
+        console.log(chalk.gray(`    Type: Permission Deny`));
+        console.log(chalk.gray(`    Blocks: Task tool`));
+        console.log(chalk.gray(`    Scope: ${scope}`));
+      }
+    } catch (error) {
+      console.error(chalk.red(`  ❌ Failed to install permission hook ${hook.name}: ${error.message}`));
     }
   }
 
@@ -354,8 +379,14 @@ class Installer {
 
       // Remove hooks
       for (const hookName of hookNames) {
-        await this.configManager.removeHook(hookName, scope);
-        console.log(chalk.green(`  ✅ ${hookName} uninstalled successfully`));
+        // Check if it's a permission-based hook
+        if (hookName === 'task-blocker') {
+          await this.configManager.removePermissionDeny('Task', scope);
+          console.log(chalk.green(`  ✅ ${hookName} uninstalled successfully (removed Task permission deny)`));
+        } else {
+          await this.configManager.removeHook(hookName, scope);
+          console.log(chalk.green(`  ✅ ${hookName} uninstalled successfully`));
+        }
       }
 
       console.log();

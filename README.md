@@ -61,6 +61,15 @@ Enhanced notifications for Claude Code events with multiple delivery methods.
 - Custom notification commands
 - Configurable notification types
 
+### 🚫 Task Blocker Hook
+Prevents Claude Code from using the Task tool and creating subagents.
+
+**Features:**
+- Blocks Task tool usage via Claude Code permissions
+- Forces Claude to work directly without subagents
+- Clean blocking without errors
+- Activity logging for debugging
+
 ## 📖 Installation Options
 
 ### Global Installation (Recommended)

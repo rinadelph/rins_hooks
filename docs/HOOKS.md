@@ -256,6 +256,60 @@ Custom commands support template variables:
 
 ---
 
+## 🚫 Task Blocker Hook
+
+**Purpose**: Prevents Claude Code from using the Task tool and creating subagents.
+
+### Features
+- **Permission-Based Blocking**: Uses Claude Code's permission system to deny Task tool usage
+- **Clean Implementation**: No hook execution errors or conflicts
+- **Activity Logging**: Tracks blocked attempts for debugging
+- **Simple Management**: Easy to install/uninstall via rins_hooks CLI
+
+### How It Works
+
+Unlike traditional hooks that intercept tool execution, the Task Blocker hook uses Claude Code's built-in permission system to deny the Task tool entirely. When installed, it adds `"Task"` to the `permissions.deny` array in your settings.
+
+### Installation
+
+```bash
+# Install task blocker (prevents subagent creation)
+rins_hooks install task-blocker
+
+# Install at different scopes
+rins_hooks install task-blocker --user    # Global
+rins_hooks install task-blocker --project # Project-wide
+rins_hooks install task-blocker --local   # Local only
+```
+
+### Configuration
+
+The task blocker is configured via Claude Code's permission system. After installation, your settings will include:
+
+```json
+{
+  "permissions": {
+    "deny": [
+      "Task"
+    ]
+  }
+}
+```
+
+### Behavior
+
+When the Task tool is blocked:
+- Claude will see "Bypassing Permissions" status
+- Any attempt to use the Task tool will be denied at the permission level
+- No subagents will be created
+- Claude will work directly without delegating to sub-tasks
+
+### Requirements
+- Claude Code with permission system support
+- Node.js for installation
+
+---
+
 ## 🛠️ Creating Custom Hooks
 
 You can create your own hooks by extending the `HookBase` class:
