@@ -70,7 +70,7 @@ if (require.main === module) {
     try {
       const input = await HookBase.parseInput();
       const hook = new TaskBlockerHook();
-      await hook.execute(input);
+      hook.execute(input);
       process.exit(0);
     } catch (error) {
       console.error(`Task blocker hook error: ${error.message}`);
