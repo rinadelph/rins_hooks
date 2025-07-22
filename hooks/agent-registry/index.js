@@ -237,7 +237,7 @@ async function main() {
   try {
     // Parse input from Claude Code
     const input = await parseInput();
-    const { tool_name, tool_input, session_id } = input;
+    const { tool_name, tool_input } = input;
     
     // Only handle file modification tools
     if (!['Edit', 'Write', 'MultiEdit'].includes(tool_name)) {
