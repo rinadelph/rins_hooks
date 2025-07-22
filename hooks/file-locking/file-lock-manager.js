@@ -131,7 +131,7 @@ class FileLockManager {
    * @param {Object} input - Hook input from Claude Code
    * @returns {Object} Hook response
    */
-  async execute(input) {
+  execute(input) {
     try {
       const { tool_name, tool_input, session_id } = input;
       
