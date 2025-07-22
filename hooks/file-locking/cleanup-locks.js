@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 const LockUtils = require('./lock-utils');
-const path = require('path');
 
 /**
  * Lock cleanup utility for administrative tasks
