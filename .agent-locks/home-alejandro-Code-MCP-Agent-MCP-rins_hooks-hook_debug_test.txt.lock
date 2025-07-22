@@ -1,0 +1,9 @@
+{
+  "agent_id": "e0cdb2fc-5277-480c-84f0-daf2dbe92cb2",
+  "file_path": "/home/alejandro/Code/MCP/Agent-MCP/rins_hooks/hook_debug_test.txt",
+  "locked_at": "2025-07-07T08:30:49.192Z",
+  "operation": "write",
+  "session_id": "e0cdb2fc-5277-480c-84f0-daf2dbe92cb2",
+  "expires_at": "2025-07-07T08:40:49.192Z",
+  "lock_id": "b532d281-b84b-44f5-8328-661d585272a6"
+}
