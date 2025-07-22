@@ -1,0 +1,17 @@
+{
+  "name": "agent-registry",
+  "description": "Agent session registry for Agent-MCP integration via .agent directory",
+  "version": "1.0.0",
+  "tags": ["agent-tracking", "registry", "session-management"],
+  "requirements": ["node"],
+  "platforms": ["linux", "darwin", "win32"],
+  "matcher": "Edit|Write|MultiEdit",
+  "timeout": 10,
+  "defaultConfig": {
+    "enabled": true,
+    "registryFile": ".agent/registry.json",
+    "sessionTimeoutMinutes": 3,
+    "activityDirectory": ".agent/session-activity",
+    "logAllActivity": true
+  }
+}

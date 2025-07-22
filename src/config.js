@@ -74,14 +74,23 @@ class ConfigManager {
         settings.hooks[eventType] = [];
       }
 
-      // Check if hook already exists
+      // Check if hook already exists with same matcher
       const existingHookIndex = settings.hooks[eventType].findIndex(
         h => h.matcher === hookConfig.matcher
       );
 
       if (existingHookIndex !== -1) {
-        // Update existing hook
-        settings.hooks[eventType][existingHookIndex] = hookConfig;
+        // Merge hook commands instead of overwriting
+        const existingHook = settings.hooks[eventType][existingHookIndex];
+        
+        // Check if this specific command already exists to avoid duplicates
+        const newCommand = hookConfig.hooks[0].command;
+        const commandExists = existingHook.hooks.some(h => h.command === newCommand);
+        
+        if (!commandExists) {
+          // Add new command to existing hook
+          existingHook.hooks.push(...hookConfig.hooks);
+        }
       } else {
         // Add new hook
         settings.hooks[eventType].push(hookConfig);

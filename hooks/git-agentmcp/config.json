@@ -1,0 +1,32 @@
+{
+  "name": "git-agentmcp",
+  "description": "Git auto-commit with Agent-MCP integration and PID tracking for multi-agent coordination",
+  "version": "1.0.0",
+  "tags": ["git", "agent-mcp", "commit", "agent-tracking", "pid", "multi-agent"],
+  "requirements": ["git"],
+  "platforms": ["linux", "darwin", "win32"],
+  "matcher": "Edit|Write|MultiEdit",
+  "timeout": 30,
+  "defaultConfig": {
+    "enabled": true,
+    "commitMessageTemplate": "{{action}}: {{toolName}} modified {{fileName}}\n\nSession: {{sessionId}}\nPID: {{pid}} (parent: {{parentPid}})\nTimestamp: {{timestamp}}\nFile: {{filePath}}\nTool: {{toolName}}\n\n# Revert: git log --grep=\"PID: {{pid}}\"\n🤖 Generated with Claude Code via rins_hooks\nCo-Authored-By: Claude <noreply@anthropic.com>",
+    "excludePatterns": [
+      "*.log",
+      "*.tmp",
+      "*.temp",
+      "*.lock",
+      ".env*",
+      "*.key",
+      "*.pem",
+      "*.p12",
+      "*.pfx",
+      "node_modules/**",
+      ".git/**",
+      ".agent/**",
+      "*.pyc",
+      "__pycache__/**"
+    ],
+    "skipEmptyCommits": true,
+    "maxCommitMessageLength": 800
+  }
+}

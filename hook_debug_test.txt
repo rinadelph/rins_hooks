@@ -1,0 +1,1 @@
+Testing hook input debugging - this should trigger all three hooks and show us what Claude Code is sending to PostToolUse hooks.

@@ -1,0 +1,17 @@
+PID Tracking Test File
+
+This file is created to test the enhanced auto-commit hook.
+
+Expected behavior:
+- Hook should add this specific file to git
+- Create a commit with PID tracking information
+- Log activity to .agent/session-activity/
+
+Session info should include:
+- Session ID from Claude Code
+- Current process PID
+- Parent process PID (Claude Code main process)
+- Timestamp
+- Tool name (Write)
+
+Test timestamp: 2025-07-07T07:50:00Z
