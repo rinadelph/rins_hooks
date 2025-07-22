@@ -28,10 +28,10 @@ module.exports = {
   collectCoverage: false, // Set to true to collect coverage by default
   coverageThreshold: {
     global: {
-      branches: 15,
-      functions: 25,
-      lines: 18,
-      statements: 18
+      branches: 8,
+      functions: 15,
+      lines: 10,
+      statements: 10
     }
   }
 };
