@@ -1,0 +1,18 @@
+{
+  "name": "task-blocker",
+  "description": "Blocks Claude from using Task tool and creating subagents",
+  "version": "1.0.0",
+  "tags": ["task", "block", "subagent", "permissions"],
+  "requirements": ["node"],
+  "platforms": ["linux", "darwin", "win32"],
+  "matcher": "",
+  "timeout": 5,
+  "eventType": "Notification",
+  "installationType": "permissions",
+  "defaultConfig": {
+    "enabled": true,
+    "blockMessage": "Task tool usage is blocked. Please work directly without creating subagents.",
+    "logActivity": true,
+    "usePermissions": true
+  }
+}

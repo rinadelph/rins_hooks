@@ -404,6 +404,54 @@ class ConfigManager {
     console.log(chalk.yellow('ℹ️  Hook enable/disable functionality not yet implemented.'));
     console.log('Use `rins_hooks install` to add hooks or `rins_hooks uninstall` to remove them.');
   }
+
+  async addPermissionDeny(toolName, scope) {
+    try {
+      const settings = await this.loadSettings(scope);
+
+      // Initialize permissions structure if it doesn't exist
+      if (!settings.permissions) {
+        settings.permissions = {};
+      }
+
+      if (!settings.permissions.deny) {
+        settings.permissions.deny = [];
+      }
+
+      // Add tool to deny list if not already present
+      if (!settings.permissions.deny.includes(toolName)) {
+        settings.permissions.deny.push(toolName);
+      }
+
+      await this.saveSettings(scope, settings);
+    } catch (error) {
+      throw new Error(`Failed to add permission deny: ${error.message}`);
+    }
+  }
+
+  async removePermissionDeny(toolName, scope) {
+    try {
+      const settings = await this.loadSettings(scope);
+
+      if (settings.permissions && settings.permissions.deny) {
+        settings.permissions.deny = settings.permissions.deny.filter(tool => tool !== toolName);
+
+        // Clean up empty arrays
+        if (settings.permissions.deny.length === 0) {
+          delete settings.permissions.deny;
+        }
+
+        // Clean up empty permissions object
+        if (Object.keys(settings.permissions).length === 0) {
+          delete settings.permissions;
+        }
+
+        await this.saveSettings(scope, settings);
+      }
+    } catch (error) {
+      throw new Error(`Failed to remove permission deny: ${error.message}`);
+    }
+  }
 }
 
 module.exports = ConfigManager;
