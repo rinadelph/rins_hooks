@@ -1,0 +1,15 @@
+{
+  "name": "extended-thinking",
+  "description": "Provides extended thinking capabilities with user control through toggles and explicit commands",
+  "version": "1.0.0",
+  "author": "rins_hooks",
+  "events": ["UserPromptSubmit"],
+  "installationType": "standard",
+  "supportedPlatforms": ["linux", "darwin", "win32"],
+  "dependencies": [],
+  "settings": {
+    "stateFile": "extended-thinking-state.json",
+    "defaultThinkingToggle": false,
+    "defaultDeepThinkingToggle": false
+  }
+}
