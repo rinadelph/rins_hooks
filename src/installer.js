@@ -248,32 +248,50 @@ class Installer {
       // Generate absolute path to hook script
       const hookScriptPath = path.resolve(this.hooksDir, hook.name, 'index.js');
 
-      // Determine event type based on hook name and config
-      let eventType = 'PostToolUse'; // Default
-      if (hook.name === 'notification') {
-        eventType = 'Notification';
-      } else if (hook.name === 'subagent-controller') {
-        eventType = 'PreToolUse';
-      } else if (hook.name === 'task-blocker') {
-        eventType = 'Notification';
-      } else if (hook.name === 'extended-thinking') {
-        eventType = 'UserPromptSubmit';
+      // Special handling for extended-thinking hook (multiple events)
+      if (hook.name === 'extended-thinking') {
+        const multiEventConfig = {
+          matcher: hook.matcher || '',
+          hooks: [
+            {
+              type: 'command',
+              command: `node "${hookScriptPath}"`,
+              timeout: hook.timeout || 30
+            }
+          ]
+        };
+
+        // Register for multiple events
+        const events = ['UserPromptSubmit', 'PreToolUse', 'PostToolUse'];
+        for (const eventType of events) {
+          await this.configManager.addHook(eventType, multiEventConfig, scope);
+        }
+      } else {
+        // Single event handling for other hooks
+        let eventType = 'PostToolUse'; // Default
+        if (hook.name === 'notification') {
+          eventType = 'Notification';
+        } else if (hook.name === 'subagent-controller') {
+          eventType = 'PreToolUse';
+        } else if (hook.name === 'task-blocker') {
+          eventType = 'Notification';
+        }
+
+        // Generate Claude Code hook configuration
+        const claudeConfig = {
+          matcher: hook.matcher || '',
+          hooks: [
+            {
+              type: 'command',
+              command: `node "${hookScriptPath}"`,
+              timeout: hook.timeout || 30
+            }
+          ]
+        };
+
+        // Add to Claude Code settings
+        await this.configManager.addHook(eventType, claudeConfig, scope);
       }
-
-      // Generate Claude Code hook configuration
-      const claudeConfig = {
-        matcher: hook.matcher || '',
-        hooks: [
-          {
-            type: 'command',
-            command: `node "${hookScriptPath}"`,
-            timeout: hook.timeout || 30
-          }
-        ]
-      };
-
-      // Add to Claude Code settings
-      await this.configManager.addHook(eventType, claudeConfig, scope);
 
       console.log(chalk.green(`  ✅ ${hook.name} installed successfully`));
       console.log(chalk.gray(`    Event: ${eventType}`));
