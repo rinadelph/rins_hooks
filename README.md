@@ -70,6 +70,15 @@ Prevents Claude Code from using the Task tool and creating subagents.
 - Clean blocking without errors
 - Activity logging for debugging
 
+### 🧠 Extended Thinking Hook
+Provides comprehensive extended thinking capabilities with user control through toggles and explicit commands.
+
+**Features:**
+- **Auto-Mode**: Toggleable extended/deep thinking for all prompts
+- **Explicit Commands**: `/think`, `/deep-think`, `/think-toggle`, `/deep-toggle`, `/think-status`
+- **Priority System**: Deep thinking takes precedence over regular extended thinking
+- **Project-Level State**: Per-project thinking preferences stored in `.claude/extended-thinking-state.json`
+
 ## 📖 Installation Options
 
 ### Global Installation (Recommended)
