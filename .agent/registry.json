@@ -2,18 +2,18 @@
   "sessions": {
     "71888bd3-d2ac-4582-bd5e-e944c59afcb8": {
       "session_id": "71888bd3-d2ac-4582-bd5e-e944c59afcb8",
-      "pid": 2825628,
-      "parent_pid": 2825610,
-      "first_seen": 1754259943411,
-      "last_activity": 1754260108590,
+      "pid": 3508779,
+      "parent_pid": 3508776,
+      "first_seen": 1754260663304,
+      "last_activity": 1754260857186,
       "tool_name": "Edit",
-      "file_path": "/home/alejandro/.claude/commands/think-status.md",
+      "file_path": "/home/alejandro/Code/MCP/Hooks/Git/rins_hooks/hooks/extended-thinking/config.json",
       "working_directory": "/home/alejandro/Code/MCP/Hooks/Git/rins_hooks",
       "hook_event": "PostToolUse"
     }
   },
   "cleanup": {
-    "last_cleanup": 1754260108590,
+    "last_cleanup": 1754260857186,
     "timeout_minutes": 3
   }
 }

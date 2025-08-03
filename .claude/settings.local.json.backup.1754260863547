@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(rm:*)",
+      "Bash(find:*)",
+      "Bash(git pull:*)",
+      "Bash(git merge:*)",
+      "Bash(npm version:*)",
+      "Bash(tmux source-file:*)"
+    ]
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/home/alejandro/Code/MCP/Hooks/Git/rins_hooks/hooks/extended-thinking/index.js\"",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}
