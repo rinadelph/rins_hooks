@@ -65,13 +65,6 @@ class ExtendedThinkingHook extends HookBase {
      */
   logActivity(input, message) {
     const timestamp = new Date().toISOString();
-    const logEntry = {
-      timestamp,
-      hook: this.name,
-      event: input.hook_event_name,
-      session_id: input.session_id?.substring(0, 8) || 'unknown',
-      message
-    };
 
     // In debug mode or if logging is enabled, output to stderr for debugging
     if (process.env.CLAUDE_DEBUG || process.env.THINKING_HOOK_DEBUG) {
