@@ -99,6 +99,11 @@ function shouldExcludeFile(filePath) {
   const fileName = path.basename(filePath);
   const relativePath = path.relative(process.cwd(), filePath);
   const normalizedPath = relativePath.replace(/\\/g, '/');
+  
+  // Exclude files outside the git repository
+  if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
+    return true;
+  }
 
   return CONFIG.excludePatterns.some(pattern => {
     const regex = new RegExp(pattern.source.replace(/\*\*/g, '.*').replace(/\*/g, '[^/\\\\]*'));
