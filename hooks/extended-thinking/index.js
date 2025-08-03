@@ -296,10 +296,23 @@ if (require.main === module) {
     const projectDir = process.cwd();
     
     if (type === 'thinking') {
-      ExtendedThinkingHook.toggleThinking(projectDir);
+      const newState = ExtendedThinkingHook.toggleThinking(projectDir);
+      console.log(`🧠 Extended Thinking is now: ${newState ? '✅ ENABLED' : '❌ DISABLED'}`);
+      const status = ExtendedThinkingHook.getStatus(projectDir);
+      console.log(`\n📊 Current Status:`);
+      console.log(`   Extended Thinking: ${status.thinking ? '✅ ON' : '❌ OFF'}`);
+      console.log(`   Deep Thinking: ${status.deepThinking ? '✅ ON' : '❌ OFF'}`);
+      console.log(`   Active Mode: ${status.activeMode}`);
     } else if (type === 'deepThinking') {
-      ExtendedThinkingHook.toggleDeepThinking(projectDir);
+      const newState = ExtendedThinkingHook.toggleDeepThinking(projectDir);
+      console.log(`🧠 Deep Thinking is now: ${newState ? '✅ ENABLED' : '❌ DISABLED'}`);
+      const status = ExtendedThinkingHook.getStatus(projectDir);
+      console.log(`\n📊 Current Status:`);
+      console.log(`   Extended Thinking: ${status.thinking ? '✅ ON' : '❌ OFF'}`);
+      console.log(`   Deep Thinking: ${status.deepThinking ? '✅ ON' : '❌ OFF'}`);
+      console.log(`   Active Mode: ${status.activeMode}`);
     }
+    process.exit(0);
   } else {
     // Normal hook execution
     HookBase.parseInput()
