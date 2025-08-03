@@ -6,7 +6,7 @@ const path = require('path');
 
 /**
  * Activity Broadcaster Hook for Claude Code PostToolUse
- * 
+ *
  * This hook logs completed file operations for real-time visibility
  * and releases file locks after successful operations.
  */
@@ -22,11 +22,11 @@ class ActivityBroadcaster {
   parseInput() {
     return new Promise((resolve, reject) => {
       let input = '';
-      
+
       process.stdin.on('data', (chunk) => {
         input += chunk.toString();
       });
-      
+
       process.stdin.on('end', () => {
         try {
           const data = JSON.parse(input);
@@ -35,7 +35,7 @@ class ActivityBroadcaster {
           reject(new Error(`Invalid JSON input: ${error.message}`));
         }
       });
-      
+
       process.stdin.on('error', reject);
     });
   }
@@ -46,7 +46,7 @@ class ActivityBroadcaster {
    * @returns {string|null} File path or null if not found
    */
   extractFilePath(toolInput) {
-    return toolInput.file_path || 
+    return toolInput.file_path ||
            toolInput.filePath ||
            (toolInput.edits && toolInput.edits[0] && toolInput.edits[0].file_path) ||
            null;
@@ -58,7 +58,7 @@ class ActivityBroadcaster {
    * @returns {string} Agent ID
    */
   extractAgentId(input) {
-    return process.env.MCP_AGENT_ID || 
+    return process.env.MCP_AGENT_ID ||
            input.agent_id ||
            input.session_id ||
            'unknown-agent';
@@ -71,28 +71,28 @@ class ActivityBroadcaster {
    */
   analyzeToolResponse(toolResponse) {
     const details = {};
-    
+
     if (toolResponse) {
       // Extract success status
       details.success = toolResponse.success !== false;
-      
+
       // Extract any error information
       if (toolResponse.error) {
         details.error = toolResponse.error;
       }
-      
+
       // Extract file information if available
       if (toolResponse.filePath) {
         details.actual_file_path = toolResponse.filePath;
       }
-      
+
       // Extract content length for write operations
       if (toolResponse.content && typeof toolResponse.content === 'string') {
         details.content_length = toolResponse.content.length;
         details.lines_written = toolResponse.content.split('\n').length;
       }
     }
-    
+
     return details;
   }
 
@@ -106,7 +106,7 @@ class ActivityBroadcaster {
       if (fs.existsSync(filePath)) {
         const stats = fs.statSync(filePath);
         const content = fs.readFileSync(filePath, 'utf8');
-        
+
         return {
           size_bytes: stats.size,
           modified_at: stats.mtime.toISOString(),
@@ -136,7 +136,7 @@ class ActivityBroadcaster {
     try {
       const statusFile = path.join(this.lockUtils.activityDir, 'agent-status.json');
       let agentStatuses = {};
-      
+
       // Load existing statuses
       if (fs.existsSync(statusFile)) {
         try {
@@ -145,14 +145,14 @@ class ActivityBroadcaster {
           console.warn(`Warning: Could not parse agent status file: ${error.message}`);
         }
       }
-      
+
       // Update status for this agent
       agentStatuses[agentId] = {
         status: status,
         last_activity: new Date().toISOString(),
         ...details
       };
-      
+
       // Write back to file
       fs.writeFileSync(statusFile, JSON.stringify(agentStatuses, null, 2));
     } catch (error) {
@@ -171,8 +171,8 @@ class ActivityBroadcaster {
         timestamp: new Date().toISOString(),
         ...activityData
       };
-      
-      fs.appendFileSync(activityFile, JSON.stringify(entry) + '\n');
+
+      fs.appendFileSync(activityFile, `${JSON.stringify(entry)}\n`);
     } catch (error) {
       console.warn(`Warning: Could not log detailed activity: ${error.message}`);
     }
@@ -205,11 +205,11 @@ class ActivityBroadcaster {
   execute(input) {
     try {
       const { tool_name, tool_input, tool_response, session_id } = input;
-      
+
       // Handle all tool operations for visibility
       const filePath = this.extractFilePath(tool_input);
       const agentId = this.extractAgentId(input);
-      
+
       // Basic activity logging for all operations
       const baseActivity = {
         action: 'tool_completed',
@@ -223,7 +223,7 @@ class ActivityBroadcaster {
       if (filePath && !this.shouldExcludeFile(filePath)) {
         const responseDetails = this.analyzeToolResponse(tool_response);
         const fileStats = this.getFileStats(filePath);
-        
+
         const detailedActivity = {
           ...baseActivity,
           response_details: responseDetails,
@@ -236,7 +236,7 @@ class ActivityBroadcaster {
         // Release file lock for modification operations
         if (['Edit', 'Write', 'MultiEdit'].includes(tool_name)) {
           const lockReleased = this.lockUtils.releaseLock(filePath, agentId);
-          
+
           if (lockReleased) {
             this.logDetailedActivity({
               action: 'lock_released',

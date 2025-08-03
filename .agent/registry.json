@@ -1,19 +1,19 @@
 {
   "sessions": {
-    "d7811463-700d-41e2-9f52-99e1c456eace": {
-      "session_id": "d7811463-700d-41e2-9f52-99e1c456eace",
-      "pid": 161334,
-      "parent_pid": 161332,
-      "first_seen": 1753143655480,
-      "last_activity": 1753143744311,
+    "336333fd-17d4-4e4d-932e-b19779a36bd2": {
+      "session_id": "336333fd-17d4-4e4d-932e-b19779a36bd2",
+      "pid": 2035207,
+      "parent_pid": 2035206,
+      "first_seen": 1754258722409,
+      "last_activity": 1754259249063,
       "tool_name": "Edit",
-      "file_path": "/home/alejandro/Code/MCP/Hooks/Git/rins_hooks/hooks/file-locking/activity-broadcaster.js",
+      "file_path": "/home/alejandro/Code/MCP/Hooks/Git/rins_hooks/README.md",
       "working_directory": "/home/alejandro/Code/MCP/Hooks/Git/rins_hooks",
       "hook_event": "PostToolUse"
     }
   },
   "cleanup": {
-    "last_cleanup": 1753143744311,
+    "last_cleanup": 1754259249063,
     "timeout_minutes": 3
   }
 }

@@ -24,7 +24,7 @@ class TaskBlockerHook extends HookBase {
 
   logActivity(message, data = {}) {
     if (!this.config.logActivity) return;
-    
+
     const timestamp = new Date().toISOString();
     const logEntry = {
       timestamp,
@@ -43,21 +43,21 @@ class TaskBlockerHook extends HookBase {
     try {
       // This hook is primarily for installation/configuration
       // The actual blocking is done via Claude Code permissions
-      
+
       this.logActivity('TASK_BLOCKER_HOOK_TRIGGERED', {
         hook_event_name: input.hook_event_name,
         tool_name: input.tool_name,
         session_id: input.session_id
       });
 
-      return this.success({ 
+      return this.success({
         message: 'Task blocker hook executed - blocking handled by permissions',
         usePermissions: this.config.usePermissions
       });
 
     } catch (error) {
-      this.logActivity('HOOK_ERROR', { 
-        error: error.message 
+      this.logActivity('HOOK_ERROR', {
+        error: error.message
       });
       return this.error(`Task blocker failed: ${error.message}`);
     }

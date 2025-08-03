@@ -6,7 +6,7 @@ const crypto = require('crypto');
 
 /**
  * File Locking Hook for Claude Code - Compliant with Anthropic Documentation
- * 
+ *
  * This is a PreToolUse hook that blocks Edit/Write/MultiEdit operations
  * when files are locked by other agents.
  */
@@ -34,7 +34,7 @@ const CONFIG = {
 function ensureDirectories() {
   const lockDir = path.join(process.cwd(), CONFIG.lockDirectory);
   const activityDir = path.join(process.cwd(), CONFIG.activityDirectory);
-  
+
   try {
     if (!fs.existsSync(lockDir)) {
       fs.mkdirSync(lockDir, { recursive: true });
@@ -48,11 +48,11 @@ function ensureDirectories() {
 }
 
 function pathToLockName(filePath) {
-  return filePath
+  return `${filePath
     .replace(/^\.?\/+/, '')
     .replace(/[/\\]/g, '-')
     .replace(/[<>:"|?*]/g, '_')
-    + '.lock';
+  }.lock`;
 }
 
 function getLockFilePath(filePath) {
@@ -63,18 +63,18 @@ function getLockFilePath(filePath) {
 
 function isLocked(filePath) {
   const lockFilePath = getLockFilePath(filePath);
-  
+
   try {
     if (!fs.existsSync(lockFilePath)) {
       return null;
     }
 
     const lockData = JSON.parse(fs.readFileSync(lockFilePath, 'utf8'));
-    
+
     // Check if lock has expired
     const now = new Date();
     const expiresAt = new Date(lockData.expires_at);
-    
+
     if (now > expiresAt) {
       // Lock expired, remove it
       try {
@@ -93,7 +93,7 @@ function isLocked(filePath) {
 
 function createLock(filePath, agentId, operation, sessionId) {
   const lockFilePath = getLockFilePath(filePath);
-  
+
   try {
     // Check if already locked
     const existingLock = isLocked(filePath);
@@ -103,7 +103,7 @@ function createLock(filePath, agentId, operation, sessionId) {
 
     const now = new Date();
     const expiresAt = new Date(now.getTime() + (CONFIG.lockTimeout * 1000));
-    
+
     const lockData = {
       agent_id: agentId,
       file_path: filePath,
@@ -115,7 +115,7 @@ function createLock(filePath, agentId, operation, sessionId) {
     };
 
     // Atomic write
-    const tempPath = lockFilePath + '.tmp';
+    const tempPath = `${lockFilePath}.tmp`;
     fs.writeFileSync(tempPath, JSON.stringify(lockData, null, 2));
     fs.renameSync(tempPath, lockFilePath);
 
@@ -137,15 +137,15 @@ function logActivity(action, agentId, filePath, details = {}) {
       file_path: filePath,
       ...details
     };
-    
-    fs.appendFileSync(activityFile, JSON.stringify(entry) + '\n');
+
+    fs.appendFileSync(activityFile, `${JSON.stringify(entry)}\n`);
   } catch (error) {
     // Silent failure - don't block operations if logging fails
   }
 }
 
 function extractFilePath(toolInput) {
-  return toolInput.file_path || 
+  return toolInput.file_path ||
          toolInput.filePath ||
          (toolInput.edits && toolInput.edits[0] && toolInput.edits[0].file_path) ||
          null;
@@ -165,14 +165,14 @@ function releaseLock(filePath, agentId) {
   try {
     const lockFilePath = getLockFilePath(filePath);
     const existingLock = isLocked(filePath);
-    
+
     // Only release if we own the lock
     if (existingLock && existingLock.agent_id === agentId) {
       fs.unlinkSync(lockFilePath);
       logActivity('lock_released', agentId, filePath, { operation: 'completed' });
       return true;
     }
-    
+
     return false;
   } catch (error) {
     return false;
@@ -187,18 +187,18 @@ function cleanupExpiredLocks() {
   try {
     const lockDir = path.join(process.cwd(), CONFIG.lockDirectory);
     if (!fs.existsSync(lockDir)) return;
-    
+
     const lockFiles = fs.readdirSync(lockDir);
     const now = new Date();
-    
+
     for (const lockFile of lockFiles) {
       if (!lockFile.endsWith('.lock')) continue;
-      
+
       const lockFilePath = path.join(lockDir, lockFile);
       try {
         const lockData = JSON.parse(fs.readFileSync(lockFilePath, 'utf8'));
         const expiresAt = new Date(lockData.expires_at);
-        
+
         if (now > expiresAt) {
           fs.unlinkSync(lockFilePath);
           logActivity('lock_expired', lockData.agent_id, lockData.file_path, {});
@@ -216,11 +216,11 @@ function cleanupExpiredLocks() {
 function parseInput() {
   return new Promise((resolve, reject) => {
     let input = '';
-    
+
     process.stdin.on('data', (chunk) => {
       input += chunk.toString();
     });
-    
+
     process.stdin.on('end', () => {
       try {
         const data = JSON.parse(input);
@@ -229,7 +229,7 @@ function parseInput() {
         reject(new Error(`Invalid JSON input: ${error.message}`));
       }
     });
-    
+
     process.stdin.on('error', reject);
   });
 }
@@ -240,7 +240,7 @@ async function main() {
     // Parse input from Claude Code
     const input = await parseInput();
     const { tool_name, tool_input, session_id } = input;
-    
+
     // DEBUG: Log everything available for agent identification
     console.error('=== AGENT ID DEBUG ===');
     console.error('Input keys:', Object.keys(input));
@@ -250,7 +250,7 @@ async function main() {
     console.error('process.ppid:', process.ppid);
     console.error('process.argv:', process.argv);
     console.error('======================');
-    
+
     // Only handle file modification tools
     if (!['Edit', 'Write', 'MultiEdit'].includes(tool_name)) {
       // Exit with code 0 (success) - allow operation
@@ -280,7 +280,7 @@ async function main() {
 
     // Direct phase detection from Claude Code hook event name
     const hookPhase = detectHookPhase(input);
-    
+
     if (hookPhase === 'PostToolUse') {
       // PostToolUse: Release lock and allow
       const released = releaseLock(filePath, agentId);
@@ -290,7 +290,7 @@ async function main() {
 
     // PreToolUse: Check locks and potentially block
     const existingLock = isLocked(filePath);
-    
+
     if (existingLock) {
       if (existingLock.agent_id === agentId) {
         // Same agent already has the lock, allow operation
@@ -300,7 +300,7 @@ async function main() {
         // File locked by different agent, BLOCK operation
         const timeRemaining = Math.ceil((new Date(existingLock.expires_at) - new Date()) / 1000 / 60);
         const errorMessage = `File "${filePath}" is currently being ${existingLock.operation} by agent "${existingLock.agent_id}". Lock expires in ${timeRemaining} minutes. Please wait or work on a different file.`;
-        
+
         // Output error to stderr and exit with code 2 (blocking)
         console.error(errorMessage);
         process.exit(2);
@@ -309,7 +309,7 @@ async function main() {
 
     // File is not locked, create lock and allow operation
     const lockCreated = createLock(filePath, agentId, operation, session_id);
-    
+
     if (lockCreated) {
       console.log(`File lock acquired for "${filePath}"`);
       process.exit(0);

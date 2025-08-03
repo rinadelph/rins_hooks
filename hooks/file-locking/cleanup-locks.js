@@ -15,16 +15,16 @@ class LockCleanup {
    */
   showStatus() {
     console.log('=== Agent File Lock Status ===\n');
-    
+
     const locks = this.lockUtils.getAllLocks();
-    
+
     if (locks.length === 0) {
       console.log('No active file locks.');
       return;
     }
 
     console.log(`Found ${locks.length} active lock(s):\n`);
-    
+
     locks.forEach((lock, index) => {
       const timeRemaining = Math.ceil((new Date(lock.expires_at) - new Date()) / 1000 / 60);
       console.log(`${index + 1}. File: ${lock.file_path}`);
@@ -94,24 +94,24 @@ class LockCleanup {
 if (require.main === module) {
   const cleanup = new LockCleanup();
   const args = process.argv.slice(2);
-  
+
   if (args.length === 0) {
     cleanup.showHelp();
     process.exit(0);
   }
 
   const command = args[0];
-  
+
   try {
     switch (command) {
       case 'status':
         cleanup.showStatus();
         break;
-        
+
       case 'clean':
         cleanup.cleanExpired();
         break;
-        
+
       case 'release-agent':
         if (args.length < 2) {
           console.error('Error: Agent ID required for release-agent command');
@@ -119,7 +119,7 @@ if (require.main === module) {
         }
         cleanup.releaseAgent(args[1]);
         break;
-        
+
       case 'force-release':
         if (args.length < 2) {
           console.error('Error: File path required for force-release command');
@@ -127,11 +127,11 @@ if (require.main === module) {
         }
         cleanup.forceRelease(args[1]);
         break;
-        
+
       case 'help':
         cleanup.showHelp();
         break;
-        
+
       default:
         console.error(`Error: Unknown command '${command}'`);
         cleanup.showHelp();

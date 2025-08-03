@@ -22,10 +22,5 @@
         ]
       }
     ]
-  },
-  "permissions": {
-    "deny": [
-      "Task"
-    ]
   }
 }

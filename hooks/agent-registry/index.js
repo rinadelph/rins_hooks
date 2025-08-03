@@ -5,7 +5,7 @@ const path = require('path');
 
 /**
  * Agent Registry Hook for Claude Code - Agent-MCP Integration
- * 
+ *
  * Features:
  * - Register Claude Code sessions in .agent/registry.json
  * - Robust .agent directory creation (compatible with Agent-MCP)
@@ -24,12 +24,12 @@ const CONFIG = {
 // Utility functions
 function ensureAgentDirectory() {
   const agentDir = path.join(process.cwd(), '.agent');
-  
+
   try {
     if (!fs.existsSync(agentDir)) {
       // Create .agent directory with Agent-MCP compatible structure
       fs.mkdirSync(agentDir, { recursive: true });
-      
+
       // Create subdirectories that don't conflict with Agent-MCP
       const subdirs = ['session-activity'];
       for (const subdir of subdirs) {
@@ -38,7 +38,7 @@ function ensureAgentDirectory() {
           fs.mkdirSync(subdirPath, { recursive: true });
         }
       }
-      
+
       // Create compatible config if none exists
       const configPath = path.join(agentDir, 'config.json');
       if (!fs.existsSync(configPath)) {
@@ -52,13 +52,13 @@ function ensureAgentDirectory() {
         fs.writeFileSync(configPath, JSON.stringify(compatibleConfig, null, 2));
       }
     }
-    
+
     // Ensure session-activity directory exists
     const activityDir = path.join(process.cwd(), CONFIG.activityDirectory);
     if (!fs.existsSync(activityDir)) {
       fs.mkdirSync(activityDir, { recursive: true });
     }
-    
+
     return true;
   } catch (error) {
     // Silent failure - don't block operations
@@ -67,7 +67,7 @@ function ensureAgentDirectory() {
 }
 
 function extractFilePath(toolInput) {
-  return toolInput.file_path || 
+  return toolInput.file_path ||
          toolInput.filePath ||
          (toolInput.edits && toolInput.edits[0] && toolInput.edits[0].file_path) ||
          null;
@@ -79,7 +79,7 @@ function extractAgentId(input) {
 
 function readRegistry() {
   const registryPath = path.join(process.cwd(), CONFIG.registryFile);
-  
+
   try {
     if (fs.existsSync(registryPath)) {
       const data = fs.readFileSync(registryPath, 'utf8');
@@ -88,7 +88,7 @@ function readRegistry() {
   } catch (error) {
     // Return empty registry on error
   }
-  
+
   return {
     sessions: {},
     cleanup: {
@@ -100,21 +100,21 @@ function readRegistry() {
 
 function writeRegistry(registry) {
   const registryPath = path.join(process.cwd(), CONFIG.registryFile);
-  const lockFile = registryPath + '.lock';
-  
+  const lockFile = `${registryPath}.lock`;
+
   try {
     // Simple lock mechanism
     if (fs.existsSync(lockFile)) {
       return false; // Another process is updating
     }
-    
+
     fs.writeFileSync(lockFile, '');
-    
+
     // Atomic write
-    const tempPath = registryPath + '.tmp';
+    const tempPath = `${registryPath}.tmp`;
     fs.writeFileSync(tempPath, JSON.stringify(registry, null, 2));
     fs.renameSync(tempPath, registryPath);
-    
+
     fs.unlinkSync(lockFile);
     return true;
   } catch (error) {
@@ -134,32 +134,32 @@ function cleanupStaleEntries(registry) {
   const now = Date.now();
   const timeoutMs = CONFIG.sessionTimeoutMinutes * 60 * 1000;
   const activeSessions = {};
-  
+
   for (const [sessionId, sessionData] of Object.entries(registry.sessions)) {
     if (now - sessionData.last_activity < timeoutMs) {
       activeSessions[sessionId] = sessionData;
     }
   }
-  
+
   registry.sessions = activeSessions;
   registry.cleanup.last_cleanup = now;
-  
+
   return registry;
 }
 
 function updateAgentRegistry(input, toolName, filePath) {
   try {
     ensureAgentDirectory();
-    
+
     const agentId = extractAgentId(input);
     const now = Date.now();
-    
+
     // Read current registry
     let registry = readRegistry();
-    
+
     // Clean up stale entries
     registry = cleanupStaleEntries(registry);
-    
+
     // Update current session
     const sessionData = {
       session_id: agentId,
@@ -172,16 +172,16 @@ function updateAgentRegistry(input, toolName, filePath) {
       working_directory: process.cwd(),
       hook_event: input.hook_event_name || 'PostToolUse'
     };
-    
+
     registry.sessions[agentId] = sessionData;
-    
+
     // Write registry back
     const success = writeRegistry(registry);
-    
+
     if (success && CONFIG.logAllActivity) {
       logSessionActivity(agentId, toolName, filePath, 'registry_updated');
     }
-    
+
     return success;
   } catch (error) {
     return false;
@@ -192,7 +192,7 @@ function logSessionActivity(agentId, toolName, filePath, action) {
   try {
     const activityDir = path.join(process.cwd(), CONFIG.activityDirectory);
     const logFile = path.join(activityDir, 'registry-activity.jsonl');
-    
+
     const logEntry = {
       timestamp: new Date().toISOString(),
       session_id: agentId,
@@ -203,8 +203,8 @@ function logSessionActivity(agentId, toolName, filePath, action) {
       file_path: filePath,
       working_directory: process.cwd()
     };
-    
-    fs.appendFileSync(logFile, JSON.stringify(logEntry) + '\n');
+
+    fs.appendFileSync(logFile, `${JSON.stringify(logEntry)}\n`);
   } catch (error) {
     // Silent failure - don't block operations
   }
@@ -214,11 +214,11 @@ function logSessionActivity(agentId, toolName, filePath, action) {
 function parseInput() {
   return new Promise((resolve, reject) => {
     let input = '';
-    
+
     process.stdin.on('data', (chunk) => {
       input += chunk.toString();
     });
-    
+
     process.stdin.on('end', () => {
       try {
         const data = JSON.parse(input);
@@ -227,7 +227,7 @@ function parseInput() {
         reject(new Error(`Invalid JSON input: ${error.message}`));
       }
     });
-    
+
     process.stdin.on('error', reject);
   });
 }
@@ -238,7 +238,7 @@ async function main() {
     // Parse input from Claude Code
     const input = await parseInput();
     const { tool_name, tool_input } = input;
-    
+
     // Only handle file modification tools
     if (!['Edit', 'Write', 'MultiEdit'].includes(tool_name)) {
       process.exit(0);
@@ -251,13 +251,13 @@ async function main() {
 
     // Update agent registry
     const success = updateAgentRegistry(input, tool_name, filePath);
-    
+
     if (success) {
       console.log(`Agent session registered: ${extractAgentId(input)}`);
     } else {
-      console.log(`Agent registry update skipped (concurrent access)`);
+      console.log('Agent registry update skipped (concurrent access)');
     }
-    
+
     process.exit(0);
 
   } catch (error) {

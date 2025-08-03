@@ -6,10 +6,10 @@ const { spawn } = require('child_process');
 
 /**
  * Git Agent-MCP Hook for Claude Code - Multi-Agent Git Integration
- * 
+ *
  * Features:
  * - PID tracking in commit messages for easy revert
- * - Session-based agent identification  
+ * - Session-based agent identification
  * - Agent-MCP .agent directory integration
  * - Multi-agent coordination and activity logging
  * - Direct Claude Code compliance (no HookBase dependency)
@@ -49,12 +49,12 @@ Co-Authored-By: Claude <noreply@anthropic.com>`,
 // Utility functions
 function ensureAgentDirectory() {
   const agentDir = path.join(process.cwd(), '.agent');
-  
+
   try {
     if (!fs.existsSync(agentDir)) {
       // Create .agent directory with standard structure
       fs.mkdirSync(agentDir, { recursive: true });
-      
+
       // Create subdirectories that don't conflict with Agent-MCP
       const subdirs = ['session-activity'];
       for (const subdir of subdirs) {
@@ -63,7 +63,7 @@ function ensureAgentDirectory() {
           fs.mkdirSync(subdirPath, { recursive: true });
         }
       }
-      
+
       // Create minimal config if none exists (compatible with Agent-MCP)
       const configPath = path.join(agentDir, 'config.json');
       if (!fs.existsSync(configPath)) {
@@ -76,7 +76,7 @@ function ensureAgentDirectory() {
         fs.writeFileSync(configPath, JSON.stringify(minimalConfig, null, 2));
       }
     }
-    
+
     return true;
   } catch (error) {
     // Silent failure - don't block git operations
@@ -85,7 +85,7 @@ function ensureAgentDirectory() {
 }
 
 function extractFilePath(toolInput) {
-  return toolInput.file_path || 
+  return toolInput.file_path ||
          toolInput.filePath ||
          (toolInput.edits && toolInput.edits[0] && toolInput.edits[0].file_path) ||
          null;
@@ -110,13 +110,13 @@ function generateCommitMessage(toolName, filePath, input) {
   const fileName = path.basename(filePath);
   const agentId = extractAgentId(input);
   const timestamp = new Date().toISOString();
-  
+
   // Determine action based on tool
   let action = 'feat';
   if (toolName === 'Edit') action = 'feat';
   else if (toolName === 'Write') action = 'feat';
   else if (toolName === 'MultiEdit') action = 'feat';
-  
+
   let message = CONFIG.commitMessageTemplate
     .replace(/\{\{action\}\}/g, action)
     .replace(/\{\{toolName\}\}/g, toolName)
@@ -188,10 +188,10 @@ async function hasChangesToCommit() {
 function logCommitActivity(agentId, filePath, commitHash, toolName) {
   try {
     ensureAgentDirectory();
-    
+
     const activityDir = path.join(process.cwd(), '.agent', 'session-activity');
     const logFile = path.join(activityDir, 'git-commits.jsonl');
-    
+
     const logEntry = {
       timestamp: new Date().toISOString(),
       session_id: agentId,
@@ -202,8 +202,8 @@ function logCommitActivity(agentId, filePath, commitHash, toolName) {
       tool_name: toolName,
       working_directory: process.cwd()
     };
-    
-    fs.appendFileSync(logFile, JSON.stringify(logEntry) + '\n');
+
+    fs.appendFileSync(logFile, `${JSON.stringify(logEntry)}\n`);
   } catch (error) {
     // Silent failure - don't block operations
   }
@@ -213,11 +213,11 @@ function logCommitActivity(agentId, filePath, commitHash, toolName) {
 function parseInput() {
   return new Promise((resolve, reject) => {
     let input = '';
-    
+
     process.stdin.on('data', (chunk) => {
       input += chunk.toString();
     });
-    
+
     process.stdin.on('end', () => {
       try {
         const data = JSON.parse(input);
@@ -226,7 +226,7 @@ function parseInput() {
         reject(new Error(`Invalid JSON input: ${error.message}`));
       }
     });
-    
+
     process.stdin.on('error', reject);
   });
 }
@@ -237,7 +237,7 @@ async function main() {
     // Parse input from Claude Code
     const input = await parseInput();
     const { tool_name, tool_input } = input;
-    
+
     // Only handle file modification tools
     if (!['Edit', 'Write', 'MultiEdit'].includes(tool_name)) {
       process.exit(0);
@@ -283,7 +283,7 @@ async function main() {
 
     // Get commit hash for logging
     const commitHash = await runGitCommand(['rev-parse', 'HEAD']);
-    
+
     // Log commit activity to .agent directory
     logCommitActivity(extractAgentId(input), filePath, commitHash.trim(), tool_name);
 

@@ -4,7 +4,7 @@ const LockUtils = require('./lock-utils');
 
 /**
  * File Lock Manager Hook for Claude Code PreToolUse
- * 
+ *
  * This hook intercepts Edit/Write/MultiEdit operations to prevent file conflicts
  * through a file-level locking mechanism.
  */
@@ -20,11 +20,11 @@ class FileLockManager {
   parseInput() {
     return new Promise((resolve, reject) => {
       let input = '';
-      
+
       process.stdin.on('data', (chunk) => {
         input += chunk.toString();
       });
-      
+
       process.stdin.on('end', () => {
         try {
           const data = JSON.parse(input);
@@ -33,7 +33,7 @@ class FileLockManager {
           reject(new Error(`Invalid JSON input: ${error.message}`));
         }
       });
-      
+
       process.stdin.on('error', reject);
     });
   }
@@ -45,7 +45,7 @@ class FileLockManager {
    */
   extractFilePath(toolInput) {
     // Handle different tool input formats
-    return toolInput.file_path || 
+    return toolInput.file_path ||
            toolInput.filePath ||
            (toolInput.edits && toolInput.edits[0] && toolInput.edits[0].file_path) ||
            null;
@@ -58,7 +58,7 @@ class FileLockManager {
    */
   extractAgentId(input) {
     // Try various ways to extract agent ID
-    return process.env.MCP_AGENT_ID || 
+    return process.env.MCP_AGENT_ID ||
            input.agent_id ||
            input.session_id ||
            'unknown-agent';
@@ -118,7 +118,7 @@ class FileLockManager {
     if (decision) {
       response.decision = decision;
     }
-    
+
     if (reason) {
       response.reason = reason;
     }
@@ -134,7 +134,7 @@ class FileLockManager {
   execute(input) {
     try {
       const { tool_name, tool_input, session_id } = input;
-      
+
       // Only handle file modification tools
       if (!['Edit', 'Write', 'MultiEdit'].includes(tool_name)) {
         return this.generateResponse(); // Allow other tools
@@ -158,16 +158,16 @@ class FileLockManager {
 
       // Check if file is currently locked
       const existingLock = this.lockUtils.isLocked(filePath);
-      
+
       if (existingLock) {
         if (existingLock.agent_id === agentId) {
           // Same agent already has the lock, allow operation
-          return this.generateResponse('approve', `File already locked by this agent`);
+          return this.generateResponse('approve', 'File already locked by this agent');
         } else {
           // File locked by different agent, block operation
           const timeRemaining = Math.ceil((new Date(existingLock.expires_at) - new Date()) / 1000 / 60);
           return this.generateResponse(
-            'block', 
+            'block',
             `File "${filePath}" is currently being ${existingLock.operation} by agent "${existingLock.agent_id}". Lock expires in ${timeRemaining} minutes. Please wait or work on a different file.`
           );
         }
@@ -175,10 +175,10 @@ class FileLockManager {
 
       // File is not locked, create lock and approve operation
       const lockCreated = this.lockUtils.createLock(filePath, agentId, operation, session_id);
-      
+
       if (lockCreated) {
         return this.generateResponse(
-          'approve', 
+          'approve',
           `File lock acquired for "${filePath}"`
         );
       } else {

@@ -9,7 +9,7 @@ class LockUtils {
     this.lockDir = path.resolve(lockDir);
     this.activityDir = path.resolve(activityDir);
     this.defaultTimeout = 10 * 60 * 1000; // 10 minutes
-    
+
     // Ensure directories exist
     this.ensureDirectories();
   }
@@ -34,11 +34,11 @@ class LockUtils {
    */
   pathToLockName(filePath) {
     // Convert path separators to dashes and remove leading slashes/dots
-    return filePath
+    return `${filePath
       .replace(/^\.?\/+/, '') // Remove leading ./ or /
       .replace(/[/\\]/g, '-') // Replace slashes with dashes
       .replace(/[<>:"|?*]/g, '_') // Replace invalid filename chars
-      + '.lock';
+    }.lock`;
   }
 
   /**
@@ -58,18 +58,18 @@ class LockUtils {
    */
   isLocked(filePath) {
     const lockFilePath = this.getLockFilePath(filePath);
-    
+
     try {
       if (!fs.existsSync(lockFilePath)) {
         return null;
       }
 
       const lockData = JSON.parse(fs.readFileSync(lockFilePath, 'utf8'));
-      
+
       // Check if lock has expired
       const now = new Date();
       const expiresAt = new Date(lockData.expires_at);
-      
+
       if (now > expiresAt) {
         // Lock expired, remove it
         this.releaseLock(filePath);
@@ -95,7 +95,7 @@ class LockUtils {
   createLock(filePath, agentId, operation = 'editing', sessionId = 'unknown', timeout = null) {
     const lockFilePath = this.getLockFilePath(filePath);
     timeout = timeout || this.defaultTimeout;
-    
+
     try {
       // Check if already locked
       const existingLock = this.isLocked(filePath);
@@ -105,7 +105,7 @@ class LockUtils {
 
       const now = new Date();
       const expiresAt = new Date(now.getTime() + timeout);
-      
+
       const lockData = {
         agent_id: agentId,
         file_path: filePath,
@@ -117,7 +117,7 @@ class LockUtils {
       };
 
       // Atomic write using temporary file
-      const tempPath = lockFilePath + '.tmp';
+      const tempPath = `${lockFilePath}.tmp`;
       fs.writeFileSync(tempPath, JSON.stringify(lockData, null, 2));
       fs.renameSync(tempPath, lockFilePath);
 
@@ -137,7 +137,7 @@ class LockUtils {
    */
   releaseLock(filePath, agentId = null) {
     const lockFilePath = this.getLockFilePath(filePath);
-    
+
     try {
       if (!fs.existsSync(lockFilePath)) {
         return true; // Already unlocked
@@ -168,13 +168,13 @@ class LockUtils {
    */
   releaseAllLocks(agentId) {
     let released = 0;
-    
+
     try {
       const lockFiles = fs.readdirSync(this.lockDir);
-      
+
       for (const lockFile of lockFiles) {
         if (!lockFile.endsWith('.lock')) continue;
-        
+
         const lockFilePath = path.join(this.lockDir, lockFile);
         try {
           const lockData = JSON.parse(fs.readFileSync(lockFilePath, 'utf8'));
@@ -200,27 +200,27 @@ class LockUtils {
    */
   getAllLocks() {
     const locks = [];
-    
+
     try {
       const lockFiles = fs.readdirSync(this.lockDir);
-      
+
       for (const lockFile of lockFiles) {
         if (!lockFile.endsWith('.lock')) continue;
-        
+
         const lockFilePath = path.join(this.lockDir, lockFile);
         try {
           const lockData = JSON.parse(fs.readFileSync(lockFilePath, 'utf8'));
-          
+
           // Check if expired
           const now = new Date();
           const expiresAt = new Date(lockData.expires_at);
-          
+
           if (now > expiresAt) {
             // Clean up expired lock
             fs.unlinkSync(lockFilePath);
             continue;
           }
-          
+
           locks.push(lockData);
         } catch (error) {
           console.warn(`Warning: Error reading lock file ${lockFile}: ${error.message}`);
@@ -250,8 +250,8 @@ class LockUtils {
         file_path: filePath,
         ...details
       };
-      
-      fs.appendFileSync(activityFile, JSON.stringify(entry) + '\n');
+
+      fs.appendFileSync(activityFile, `${JSON.stringify(entry)}\n`);
     } catch (error) {
       console.warn(`Warning: Could not log activity: ${error.message}`);
     }
@@ -263,19 +263,19 @@ class LockUtils {
    */
   cleanupExpiredLocks() {
     let cleaned = 0;
-    
+
     try {
       const lockFiles = fs.readdirSync(this.lockDir);
       const now = new Date();
-      
+
       for (const lockFile of lockFiles) {
         if (!lockFile.endsWith('.lock')) continue;
-        
+
         const lockFilePath = path.join(this.lockDir, lockFile);
         try {
           const lockData = JSON.parse(fs.readFileSync(lockFilePath, 'utf8'));
           const expiresAt = new Date(lockData.expires_at);
-          
+
           if (now > expiresAt) {
             fs.unlinkSync(lockFilePath);
             this.logActivity('lock_expired', lockData.agent_id, lockData.file_path, {});

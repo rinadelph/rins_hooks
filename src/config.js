@@ -82,11 +82,11 @@ class ConfigManager {
       if (existingHookIndex !== -1) {
         // Merge hook commands instead of overwriting
         const existingHook = settings.hooks[eventType][existingHookIndex];
-        
+
         // Check if this specific command already exists to avoid duplicates
         const newCommand = hookConfig.hooks[0].command;
         const commandExists = existingHook.hooks.some(h => h.command === newCommand);
-        
+
         if (!commandExists) {
           // Add new command to existing hook
           existingHook.hooks.push(...hookConfig.hooks);

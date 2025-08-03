@@ -291,8 +291,8 @@ class Installer {
       if (hook.name === 'task-blocker') {
         await this.configManager.addPermissionDeny('Task', scope);
         console.log(chalk.green(`  ✅ ${hook.name} installed successfully`));
-        console.log(chalk.gray(`    Type: Permission Deny`));
-        console.log(chalk.gray(`    Blocks: Task tool`));
+        console.log(chalk.gray('    Type: Permission Deny'));
+        console.log(chalk.gray('    Blocks: Task tool'));
         console.log(chalk.gray(`    Scope: ${scope}`));
       }
     } catch (error) {
