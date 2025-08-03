@@ -256,6 +256,8 @@ class Installer {
         eventType = 'PreToolUse';
       } else if (hook.name === 'task-blocker') {
         eventType = 'Notification';
+      } else if (hook.name === 'extended-thinking') {
+        eventType = 'UserPromptSubmit';
       }
 
       // Generate Claude Code hook configuration
