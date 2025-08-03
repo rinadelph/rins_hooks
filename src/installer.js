@@ -291,16 +291,19 @@ class Installer {
 
         // Add to Claude Code settings
         await this.configManager.addHook(eventType, claudeConfig, scope);
+        
+        console.log(chalk.green(`  ✅ ${hook.name} installed successfully`));
+        console.log(chalk.gray(`    Event: ${eventType}`));
+        console.log(chalk.gray(`    Matcher: ${hook.matcher || '(all)'}`));
+        console.log(chalk.gray(`    Command: node "${hookScriptPath}"`));
       }
 
-      console.log(chalk.green(`  ✅ ${hook.name} installed successfully`));
       if (hook.name === 'extended-thinking') {
-        console.log(chalk.gray(`    Events: UserPromptSubmit, PreToolUse, PostToolUse`));
-      } else {
-        console.log(chalk.gray(`    Event: ${eventType}`));
+        console.log(chalk.green(`  ✅ ${hook.name} installed successfully`));
+        console.log(chalk.gray('    Events: UserPromptSubmit, PreToolUse, PostToolUse'));
+        console.log(chalk.gray(`    Matcher: ${hook.matcher || '(all)'}`));
+        console.log(chalk.gray(`    Command: node "${hookScriptPath}"`));
       }
-      console.log(chalk.gray(`    Matcher: ${hook.matcher || '(all)'}`));
-      console.log(chalk.gray(`    Command: node "${hookScriptPath}"`));
 
     } catch (error) {
       console.error(chalk.red(`  ❌ Failed to install ${hook.name}: ${error.message}`));
