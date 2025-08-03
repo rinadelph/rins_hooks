@@ -31,13 +31,13 @@ class ExtendedThinkingHook extends HookBase {
       switch (input.hook_event_name) {
         case 'UserPromptSubmit':
           return this.handleUserPromptSubmit(input, stateManager, toggles);
-        
+
         case 'PreToolUse':
           return this.handlePreToolUse(input, stateManager, toggles);
-        
+
         case 'PostToolUse':
           return this.handlePostToolUse(input, stateManager, toggles);
-        
+
         default:
           return this.success();
       }
@@ -55,18 +55,18 @@ class ExtendedThinkingHook extends HookBase {
     if (toggles.deepThinking) {
       const prompt = stateManager.getDeepThinkingPrompt();
       this.logActivity(input, 'Injecting deep thinking context for user prompt');
-      
+
       const result = {
         hookSpecificOutput: {
           hookEventName: 'UserPromptSubmit',
           additionalContext: prompt
         }
       };
-      
+
       console.log(JSON.stringify(result));
       process.exit(0);
     }
-    
+
     return this.success();
   }
 
@@ -75,39 +75,39 @@ class ExtendedThinkingHook extends HookBase {
    */
   handlePreToolUse(input, stateManager, toggles) {
     const toolName = input.tool_name;
-    
+
     // Deep thinking: comprehensive analysis before any tool
     if (toggles.deepThinking) {
       const prompt = this.getPreToolDeepThinkingPrompt(toolName);
       this.logActivity(input, `Injecting deep thinking context before ${toolName}`);
-      
+
       const result = {
         hookSpecificOutput: {
           hookEventName: 'PreToolUse',
           additionalContext: prompt
         }
       };
-      
+
       console.log(JSON.stringify(result));
       process.exit(0);
     }
-    
+
     // Extended thinking: focused analysis for specific tools
     if (toggles.thinking && this.shouldApplyExtendedThinking(toolName)) {
       const prompt = this.getPreToolExtendedThinkingPrompt(toolName);
       this.logActivity(input, `Injecting extended thinking context before ${toolName}`);
-      
+
       const result = {
         hookSpecificOutput: {
           hookEventName: 'PreToolUse',
           additionalContext: prompt
         }
       };
-      
+
       console.log(JSON.stringify(result));
       process.exit(0);
     }
-    
+
     return this.success();
   }
 
@@ -119,18 +119,18 @@ class ExtendedThinkingHook extends HookBase {
       const toolName = input.tool_name;
       const prompt = this.getPostToolThinkingPrompt(toolName);
       this.logActivity(input, `Injecting post-tool thinking context after ${toolName}`);
-      
+
       const result = {
         hookSpecificOutput: {
           hookEventName: 'PostToolUse',
           additionalContext: prompt
         }
       };
-      
+
       console.log(JSON.stringify(result));
       process.exit(0);
     }
-    
+
     return this.success();
   }
 
@@ -141,9 +141,9 @@ class ExtendedThinkingHook extends HookBase {
     const extendedThinkingTools = [
       'Read', 'Edit', 'MultiEdit', 'Write',  // File operations
       'Bash',  // Command execution
-      'Grep', 'Glob',  // Search operations
+      'Grep', 'Glob'  // Search operations
     ];
-    
+
     return extendedThinkingTools.includes(toolName);
   }
 
@@ -183,11 +183,11 @@ Now proceed with using the ${toolName} tool with this comprehensive understandin
       'Write': 'Before writing this file, think about the content structure, purpose, and how it fits into the project.',
       'Bash': 'Before executing this command, think about what it will do, potential side effects, and safety considerations.',
       'Grep': 'Before searching, think about the search strategy and what patterns will most effectively find the needed information.',
-      'Glob': 'Before pattern matching, think about the file patterns that will capture exactly what I need.',
+      'Glob': 'Before pattern matching, think about the file patterns that will capture exactly what I need.'
     };
 
     const specificPrompt = toolSpecificPrompts[toolName] || `Before using ${toolName}, think about the approach and expected outcomes.`;
-    
+
     return `## 🧠 Extended Thinking: ${toolName} Tool
 
 ${specificPrompt}
@@ -286,20 +286,35 @@ Use this reflection to inform your next actions and responses.`;
   }
 }
 
-// When run directly (as a hook), parse input and execute
+// When run directly, handle both hook and command execution
 if (require.main === module) {
-  HookBase.parseInput()
-    .then(input => {
-      const hook = new ExtendedThinkingHook();
-      return hook.execute(input);
-    })
-    .then(result => {
-      HookBase.outputResult(result);
-    })
-    .catch(error => {
-      console.error(`Extended thinking hook error: ${error.message}`);
-      process.exit(1);
-    });
+  const args = process.argv.slice(2);
+  
+  // Check for command-line flags
+  if (args.includes('--toggle')) {
+    const type = args[args.indexOf('--toggle') + 1];
+    const projectDir = process.cwd();
+    
+    if (type === 'thinking') {
+      ExtendedThinkingHook.toggleThinking(projectDir);
+    } else if (type === 'deepThinking') {
+      ExtendedThinkingHook.toggleDeepThinking(projectDir);
+    }
+  } else {
+    // Normal hook execution
+    HookBase.parseInput()
+      .then(input => {
+        const hook = new ExtendedThinkingHook();
+        return hook.execute(input);
+      })
+      .then(result => {
+        HookBase.outputResult(result);
+      })
+      .catch(error => {
+        console.error(`Extended thinking hook error: ${error.message}`);
+        process.exit(1);
+      });
+  }
 }
 
 module.exports = ExtendedThinkingHook;
