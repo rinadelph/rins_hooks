@@ -3,7 +3,7 @@
   "description": "Provides extended thinking capabilities with user control through toggles and explicit commands",
   "version": "1.0.0",
   "author": "rins_hooks",
-  "events": ["UserPromptSubmit"],
+  "events": ["UserPromptSubmit", "PreToolUse", "PostToolUse"],
   "installationType": "standard",
   "supportedPlatforms": ["linux", "darwin", "win32"],
   "dependencies": [],
