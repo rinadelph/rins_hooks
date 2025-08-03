@@ -294,7 +294,11 @@ class Installer {
       }
 
       console.log(chalk.green(`  ✅ ${hook.name} installed successfully`));
-      console.log(chalk.gray(`    Event: ${eventType}`));
+      if (hook.name === 'extended-thinking') {
+        console.log(chalk.gray(`    Events: UserPromptSubmit, PreToolUse, PostToolUse`));
+      } else {
+        console.log(chalk.gray(`    Event: ${eventType}`));
+      }
       console.log(chalk.gray(`    Matcher: ${hook.matcher || '(all)'}`));
       console.log(chalk.gray(`    Command: node "${hookScriptPath}"`));
 
