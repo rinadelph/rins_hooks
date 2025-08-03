@@ -13,49 +13,218 @@ class ExtendedThinkingHook extends HookBase {
   }
 
   /**
-     * Execute the hook for UserPromptSubmit events
+     * Execute the hook for multiple event types
      * @param {Object} input - Hook input from Claude Code
      * @returns {Object} Hook result with optional additional context
      */
   execute(input) {
     try {
-      // Validate input
-      if (!input || input.hook_event_name !== 'UserPromptSubmit') {
+      if (!input || !input.hook_event_name) {
         return this.success();
       }
 
-      // Get project directory from input if available
       const projectDir = input.cwd || null;
       const stateManager = new ThinkingStateManager(projectDir);
+      const toggles = stateManager.getToggles();
 
-      // Check if any thinking mode is enabled
-      const thinkingPrompt = stateManager.getThinkingPrompt();
-
-      if (thinkingPrompt) {
-        // Log activity for debugging
-        this.logActivity(input, `Injecting thinking context (${stateManager.getStatus().activeMode})`);
-
-        // Return JSON output with additional context
-        const result = {
-          hookSpecificOutput: {
-            hookEventName: 'UserPromptSubmit',
-            additionalContext: thinkingPrompt
-          }
-        };
-
-        console.log(JSON.stringify(result));
-        process.exit(0);
-      } else {
-        // No thinking mode enabled, let normal processing continue
-        this.logActivity(input, 'No thinking mode enabled, continuing normally');
-        return this.success();
+      // Handle different event types
+      switch (input.hook_event_name) {
+        case 'UserPromptSubmit':
+          return this.handleUserPromptSubmit(input, stateManager, toggles);
+        
+        case 'PreToolUse':
+          return this.handlePreToolUse(input, stateManager, toggles);
+        
+        case 'PostToolUse':
+          return this.handlePostToolUse(input, stateManager, toggles);
+        
+        default:
+          return this.success();
       }
 
     } catch (error) {
-      // Log error but don't block the user's prompt
       this.logActivity(input, `Error in extended thinking hook: ${error.message}`);
       return this.success(); // Fail gracefully
     }
+  }
+
+  /**
+   * Handle UserPromptSubmit events - Deep thinking for all prompts
+   */
+  handleUserPromptSubmit(input, stateManager, toggles) {
+    if (toggles.deepThinking) {
+      const prompt = stateManager.getDeepThinkingPrompt();
+      this.logActivity(input, 'Injecting deep thinking context for user prompt');
+      
+      const result = {
+        hookSpecificOutput: {
+          hookEventName: 'UserPromptSubmit',
+          additionalContext: prompt
+        }
+      };
+      
+      console.log(JSON.stringify(result));
+      process.exit(0);
+    }
+    
+    return this.success();
+  }
+
+  /**
+   * Handle PreToolUse events - Thinking before tool execution
+   */
+  handlePreToolUse(input, stateManager, toggles) {
+    const toolName = input.tool_name;
+    
+    // Deep thinking: comprehensive analysis before any tool
+    if (toggles.deepThinking) {
+      const prompt = this.getPreToolDeepThinkingPrompt(toolName);
+      this.logActivity(input, `Injecting deep thinking context before ${toolName}`);
+      
+      const result = {
+        hookSpecificOutput: {
+          hookEventName: 'PreToolUse',
+          additionalContext: prompt
+        }
+      };
+      
+      console.log(JSON.stringify(result));
+      process.exit(0);
+    }
+    
+    // Extended thinking: focused analysis for specific tools
+    if (toggles.thinking && this.shouldApplyExtendedThinking(toolName)) {
+      const prompt = this.getPreToolExtendedThinkingPrompt(toolName);
+      this.logActivity(input, `Injecting extended thinking context before ${toolName}`);
+      
+      const result = {
+        hookSpecificOutput: {
+          hookEventName: 'PreToolUse',
+          additionalContext: prompt
+        }
+      };
+      
+      console.log(JSON.stringify(result));
+      process.exit(0);
+    }
+    
+    return this.success();
+  }
+
+  /**
+   * Handle PostToolUse events - Thinking after tool execution
+   */
+  handlePostToolUse(input, stateManager, toggles) {
+    if (toggles.deepThinking) {
+      const toolName = input.tool_name;
+      const prompt = this.getPostToolThinkingPrompt(toolName);
+      this.logActivity(input, `Injecting post-tool thinking context after ${toolName}`);
+      
+      const result = {
+        hookSpecificOutput: {
+          hookEventName: 'PostToolUse',
+          additionalContext: prompt
+        }
+      };
+      
+      console.log(JSON.stringify(result));
+      process.exit(0);
+    }
+    
+    return this.success();
+  }
+
+  /**
+   * Check if extended thinking should apply to this tool
+   */
+  shouldApplyExtendedThinking(toolName) {
+    const extendedThinkingTools = [
+      'Read', 'Edit', 'MultiEdit', 'Write',  // File operations
+      'Bash',  // Command execution
+      'Grep', 'Glob',  // Search operations
+    ];
+    
+    return extendedThinkingTools.includes(toolName);
+  }
+
+  /**
+   * Get deep thinking prompt for before tool use
+   */
+  getPreToolDeepThinkingPrompt(toolName) {
+    return `Before using the ${toolName} tool, engage in DEEP analytical thinking:
+
+## 🧠 PRE-TOOL DEEP ANALYSIS
+
+### 1. **Tool Context Understanding**
+   - What is this ${toolName} tool about to do?
+   - What are the potential implications of this action?
+   - Are there any risks or considerations I should be aware of?
+
+### 2. **Strategic Planning**
+   - Is this the optimal approach for the current task?
+   - What alternatives exist and why is this choice better?
+   - How does this fit into the broader workflow?
+
+### 3. **Preparation & Verification**
+   - Do I have all the information needed to use this tool effectively?
+   - Are there any prerequisites or setup steps I should consider?
+   - What could go wrong and how can I mitigate risks?
+
+Now proceed with using the ${toolName} tool with this comprehensive understanding.`;
+  }
+
+  /**
+   * Get extended thinking prompt for before tool use
+   */
+  getPreToolExtendedThinkingPrompt(toolName) {
+    const toolSpecificPrompts = {
+      'Read': 'Before reading this file, think about what information I\'m looking for and how it relates to the current task.',
+      'Edit': 'Before editing this file, think about the changes needed, potential impacts, and how to make precise modifications.',
+      'Write': 'Before writing this file, think about the content structure, purpose, and how it fits into the project.',
+      'Bash': 'Before executing this command, think about what it will do, potential side effects, and safety considerations.',
+      'Grep': 'Before searching, think about the search strategy and what patterns will most effectively find the needed information.',
+      'Glob': 'Before pattern matching, think about the file patterns that will capture exactly what I need.',
+    };
+
+    const specificPrompt = toolSpecificPrompts[toolName] || `Before using ${toolName}, think about the approach and expected outcomes.`;
+    
+    return `## 🧠 Extended Thinking: ${toolName} Tool
+
+${specificPrompt}
+
+Consider:
+1. **Purpose**: What am I trying to accomplish?
+2. **Approach**: Is this the best way to achieve the goal?
+3. **Precision**: How can I be most accurate and efficient?
+4. **Context**: How does this fit into the larger task?
+
+Proceed thoughtfully with the ${toolName} operation.`;
+  }
+
+  /**
+   * Get thinking prompt for after tool use
+   */
+  getPostToolThinkingPrompt(toolName) {
+    return `After using the ${toolName} tool, engage in reflective analysis:
+
+## 🧠 POST-TOOL REFLECTION
+
+### 1. **Result Assessment**
+   - Did the ${toolName} operation achieve the intended goal?
+   - Are the results what I expected, and if not, why?
+   - What insights can I gain from this outcome?
+
+### 2. **Next Steps Planning**
+   - What should I do next based on these results?
+   - Are there follow-up actions needed?
+   - How do these results inform my overall strategy?
+
+### 3. **Learning Integration**
+   - What did I learn from this ${toolName} operation?
+   - How can I apply this knowledge to future similar tasks?
+   - Are there patterns or principles I should remember?
+
+Use this reflection to inform your next actions and responses.`;
   }
 
   /**
