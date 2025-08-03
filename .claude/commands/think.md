@@ -1,7 +1,7 @@
 ---
 description: Apply extended thinking to analyze and respond to a prompt
 argument-hint: [your prompt here]
-model: sonnet
+model: claude-3-5-sonnet-20241022
 ---
 
 Before responding to the following prompt, engage in extended thinking. Think through this step-by-step:
