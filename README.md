@@ -29,7 +29,7 @@ rins_hooks install --interactive
 Or install specific hooks:
 
 ```bash
-rins_hooks install auto-commit code-formatter notification
+rins_hooks install auto-commit code-formatter notification extended-thinking
 ```
 
 ## 📋 Available Hooks
