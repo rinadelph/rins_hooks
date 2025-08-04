@@ -314,7 +314,7 @@ class HookControlPanel {
       await this.displaySectionOverview(sections[currentSection]);
       
       // Clean keypress instruction
-      console.log(chalk.bgBlack.white('  Press: ← → Navigate • Enter Manage • I Install • M Manage • V View • Q Quit  '));
+      console.log(chalk.bgBlack.white('  ← → Navigate • ⏎ Enter • I Install • M Manage • V View • Q Quit  '));
       
       const key = await this.waitForDirectKeypress();
       if (debug) console.log(`DEBUG: Key pressed: ${key}`);
