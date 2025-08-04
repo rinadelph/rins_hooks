@@ -1,11 +1,16 @@
 {
   "name": "rapala-command",
-  "description": "Enable /rapala slash commands for generating Claude Code hooks from natural language",
-  "version": "1.0.0",
+  "description": "Manages and maintains the /rapala slash command for hook generation",
+  "version": "2.0.0",
   "author": "Rapala Hook Management System",
-  "tags": ["command", "generation", "slash-command", "utility"],
+  "tags": ["command", "management", "slash-command", "utility", "maintenance"],
   "platforms": ["linux", "darwin", "win32"],
   "requirements": [],
-  "matcher": "",
-  "installationType": "hook"
+  "events": ["SessionStart"],
+  "installationType": "utility",
+  "supportedPlatforms": ["linux", "darwin", "win32"],
+  "dependencies": [],
+  "settings": {
+    "purpose": "Ensures /rapala slash command is available and up to date"
+  }
 }
