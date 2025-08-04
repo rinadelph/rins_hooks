@@ -373,52 +373,28 @@ class HookControlPanel {
     const totalInstalled = sectionData.user.length + sectionData.project.length + sectionData.local.length;
     const totalAvailable = sectionData.available.length;
 
-    // Section header with icon
-    const sectionIcons = {
-      hooks: '🔗',
-      tools: '🔧', 
-      resources: '📚',
-      prompts: '💬',
-      mcps: '🤖'
-    };
+    // Section header with icon - horizontal layout
+    const icon = this.getCategoryIcon(sectionType);
+    const stats = totalInstalled > 0 ? 
+      `${chalk.green(totalInstalled + ' installed')} ${totalAvailable > totalInstalled ? chalk.cyan('│ ' + (totalAvailable - totalInstalled) + ' available') : ''}` :
+      chalk.yellow('No items installed') + chalk.cyan(' │ ' + totalAvailable + ' available');
     
-    const icon = sectionIcons[sectionType] || '📋';
-    console.log(chalk.bold.cyan(`  ${icon} ${this.getSectionTitle(sectionType)} Overview`));
-    console.log(chalk.gray('  ─────────────────────────────'));
+    console.log(`${icon} ${chalk.bold.white(this.getSectionTitle(sectionType))} │ ${stats}`);
     
-    // Enhanced stats display
-    if (totalInstalled === 0) {
-      console.log(chalk.yellow('    📦 No items installed yet'));
-      console.log(chalk.cyan(`    🎯 ${totalAvailable} available`));
-    } else {
-      console.log(chalk.green(`    ✅ ${totalInstalled} installed`));
-      if (totalAvailable - totalInstalled > 0) {
-        console.log(chalk.cyan(`    📦 ${totalAvailable - totalInstalled} more available`));
-      }
-      
-      // Show installed items more compactly
+    // Show recent items horizontally if any installed
+    if (totalInstalled > 0) {
       const allInstalled = [...sectionData.user, ...sectionData.project, ...sectionData.local];
-      const preview = allInstalled.slice(0, 2);
+      const preview = allInstalled.slice(0, 3);
+      const itemList = preview.map(item => {
+        const scopeIcon = this.getScopeIcon(item, sectionData);
+        return `${item.name}${scopeIcon}`;
+      }).join(chalk.gray(' │ '));
       
-      console.log();
-      console.log(chalk.blue('    📋 Recent:'));
-      preview.forEach(item => {
-        const scopeText = this.getScopeIcon(item, sectionData) === '👤' ? 'user' : 
-                         this.getScopeIcon(item, sectionData) === '📁' ? 'project' : 'local';
-        console.log(`      • ${item.name} ${chalk.dim(`(${scopeText})`)}`);
-      });
-      
-      if (allInstalled.length > 2) {
-        console.log(chalk.dim(`      ... and ${allInstalled.length - 2} more`));
-      }
+      console.log(chalk.gray('Recent: ') + itemList + (allInstalled.length > 3 ? chalk.dim(' │ +' + (allInstalled.length - 3) + ' more') : ''));
     }
     
+    console.log(chalk.dim(this.getSectionDescription(sectionType)));
     console.log();
-    console.log(chalk.italic.gray(`    ${this.getSectionDescription(sectionType)}`));
-    console.log();
-    
-    // Bottom instruction bar
-    console.log(chalk.dim('  ────────────────────────────────────────────────────────────────'));
   }
 
   /**
