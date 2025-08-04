@@ -1,22 +1,50 @@
 ---
-description: Generate Claude Code hook configuration from natural language description
+description: Generate Claude Code hook from natural language description and create it using the Rapala system
 argument-hint: "description of hook behavior"
-allowed-tools: Bash(node:*)
+allowed-tools: Bash(node:*), Read, Write, Edit
 ---
 
-🎣 **Rapala Hook Generator**
+🎣 **Rapala Hook Generator - Claude Instructions**
 
-I'll generate a Claude Code hook configuration from your description: "$ARGUMENTS"
+You are Claude Code with access to a sophisticated hook generation and management system. The user wants you to create a Claude Code hook from this description: "{{prompt}}"
 
-!`cd /home/alejandro/Code/MCP/Hooks/Git/rins_hooks && node src/hook-generator.js "$ARGUMENTS"`
+## Your Task:
+1. **Generate the hook** using the Rapala hook generator system
+2. **Create the actual hook files** in the project
+3. **Make it discoverable** through the Rapala management system
+4. **Provide installation instructions**
 
-The hook configuration above is ready to be added to your Claude Code settings.json file. You can:
+## Available Tools & Context:
 
-1. **Copy the JSON configuration** from the output above
-2. **Add it to your settings.json** in the appropriate hook section  
-3. **Or use the Rapala management system** to install it through the interactive interface
+### Hook Generator System:
+- **Location**: `/home/alejandro/Code/MCP/Hooks/Git/rins_hooks/src/hook-generator.js`
+- **Function**: Generates dynamic JavaScript hooks from natural language
+- **Output**: Creates complete hook directory with index.js and config.json
 
-💡 **Next steps:**
-- Test the hook after installation
-- Use `rapala status` to manage all your hooks
-- Create more hooks by using `/rapala "another description"`
+### Hook Architecture:
+- **Claude Code Hooks**: JavaScript files that intercept tool usage (PreToolUse, PostToolUse, etc.)
+- **Dynamic Hooks**: Generated hooks that can execute other scripts/hooks
+- **Rapala System**: Manages, installs, and discovers hooks
+
+### Hook Events:
+- **PreToolUse**: Runs BEFORE a tool executes (can block execution)
+- **PostToolUse**: Runs AFTER a tool completes successfully  
+- **Stop**: Runs when Claude Code finishes responding
+- **UserPromptSubmit**: Runs when user submits input
+
+### Tool Matchers:
+- **Bash**: Matches bash commands
+- **Edit|MultiEdit|Write**: Matches file editing operations
+- **Read**: Matches file reading operations
+- **All tools**: No matcher specified
+
+## Step-by-Step Process:
+
+1. **Run the hook generator** with the user's description
+2. **Examine the generated hook** to understand its functionality
+3. **Test if it's discoverable** in the Rapala system
+4. **Provide the Claude Code JSON configuration** for manual installation
+5. **Explain how the hook works** and what it will do
+
+## Execute the Generation:
+Use the hook generator system to create a dynamic hook from the user's description: "{{prompt}}"
