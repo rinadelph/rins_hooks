@@ -98,37 +98,171 @@ class HookControlPanel {
   }
 
   /**
-   * Load current hook states from all configuration levels
+   * Load current enhancement states (hooks, tools, resources, prompts, mcps)
    */
-  async loadCurrentHookStates() {
-    // This will be populated with actual hook states
-    this.hookStates = {
-      user: [],
-      project: [],
-      local: [],
-      available: [],
+  async loadCurrentEnhancementStates() {
+    // Rapala enhancement categories
+    this.enhancementStates = {
+      hooks: { user: [], project: [], local: [], available: [] },
+      tools: { user: [], project: [], local: [], available: [] },
+      resources: { user: [], project: [], local: [], available: [] },
+      prompts: { user: [], project: [], local: [], available: [] },
+      mcps: { user: [], project: [], local: [], available: [] },
       updates: [],
       autoUpdate: false
     };
 
     try {
       const status = await this.configManager.getInstallationStatus();
-      const availableHooks = await this.installer.getAvailableHooks();
+      const availableItems = await this.installer.getAvailableHooks();
       
-      this.hookStates.user = status.user || [];
-      this.hookStates.project = status.project || [];
-      this.hookStates.local = status.local || [];
-      this.hookStates.available = availableHooks || [];
+      // Categorize available items into Rapala categories
+      const categorizedItems = this.categorizeRapalaItems(availableItems);
+      
+      // Categorize installed items
+      const allInstalled = [...status.user, ...status.project, ...status.local];
+      const categorizedInstalled = this.categorizeRapalaItems(allInstalled);
+      
+      // Populate each category
+      this.enhancementStates.hooks.available = categorizedItems.hooks;
+      this.enhancementStates.tools.available = categorizedItems.tools;
+      this.enhancementStates.resources.available = categorizedItems.resources;
+      this.enhancementStates.prompts.available = categorizedItems.prompts;
+      this.enhancementStates.mcps.available = categorizedItems.mcps;
+      
+      // Populate installed items by scope
+      ['user', 'project', 'local'].forEach(scope => {
+        const scopeItems = status[scope] || [];
+        const categorized = this.categorizeRapalaItems(scopeItems);
+        
+        this.enhancementStates.hooks[scope] = categorized.hooks;
+        this.enhancementStates.tools[scope] = categorized.tools;
+        this.enhancementStates.resources[scope] = categorized.resources;
+        this.enhancementStates.prompts[scope] = categorized.prompts;
+        this.enhancementStates.mcps[scope] = categorized.mcps;
+      });
+
+      // Maintain backwards compatibility
+      this.hookStates = {
+        user: status.user || [],
+        project: status.project || [],
+        local: status.local || [],
+        available: availableItems || [],
+        updates: [],
+        autoUpdate: false
+      };
 
       // Check for updates
       if (fs.existsSync(path.join(__dirname, '..', 'hooks', 'version-checker', 'index.js'))) {
         const VersionCheckerHook = require('../hooks/version-checker/index.js');
         const updateStatus = VersionCheckerHook.getAutoUpdateStatus(this.currentDir);
+        this.enhancementStates.autoUpdate = updateStatus.autoUpdate;
         this.hookStates.autoUpdate = updateStatus.autoUpdate;
       }
     } catch (error) {
-      console.warn(chalk.yellow(`⚠️  Could not load hook states: ${error.message}`));
+      console.warn(chalk.yellow(`⚠️  Could not load enhancement states: ${error.message}`));
     }
+  }
+
+  /**
+   * Categorize items into Rapala categories: Hooks, Tools, Resources, Prompts, MCPs
+   */
+  categorizeRapalaItems(items) {
+    const categories = {
+      hooks: [],
+      tools: [],
+      resources: [],
+      prompts: [],
+      mcps: []
+    };
+
+    items.forEach(item => {
+      const tags = item.tags || [];
+      const name = item.name || '';
+      const description = item.description || '';
+
+      // Categorization logic based on name, tags, and description
+      if (this.isHook(name, tags, description)) {
+        categories.hooks.push(item);
+      } else if (this.isTool(name, tags, description)) {
+        categories.tools.push(item);
+      } else if (this.isResource(name, tags, description)) {
+        categories.resources.push(item);
+      } else if (this.isPrompt(name, tags, description)) {
+        categories.prompts.push(item);
+      } else if (this.isMCP(name, tags, description)) {
+        categories.mcps.push(item);
+      } else {
+        // Default: if unclear, categorize as hook for backwards compatibility
+        categories.hooks.push(item);
+      }
+    });
+
+    return categories;
+  }
+
+  /**
+   * Determine if item is a Hook (extends Claude Code functionality)
+   */
+  isHook(name, tags, description) {
+    const hookIndicators = [
+      'hook', 'extended-thinking', 'notification', 'auto-commit', 'git-agentmcp', 
+      'code-formatter', 'version-checker', 'debug-git'
+    ];
+    const hookTags = ['automation', 'git', 'commit', 'formatting', 'notification', 'debug'];
+    
+    return hookIndicators.some(indicator => name.includes(indicator)) ||
+           hookTags.some(tag => tags.includes(tag)) ||
+           description.toLowerCase().includes('hook');
+  }
+
+  /**
+   * Determine if item is a Tool (limits/blocks functionality)
+   */
+  isTool(name, tags, description) {
+    const toolIndicators = ['task-blocker', 'no-coauthor', 'file-locking'];
+    const toolTags = ['block', 'permissions', 'locking', 'settings'];
+    
+    return toolIndicators.some(indicator => name.includes(indicator)) ||
+           toolTags.some(tag => tags.includes(tag)) ||
+           description.toLowerCase().includes('block') ||
+           description.toLowerCase().includes('disable') ||
+           description.toLowerCase().includes('prevent');
+  }
+
+  /**
+   * Determine if item is a Resource (reference materials, documentation)
+   */
+  isResource(name, tags, description) {
+    const resourceIndicators = ['resource', 'doc', 'guide', 'template'];
+    const resourceTags = ['documentation', 'reference', 'template', 'guide'];
+    
+    return resourceIndicators.some(indicator => name.includes(indicator)) ||
+           resourceTags.some(tag => tags.includes(tag));
+  }
+
+  /**
+   * Determine if item is a Prompt (prompt engineering, context)
+   */
+  isPrompt(name, tags, description) {
+    const promptIndicators = ['prompt', 'context', 'instruction'];
+    const promptTags = ['prompt', 'context', 'instruction', 'template'];
+    
+    return promptIndicators.some(indicator => name.includes(indicator)) ||
+           promptTags.some(tag => tags.includes(tag));
+  }
+
+  /**
+   * Determine if item is an MCP (Multi-agent Collaboration Protocol)
+   */
+  isMCP(name, tags, description) {
+    const mcpIndicators = ['agent-registry', 'mcp'];
+    const mcpTags = ['agent-tracking', 'registry', 'session-management', 'collaboration', 'multi-agent', 'agent-mcp'];
+    
+    return mcpIndicators.some(indicator => name.includes(indicator)) ||
+           mcpTags.some(tag => tags.includes(tag)) ||
+           description.toLowerCase().includes('agent') ||
+           description.toLowerCase().includes('multi-agent');
   }
 
   /**
