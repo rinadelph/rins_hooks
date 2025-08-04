@@ -589,32 +589,60 @@ class HookControlPanel {
       !allInstalled.find(installed => installed.name === item.name)
     );
 
-    console.log(chalk.cyan(`${this.getSectionTitle(sectionType)} Details:`));
-    console.log();
-
+    // Section icon
+    const sectionIcon = this.getCategoryIcon(sectionType);
+    
+    // Content with consistent styling
     if (allInstalled.length > 0) {
-      console.log(chalk.green(`Installed (${allInstalled.length}):`));
-      allInstalled.forEach(item => {
-        const scope = this.getScopeIcon(item, sectionData);
-        console.log(`  • ${item.name} ${scope} - ${item.description || 'No description'}`);
-      });
+      console.log(`  ${chalk.bold.green('✅ Installed')} ${chalk.gray(`(${allInstalled.length} items)`)}`);
+      console.log(chalk.cyan('  ───────────────────────────────────'));
       console.log();
+      
+      // Show recently installed first, limit to 3
+      const recentInstalled = allInstalled.slice(0, 3);
+      recentInstalled.forEach(item => {
+        const scope = this.getScopeIcon(item, sectionData);
+        const description = item.description || 'No description';
+        console.log(`    ${chalk.green('•')} ${chalk.bold(item.name)} ${scope}`);
+        console.log(`      ${chalk.gray(description)}`);
+        console.log();
+      });
+      
+      if (allInstalled.length > 3) {
+        console.log(`    ${chalk.gray(`... and ${allInstalled.length - 3} more`)}`);
+        console.log();
+      }
     }
 
     if (available.length > 0) {
-      console.log(chalk.yellow(`Available to install (${available.length}):`));
-      available.slice(0, 5).forEach(item => {
-        console.log(`  • ${item.name} - ${item.description || 'No description'}`);
-      });
-      if (available.length > 5) {
-        console.log(chalk.gray(`  ... and ${available.length - 5} more`));
-      }
+      console.log(`  ${chalk.bold.yellow('📦 Available')} ${chalk.gray(`(${available.length} items)`)}`);
+      console.log(chalk.cyan('  ───────────────────────────────────'));
       console.log();
+      
+      // Show top 4 available items
+      available.slice(0, 4).forEach(item => {
+        const description = item.description || 'No description';
+        console.log(`    ${chalk.yellow('•')} ${chalk.bold(item.name)}`);
+        console.log(`      ${chalk.gray(description)}`);
+        console.log();
+      });
+      
+      if (available.length > 4) {
+        console.log(`    ${chalk.gray(`... and ${available.length - 4} more`)}`);
+        console.log();
+      }
     }
 
     if (allInstalled.length === 0 && available.length === 0) {
-      console.log(chalk.gray('No items available in this section'));
+      console.log(`  ${chalk.gray('No items available in this section')}`);
       console.log();
+    }
+
+    // Summary stats with styling
+    const totalCount = allInstalled.length + available.length;
+    if (totalCount > 0) {
+      console.log(chalk.cyan('  ───────────────────────────────────'));
+      console.log(`  ${sectionIcon} ${chalk.bold(this.getSectionTitle(sectionType))} overview: ${chalk.green(allInstalled.length)} installed • ${chalk.yellow(available.length)} available`);
     }
   }
 
