@@ -36,77 +36,221 @@ class HookControlPanel {
   }
 
   /**
-   * Main interactive status and control interface
+   * Scan current directory for Claude configuration and project context
+   */
+  async scanCurrentDirectory() {
+    console.log(chalk.blue('🔍 Scanning Current Environment...'));
+    console.log(chalk.gray(`Directory: ${this.currentDir}`));
+    
+    // Look for .claude directory in current and parent directories
+    let searchDir = this.currentDir;
+    while (searchDir !== path.dirname(searchDir)) {
+      const claudePath = path.join(searchDir, '.claude');
+      if (fs.existsSync(claudePath)) {
+        this.claudeDir = claudePath;
+        console.log(chalk.green(`✅ Found Claude directory: ${claudePath}`));
+        break;
+      }
+      searchDir = path.dirname(searchDir);
+    }
+
+    // Check for global Claude settings
+    const homeClaudeDir = path.join(require('os').homedir(), '.claude');
+    if (fs.existsSync(homeClaudeDir)) {
+      console.log(chalk.green(`✅ Found global Claude directory: ${homeClaudeDir}`));
+    }
+
+    console.log();
+  }
+
+  /**
+   * Detect project context and type
+   */
+  async detectProjectContext() {
+    const context = {
+      type: 'unknown',
+      name: path.basename(this.currentDir),
+      hasGit: fs.existsSync(path.join(this.currentDir, '.git')),
+      hasPackageJson: fs.existsSync(path.join(this.currentDir, 'package.json')),
+      hasPyprojectToml: fs.existsSync(path.join(this.currentDir, 'pyproject.toml')),
+      hasCargoToml: fs.existsSync(path.join(this.currentDir, 'Cargo.toml')),
+      hasClaudeConfig: !!this.claudeDir,
+      settings: {}
+    };
+
+    // Determine project type
+    if (context.hasPackageJson) {
+      context.type = 'node';
+      try {
+        const pkg = JSON.parse(fs.readFileSync(path.join(this.currentDir, 'package.json'), 'utf8'));
+        context.name = pkg.name || context.name;
+        context.version = pkg.version;
+      } catch (error) {
+        // Ignore package.json parse errors
+      }
+    } else if (context.hasPyprojectToml) {
+      context.type = 'python';
+    } else if (context.hasCargoToml) {
+      context.type = 'rust';
+    }
+
+    this.projectContext = context;
+  }
+
+  /**
+   * Load current hook states from all configuration levels
+   */
+  async loadCurrentHookStates() {
+    // This will be populated with actual hook states
+    this.hookStates = {
+      user: [],
+      project: [],
+      local: [],
+      available: [],
+      updates: [],
+      autoUpdate: false
+    };
+
+    try {
+      const status = await this.configManager.getInstallationStatus();
+      const availableHooks = await this.installer.getAvailableHooks();
+      
+      this.hookStates.user = status.user || [];
+      this.hookStates.project = status.project || [];
+      this.hookStates.local = status.local || [];
+      this.hookStates.available = availableHooks || [];
+
+      // Check for updates
+      if (fs.existsSync(path.join(__dirname, '..', 'hooks', 'version-checker', 'index.js'))) {
+        const VersionCheckerHook = require('../hooks/version-checker/index.js');
+        const updateStatus = VersionCheckerHook.getAutoUpdateStatus(this.currentDir);
+        this.hookStates.autoUpdate = updateStatus.autoUpdate;
+      }
+    } catch (error) {
+      console.warn(chalk.yellow(`⚠️  Could not load hook states: ${error.message}`));
+    }
+  }
+
+  /**
+   * Main interactive status and control interface - 100% Self-Contained
    */
   async showInteractiveStatus() {
-    console.log(chalk.blue('🎛️  Hook Control Panel'));
-    console.log(chalk.gray('Complete management interface for all your Claude Code hooks'));
+    // Initialize and scan environment
+    await this.initialize();
+
+    console.log(chalk.blue('🎛️  Complete Hook Management Center'));
+    console.log(chalk.gray('100% self-contained interface - no CLI commands needed'));
     console.log();
 
     while (true) {
-      // Get current status
-      const status = await this.getComprehensiveStatus();
+      // Show comprehensive environment overview
+      await this.displayEnvironmentOverview();
       
-      // Show current status overview
-      await this.displayStatusOverview(status);
-      
-      // Main menu
+      // Main menu with all functionality
       const mainAction = await inquirer.prompt([{
         type: 'list',
         name: 'action',
         message: 'What would you like to do?',
         choices: [
-          { name: '🔍 View Detailed Hook Status', value: 'details' },
-          { name: '⚙️  Manage Individual Hooks', value: 'manage' },
-          { name: '📦 Install New Hooks', value: 'install' },
-          { name: '🔄 Update All Hooks', value: 'update' },
-          { name: '🧹 Clean & Optimize Configuration', value: 'clean' },
+          { name: '📊 Environment & Hook Status', value: 'status' },
+          { name: '🔍 Scan & Analyze Current Directory', value: 'scan' },
+          { name: '⚙️  Individual Hook Management', value: 'manage' },
+          { name: '📦 Install & Configure Hooks', value: 'install' },
+          { name: '🔄 Update System & Hooks', value: 'update' },
+          { name: '🤖 Agent-MCP Management', value: 'agentmcp' },
+          { name: '🧹 Clean & Optimize', value: 'clean' },
           { name: '🔧 Bulk Operations', value: 'bulk' },
+          { name: '⚙️  System Settings', value: 'settings' },
           new inquirer.Separator(),
-          { name: '🚪 Exit Control Panel', value: 'exit' }
+          { name: '🚪 Exit Management Center', value: 'exit' }
         ]
       }]);
 
-      switch (mainAction.action) {
-        case 'details':
-          await this.showDetailedStatus(status);
-          break;
-        case 'manage':
-          await this.manageIndividualHooks(status);
-          break;
-        case 'install':
-          await this.installer.enhancedInteractiveInstall();
-          break;
-        case 'update':
-          await this.updateAllHooks(status);
-          break;
-        case 'clean':
-          await this.cleanAndOptimize();
-          break;
-        case 'bulk':
-          await this.bulkOperations(status);
-          break;
-        case 'exit':
-          console.log(chalk.green('👋 Hook management complete!'));
-          return;
+      try {
+        switch (mainAction.action) {
+          case 'status':
+            await this.showComprehensiveStatus();
+            break;
+          case 'scan':
+            await this.performDeepScan();
+            break;
+          case 'manage':
+            await this.manageIndividualHooksComplete();
+            break;
+          case 'install':
+            await this.installHooksComplete();
+            break;
+          case 'update':
+            await this.updateSystemComplete();
+            break;
+          case 'agentmcp':
+            await this.manageAgentMCPComplete();
+            break;
+          case 'clean':
+            await this.cleanAndOptimizeComplete();
+            break;
+          case 'bulk':
+            await this.bulkOperationsComplete();
+            break;
+          case 'settings':
+            await this.systemSettingsComplete();
+            break;
+          case 'exit':
+            console.log(chalk.green('👋 Hook management complete!'));
+            return;
+        }
+      } catch (error) {
+        console.error(chalk.red(`❌ Operation failed: ${error.message}`));
+        console.log(chalk.gray('Returning to main menu...'));
       }
 
-      // Ask if they want to continue
+      // Continue automatically (no asking)
       console.log();
-      const continueChoice = await inquirer.prompt([{
-        type: 'confirm',
-        name: 'continue',
-        message: 'Continue with hook management?',
-        default: true
-      }]);
-
-      if (!continueChoice.continue) {
-        console.log(chalk.green('👋 Hook management complete!'));
-        break;
-      }
-      
-      console.log(); // Add spacing
+      console.log(chalk.gray('─'.repeat(60)));
+      console.log();
     }
+  }
+
+  /**
+   * Display comprehensive environment overview
+   */
+  async displayEnvironmentOverview() {
+    // Refresh hook states
+    await this.loadCurrentHookStates();
+
+    console.log(chalk.cyan('🌍 Current Environment'));
+    console.log();
+    
+    // Project context
+    console.log(chalk.blue('📁 Project Information:'));
+    console.log(`   ${chalk.green('Name:')} ${this.projectContext.name}`);
+    console.log(`   ${chalk.green('Type:')} ${this.projectContext.type}`);
+    console.log(`   ${chalk.green('Directory:')} ${this.currentDir}`);
+    if (this.projectContext.version) {
+      console.log(`   ${chalk.green('Version:')} ${this.projectContext.version}`);
+    }
+    console.log();
+
+    // Claude configuration status
+    console.log(chalk.blue('⚙️  Claude Configuration:'));
+    const hasUserConfig = fs.existsSync(path.join(require('os').homedir(), '.claude', 'settings.json'));
+    const hasProjectConfig = this.claudeDir && fs.existsSync(path.join(this.claudeDir, 'settings.json'));
+    const hasLocalConfig = this.claudeDir && fs.existsSync(path.join(this.claudeDir, 'settings.local.json'));
+    
+    console.log(`   ${chalk.green('User Level:')} ${hasUserConfig ? '✅ Active' : '❌ Not found'}`);
+    console.log(`   ${chalk.green('Project Level:')} ${hasProjectConfig ? '✅ Active' : '❌ Not found'}`);
+    console.log(`   ${chalk.green('Local Level:')} ${hasLocalConfig ? '✅ Active' : '❌ Not found'}`);
+    console.log();
+
+    // Hook summary
+    const totalInstalled = this.hookStates.user.length + this.hookStates.project.length + this.hookStates.local.length;
+    const totalAvailable = this.hookStates.available.length;
+    
+    console.log(chalk.blue('🎣 Hook Summary:'));
+    console.log(`   ${chalk.green('Installed:')} ${totalInstalled}/${totalAvailable} hooks`);
+    console.log(`   ${chalk.green('Auto-Update:')} ${this.hookStates.autoUpdate ? '✅ Enabled' : '❌ Disabled'}`);
+    console.log(`   ${chalk.green('Git Integration:')} ${this.projectContext.hasGit ? '✅ Available' : '❌ No Git'}`);
+    console.log();
   }
 
   /**
