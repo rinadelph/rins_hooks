@@ -1,7 +1,7 @@
 {
   "name": "notification",
   "description": "Enhanced notifications for Claude Code events",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "tags": ["notification", "desktop", "alerts"],
   "requirements": [],
   "platforms": ["linux", "darwin", "win32"],
