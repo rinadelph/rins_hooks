@@ -439,195 +439,79 @@ class HookControlPanel {
   }
 
   /**
-   * Better management UI with pagination and no infinite scroll
+   * Enter a specific section for management
    */
-  async manageSectionUI(sectionType, debug = false) {
-    const sectionData = this.enhancementStates[sectionType];
-    const allInstalled = [...sectionData.user, ...sectionData.project, ...sectionData.local];
-    const available = sectionData.available.filter(item => 
-      !allInstalled.find(installed => installed.name === item.name)
-    );
-
-    // Pagination settings
-    const itemsPerPage = 8;
-    let currentPage = 0;
-    let viewMode = 'installed'; // 'installed', 'available', 'all'
-
+  async enterSection(sectionType, debug = false) {
+    if (debug) console.log(`DEBUG: enterSection called with ${sectionType}`);
     while (true) {
+      if (debug) console.log(`DEBUG: enterSection loop iteration for ${sectionType}`);
       console.clear();
       
-      // Header
+      // Clean horizontal header
       const icon = this.getCategoryIcon(sectionType);
       console.log(chalk.bold.magenta(`${icon} ${this.getSectionTitle(sectionType)} Management`));
-      console.log(chalk.gray('━'.repeat(60)));
-      
-      // View mode tabs
-      const modes = [
-        { key: 'installed', label: 'Installed', count: allInstalled.length },
-        { key: 'available', label: 'Available', count: available.length },
-        { key: 'all', label: 'All', count: allInstalled.length + available.length }
-      ];
-      
-      const modeTabs = modes.map(mode => {
-        const isActive = viewMode === mode.key;
-        const label = `${mode.label} (${mode.count})`;
-        return isActive ? chalk.bold.white.bgCyan(` ${label} `) : chalk.cyan(label);
-      }).join(chalk.gray(' │ '));
-      
-      console.log(modeTabs);
+      console.log(chalk.gray('━'.repeat(50)));
       console.log();
 
-      // Get current items based on view mode
-      let currentItems = [];
-      if (viewMode === 'installed') {
-        currentItems = allInstalled;
-      } else if (viewMode === 'available') {
-        currentItems = available;
-      } else {
-        currentItems = [...allInstalled, ...available];
-      }
+      // Show detailed section content
+      await this.displayDetailedSection(sectionType);
 
-      // Pagination logic
-      const totalPages = Math.ceil(currentItems.length / itemsPerPage);
-      const startIndex = currentPage * itemsPerPage;
-      const endIndex = Math.min(startIndex + itemsPerPage, currentItems.length);
-      const pageItems = currentItems.slice(startIndex, endIndex);
+      // Action bar with smart colors
+      console.log(chalk.gray('━'.repeat(50)));
+      console.log(chalk.cyan('📦') + chalk.gray(' Install │ ') + chalk.green('⚙️') + chalk.gray(' Manage │ ') + chalk.blue('📊') + chalk.gray(' View │ ') + chalk.yellow('🔄') + chalk.gray(' Update │ ') + chalk.magenta('←') + chalk.gray(' Back │ ') + chalk.red('Q') + chalk.gray(' Quit'));
 
-      // Display items
-      if (pageItems.length > 0) {
-        pageItems.forEach((item, index) => {
-          const globalIndex = startIndex + index + 1;
-          const isInstalled = allInstalled.includes(item);
-          const typeIcon = this.getItemDisplayInfo(item, sectionType, isInstalled);
-          const scope = isInstalled ? this.getScopeIcon(item, sectionData) : '';
-          const description = (item.description || 'No description').substring(0, 45);
-          
-          console.log(`  ${chalk.gray(globalIndex.toString().padStart(2))}. ${typeIcon.icon} ${chalk.bold(item.name)}${scope}`);
-          console.log(`      ${chalk.gray(description + (description.length === 45 ? '...' : ''))}`);
-        });
-      } else {
-        console.log(chalk.yellow(`  No ${viewMode} items found.`));
-      }
+      const action = await inquirer.prompt([{
+        type: 'list',
+        name: 'choice',
+        message: chalk.cyan(`${this.getSectionTitle(sectionType)} actions:`),
+        choices: [
+          { name: chalk.blue('📦 Install items'), value: 'install' },
+          { name: chalk.green('⚙️ Manage installed items'), value: 'manage' },
+          { name: chalk.magenta('📊 View all items'), value: 'view' },
+          { name: chalk.yellow('🔄 Update items'), value: 'update' },
+          new inquirer.Separator('────────────────────────────'),
+          { name: chalk.gray('← Back to sections'), value: 'back' },
+          { name: chalk.red('Q Quit Rapala'), value: 'quit' }
+        ],
+        pageSize: 10,
+        // Add arrow key navigation
+        loop: false
+      }]);
 
-      console.log();
+      if (debug) console.log(`DEBUG: User selected action: ${action.choice}`);
       
-      // Pagination info
-      if (totalPages > 1) {
-        console.log(chalk.cyan(`Page ${currentPage + 1} of ${totalPages} │ ${currentItems.length} total items`));
-      } else {
-        console.log(chalk.cyan(`${currentItems.length} total items`));
-      }
-
-      // Action bar
-      console.log(chalk.gray('━'.repeat(60)));
-      console.log(
-        chalk.yellow('1-9') + chalk.gray(' Select │ ') +
-        chalk.green('Tab') + chalk.gray(' Mode │ ') +
-        chalk.blue('← →') + chalk.gray(' Page │ ') +
-        chalk.cyan('I') + chalk.gray(' Install │ ') +
-        chalk.magenta('Esc') + chalk.gray(' Back │ ') +
-        chalk.red('Q') + chalk.gray(' Quit')
-      );
-
-      const key = await this.waitForDirectKeypress();
-      
-      switch (key) {
-        case 'tab':
-          const currentModeIndex = modes.findIndex(m => m.key === viewMode);
-          viewMode = modes[(currentModeIndex + 1) % modes.length].key;
-          currentPage = 0; // Reset to first page when switching modes
-          break;
-        case 'left':
-          currentPage = Math.max(0, currentPage - 1);
-          break;
-        case 'right':
-          currentPage = Math.min(totalPages - 1, currentPage + 1);
-          break;
-        case 'i':
+      switch (action.choice) {
+        case 'install':
+          if (debug) console.log('DEBUG: Calling installSectionItems');
           await this.installSectionItems(sectionType);
-          await this.loadCurrentEnhancementStates(); // Refresh
+          if (debug) console.log('DEBUG: Finished installSectionItems, continuing enterSection loop');
           break;
-        case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
-          const itemIndex = parseInt(key) - 1;
-          if (itemIndex < pageItems.length) {
-            const selectedItem = pageItems[itemIndex];
-            const isInstalled = allInstalled.includes(selectedItem);
-            if (isInstalled) {
-              await this.manageIndividualItem(selectedItem);
-              await this.loadCurrentEnhancementStates(); // Refresh
-            } else {
-              await this.quickInstallItem(selectedItem, sectionType);
-              await this.loadCurrentEnhancementStates(); // Refresh
-            }
-          }
+        case 'manage':
+          if (debug) console.log('DEBUG: Calling manageSectionItems');
+          await this.manageSectionItems(sectionType);
+          if (debug) console.log('DEBUG: Finished manageSectionItems, continuing enterSection loop');
           break;
-        case 'escape':
+        case 'view':
+          if (debug) console.log('DEBUG: Calling viewSectionItems');
+          await this.viewSectionItems(sectionType);
+          if (debug) console.log('DEBUG: Finished viewSectionItems, continuing enterSection loop');
+          break;
+        case 'update':
+          if (debug) console.log('DEBUG: Calling updateSectionItems');
+          await this.updateSectionItems(sectionType);
+          if (debug) console.log('DEBUG: Finished updateSectionItems, continuing enterSection loop');
+          break;
+        case 'back':
+          if (debug) console.log('DEBUG: User selected back, returning false');
           return false;
-        case 'q':
+        case 'quit':
+          if (debug) console.log('DEBUG: User selected quit, returning true');
           return true;
         default:
+          if (debug) console.log(`DEBUG: Unknown action: ${action.choice}`);
           break;
       }
     }
-  }
-
-  /**
-   * Get display information for an item (icon and color)
-   */
-  getItemDisplayInfo(item, sectionType, isInstalled) {
-    if (sectionType === 'hooks' && item.hookType === 'rapala-generated') {
-      return {
-        icon: isInstalled ? chalk.magenta('🎣') : chalk.gray('🎣'),
-        color: chalk.magenta
-      };
-    } else if (sectionType === 'hooks') {
-      return {
-        icon: isInstalled ? chalk.blue('🔧') : chalk.gray('🔧'),
-        color: chalk.blue
-      };
-    } else {
-      const baseIcon = this.getCategoryIcon(sectionType);
-      return {
-        icon: isInstalled ? chalk.green(baseIcon) : chalk.gray(baseIcon),
-        color: chalk.green
-      };
-    }
-  }
-
-  /**
-   * Quick install an available item
-   */
-  async quickInstallItem(item, sectionType) {
-    console.clear();
-    console.log(chalk.blue(`🎣 Quick Install: ${item.name}`));
-    console.log();
-    console.log(chalk.gray(`Description: ${item.description || 'No description'}`));
-    console.log();
-
-    const scope = await this.selectInstallScope();
-    
-    try {
-      console.log(chalk.cyan(`Installing ${item.name} at ${scope} level...`));
-      await this.installer.installHooks([item.name], { [scope]: true });
-      console.log(chalk.green(`✅ ${item.name} installed successfully!`));
-    } catch (error) {
-      console.log(chalk.red(`❌ Installation failed: ${error.message}`));
-    }
-    
-    await this.waitForEnter(false);
-  }
-
-  /**
-   * List all items in a section with better formatting
-   */
-  async listAllSectionItems(sectionType) {
-    console.clear();
-    const icon = this.getCategoryIcon(sectionType);
-    console.log(chalk.bold.magenta(`${icon} All ${this.getSectionTitle(sectionType)}`));
-    console.log(chalk.gray('━'.repeat(60)));
-
-    await this.displayDetailedSection(sectionType);
-    await this.waitForEnter(false);
   }
 
   /**
