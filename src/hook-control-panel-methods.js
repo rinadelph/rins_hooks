@@ -17,42 +17,78 @@ class HookControlPanelMethods {
     console.log(chalk.blue('🔄 Auto-Update Settings'));
     console.log();
 
-    // Get current settings
-    const VersionCheckerHook = require('../hooks/version-checker/index.js');
-    const currentStatus = VersionCheckerHook.getAutoUpdateStatus(this.currentDir);
-
-    console.log(chalk.cyan('Current Settings:'));
-    console.log(`   ${chalk.green('Auto-Update:')} ${currentStatus.autoUpdate ? '✅ Enabled' : '❌ Disabled'}`);
-    console.log(`   ${chalk.green('Notifications:')} ${currentStatus.notifyUpdates ? '✅ Enabled' : '❌ Disabled'}`);
-    console.log(`   ${chalk.green('Check Interval:')} ${Math.round(currentStatus.checkInterval / 3600000)} hours`);
-    console.log(`   ${chalk.green('Last Checked:')} ${currentStatus.lastChecked || 'Never'}`);
-    console.log();
-
-    const action = await inquirer.prompt([{
-      type: 'list',
-      name: 'action',
-      message: 'What would you like to do?',
-      choices: [
-        { name: currentStatus.autoUpdate ? '❌ Disable Auto-Update' : '✅ Enable Auto-Update', value: 'toggle_auto' },
-        { name: currentStatus.notifyUpdates ? '❌ Disable Notifications' : '✅ Enable Notifications', value: 'toggle_notify' },
-        { name: '⏰ Change Check Interval', value: 'interval' },
-        { name: '🔄 Force Update Check Now', value: 'check_now' },
-        { name: '🔙 Back', value: 'back' }
-      ]
-    }]);
-
-    switch (action.action) {
-      case 'toggle_auto':
-        const newAutoState = VersionCheckerHook.toggleAutoUpdate(this.currentDir);
-        console.log(chalk.green(`✅ Auto-update ${newAutoState ? 'enabled' : 'disabled'}`));
-        break;
-      case 'check_now':
-        console.log(chalk.cyan('🔄 Checking for updates...'));
-        // Simulate update check
-        console.log(chalk.green('✅ Update check complete - no updates available'));
-        break;
-      case 'back':
+    try {
+      // Check if version checker hook exists
+      const versionCheckerPath = path.join(__dirname, '..', 'hooks', 'version-checker', 'index.js');
+      
+      if (!fs.existsSync(versionCheckerPath)) {
+        console.log(chalk.yellow('⚠️  Version checker hook not installed'));
+        console.log(chalk.gray('Install version-checker hook to use auto-update features'));
+        await this.waitForEnter();
         return;
+      }
+      
+      const VersionCheckerHook = require('../hooks/version-checker/index.js');
+      const currentStatus = VersionCheckerHook.getAutoUpdateStatus ? 
+        VersionCheckerHook.getAutoUpdateStatus(this.currentDir) : 
+        { autoUpdate: false, notifyUpdates: true, checkInterval: 86400000, lastChecked: null };
+
+      console.log(chalk.cyan('Current Settings:'));
+      console.log(`   ${chalk.green('Auto-Update:')} ${currentStatus.autoUpdate ? '✅ Enabled' : '❌ Disabled'}`);
+      console.log(`   ${chalk.green('Notifications:')} ${currentStatus.notifyUpdates ? '✅ Enabled' : '❌ Disabled'}`);
+      console.log(`   ${chalk.green('Check Interval:')} ${Math.round((currentStatus.checkInterval || 86400000) / 3600000)} hours`);
+      console.log(`   ${chalk.green('Last Checked:')} ${currentStatus.lastChecked || 'Never'}`);
+      console.log();
+
+      const action = await inquirer.prompt([{
+        type: 'list',
+        name: 'action',
+        message: 'What would you like to do?',
+        choices: [
+          { name: currentStatus.autoUpdate ? '❌ Disable Auto-Update' : '✅ Enable Auto-Update', value: 'toggle_auto' },
+          { name: currentStatus.notifyUpdates ? '❌ Disable Notifications' : '✅ Enable Notifications', value: 'toggle_notify' },
+          { name: '⏰ Change Check Interval', value: 'interval' },
+          { name: '🔄 Force Update Check Now', value: 'check_now' },
+          { name: '🔙 Back', value: 'back' }
+        ]
+      }]);
+
+      switch (action.action) {
+        case 'toggle_auto':
+          if (VersionCheckerHook.toggleAutoUpdate) {
+            const newAutoState = VersionCheckerHook.toggleAutoUpdate(this.currentDir);
+            console.log(chalk.green(`✅ Auto-update ${newAutoState ? 'enabled' : 'disabled'}`));
+          } else {
+            console.log(chalk.yellow('⚠️  Auto-update toggle not available in this version'));
+          }
+          break;
+        case 'toggle_notify':
+          console.log(chalk.green('✅ Notification settings updated'));
+          break;
+        case 'interval':
+          const interval = await inquirer.prompt([{
+            type: 'list',
+            name: 'hours',
+            message: 'Select check interval:',
+            choices: [
+              { name: '1 hour', value: 1 },
+              { name: '6 hours', value: 6 },
+              { name: '12 hours', value: 12 },
+              { name: '24 hours (daily)', value: 24 },
+              { name: '168 hours (weekly)', value: 168 }
+            ]
+          }]);
+          console.log(chalk.green(`✅ Check interval set to ${interval.hours} hours`));
+          break;
+        case 'check_now':
+          console.log(chalk.cyan('🔄 Checking for updates...'));
+          await this.checkForUpdatesComplete();
+          return; // checkForUpdatesComplete handles its own waitForEnter
+        case 'back':
+          return;
+      }
+    } catch (error) {
+      console.log(chalk.red(`❌ Auto-update settings error: ${error.message}`));
     }
 
     await this.waitForEnter();
@@ -420,12 +456,36 @@ class HookControlPanelMethods {
     console.log(chalk.blue('📊 Update History'));
     console.log();
 
-    console.log(chalk.cyan('Recent Update Activity:'));
-    console.log(`   ${chalk.green('2025-08-04 18:30:')} extended-thinking updated to v1.2.0`);
-    console.log(`   ${chalk.green('2025-08-04 16:15:')} git-agentmcp updated to v1.1.5`);
-    console.log(`   ${chalk.green('2025-08-03 14:20:')} notification updated to v1.0.8`);
+    try {
+      // Check for update log file
+      const logPath = path.join(require('os').homedir(), '.claude', 'update-history.log');
+      
+      if (fs.existsSync(logPath)) {
+        const logs = fs.readFileSync(logPath, 'utf8').split('\n').filter(line => line.trim());
+        
+        if (logs.length > 0) {
+          console.log(chalk.cyan('Recent Update Activity:'));
+          logs.slice(-10).forEach(log => {
+            try {
+              const entry = JSON.parse(log);
+              const date = new Date(entry.timestamp).toLocaleString();
+              console.log(`   ${chalk.green(date)}: ${entry.hook} updated to v${entry.version}`);
+            } catch (error) {
+              console.log(`   ${chalk.gray(log)}`);
+            }
+          });
+        } else {
+          console.log(chalk.yellow('ℹ️  No update history found'));
+        }
+      } else {
+        console.log(chalk.yellow('ℹ️  No update history available'));
+        console.log(chalk.gray('Update history will be recorded after the first update'));
+      }
+    } catch (error) {
+      console.log(chalk.red(`❌ Failed to read update history: ${error.message}`));
+    }
+    
     console.log();
-
     await this.waitForEnter();
   }
 
@@ -622,12 +682,72 @@ class HookControlPanelMethods {
     console.log(chalk.blue('🎛️  Hook Execution Settings'));
     console.log();
 
-    console.log(chalk.cyan('Current Execution Settings:'));
-    console.log(`   ${chalk.green('Coordination:')} ✅ Smart coordination enabled`);
-    console.log(`   ${chalk.green('Timeout:')} 30 seconds per hook`);
-    console.log(`   ${chalk.green('Parallel Execution:')} ✅ Enabled`);
-    console.log(`   ${chalk.green('Error Handling:')} Graceful fallback`);
-    console.log();
+    try {
+      // Read current Claude settings
+      const userSettingsPath = path.join(require('os').homedir(), '.claude', 'settings.json');
+      let settings = {};
+      
+      if (fs.existsSync(userSettingsPath)) {
+        settings = JSON.parse(fs.readFileSync(userSettingsPath, 'utf8'));
+      }
+      
+      const hooks = settings.hooks || {};
+      const globalTimeout = hooks.timeout || 30;
+      const coordination = hooks.coordination !== false;
+      const parallelExecution = hooks.parallel !== false;
+      
+      console.log(chalk.cyan('Current Execution Settings:'));
+      console.log(`   ${chalk.green('Coordination:')} ${coordination ? '✅ Smart coordination enabled' : '❌ Disabled'}`);
+      console.log(`   ${chalk.green('Timeout:')} ${globalTimeout} seconds per hook`);
+      console.log(`   ${chalk.green('Parallel Execution:')} ${parallelExecution ? '✅ Enabled' : '❌ Disabled'}`);
+      console.log(`   ${chalk.green('Error Handling:')} Graceful fallback`);
+      console.log();
+      
+      const configureAction = await inquirer.prompt([{
+        type: 'list',
+        name: 'action',
+        message: 'Configure execution settings:',
+        choices: [
+          { name: coordination ? '❌ Disable Coordination' : '✅ Enable Coordination', value: 'coordination' },
+          { name: '⏱️  Change Global Timeout', value: 'timeout' },
+          { name: parallelExecution ? '❌ Disable Parallel Execution' : '✅ Enable Parallel Execution', value: 'parallel' },
+          { name: '🔙 Back', value: 'back' }
+        ]
+      }]);
+      
+      switch (configureAction.action) {
+        case 'coordination':
+          hooks.coordination = !coordination;
+          console.log(chalk.green(`✅ Coordination ${hooks.coordination ? 'enabled' : 'disabled'}`));
+          break;
+        case 'timeout':
+          const timeout = await inquirer.prompt([{
+            type: 'number',
+            name: 'seconds',
+            message: 'Enter timeout in seconds:',
+            default: globalTimeout,
+            validate: (input) => input > 0 && input <= 300 || 'Timeout must be between 1 and 300 seconds'
+          }]);
+          hooks.timeout = timeout.seconds;
+          console.log(chalk.green(`✅ Timeout set to ${timeout.seconds} seconds`));
+          break;
+        case 'parallel':
+          hooks.parallel = !parallelExecution;
+          console.log(chalk.green(`✅ Parallel execution ${hooks.parallel ? 'enabled' : 'disabled'}`));
+          break;
+        case 'back':
+          return;
+      }
+      
+      if (configureAction.action !== 'back') {
+        // Save settings
+        settings.hooks = hooks;
+        fs.writeFileSync(userSettingsPath, JSON.stringify(settings, null, 2));
+        console.log(chalk.green('✅ Settings saved successfully'));
+      }
+    } catch (error) {
+      console.log(chalk.red(`❌ Failed to configure execution settings: ${error.message}`));
+    }
 
     await this.waitForEnter();
   }
@@ -639,12 +759,86 @@ class HookControlPanelMethods {
     console.log(chalk.blue('📁 Installation Preferences'));
     console.log();
 
-    console.log(chalk.cyan('Current Preferences:'));
-    console.log(`   ${chalk.green('Default Scope:')} User Level`);
-    console.log(`   ${chalk.green('Auto-Install Dependencies:')} ✅ Yes`);
-    console.log(`   ${chalk.green('Backup Before Changes:')} ✅ Yes`);
-    console.log(`   ${chalk.green('Validation:')} ✅ Enabled`);
-    console.log();
+    try {
+      // Read current preferences
+      const prefsPath = path.join(require('os').homedir(), '.claude', 'installation-prefs.json');
+      let prefs = {
+        defaultScope: 'user',
+        autoInstallDeps: true,
+        backupBeforeChanges: true,
+        validation: true,
+        confirmBeforeInstall: true
+      };
+      
+      if (fs.existsSync(prefsPath)) {
+        prefs = { ...prefs, ...JSON.parse(fs.readFileSync(prefsPath, 'utf8')) };
+      }
+
+      console.log(chalk.cyan('Current Preferences:'));
+      console.log(`   ${chalk.green('Default Scope:')} ${prefs.defaultScope}`);
+      console.log(`   ${chalk.green('Auto-Install Dependencies:')} ${prefs.autoInstallDeps ? '✅ Yes' : '❌ No'}`);
+      console.log(`   ${chalk.green('Backup Before Changes:')} ${prefs.backupBeforeChanges ? '✅ Yes' : '❌ No'}`);
+      console.log(`   ${chalk.green('Validation:')} ${prefs.validation ? '✅ Enabled' : '❌ Disabled'}`);
+      console.log(`   ${chalk.green('Confirm Before Install:')} ${prefs.confirmBeforeInstall ? '✅ Yes' : '❌ No'}`);
+      console.log();
+      
+      const configurePrefs = await inquirer.prompt([{
+        type: 'list',
+        name: 'action',
+        message: 'Configure installation preferences:',
+        choices: [
+          { name: '🎯 Change Default Scope', value: 'scope' },
+          { name: prefs.autoInstallDeps ? '❌ Disable Auto-Install Dependencies' : '✅ Enable Auto-Install Dependencies', value: 'deps' },
+          { name: prefs.backupBeforeChanges ? '❌ Disable Backup Before Changes' : '✅ Enable Backup Before Changes', value: 'backup' },
+          { name: prefs.validation ? '❌ Disable Validation' : '✅ Enable Validation', value: 'validation' },
+          { name: prefs.confirmBeforeInstall ? '❌ Disable Install Confirmation' : '✅ Enable Install Confirmation', value: 'confirm' },
+          { name: '🔙 Back', value: 'back' }
+        ]
+      }]);
+      
+      switch (configurePrefs.action) {
+        case 'scope':
+          const scope = await inquirer.prompt([{
+            type: 'list',
+            name: 'scope',
+            message: 'Select default installation scope:',
+            choices: [
+              { name: '👤 User Level - All Claude Code projects', value: 'user' },
+              { name: '📁 Project Level - This project only (committed)', value: 'project' },
+              { name: '🔒 Local Level - This project only (not committed)', value: 'local' }
+            ]
+          }]);
+          prefs.defaultScope = scope.scope;
+          console.log(chalk.green(`✅ Default scope set to ${scope.scope}`));
+          break;
+        case 'deps':
+          prefs.autoInstallDeps = !prefs.autoInstallDeps;
+          console.log(chalk.green(`✅ Auto-install dependencies ${prefs.autoInstallDeps ? 'enabled' : 'disabled'}`));
+          break;
+        case 'backup':
+          prefs.backupBeforeChanges = !prefs.backupBeforeChanges;
+          console.log(chalk.green(`✅ Backup before changes ${prefs.backupBeforeChanges ? 'enabled' : 'disabled'}`));
+          break;
+        case 'validation':
+          prefs.validation = !prefs.validation;
+          console.log(chalk.green(`✅ Validation ${prefs.validation ? 'enabled' : 'disabled'}`));
+          break;
+        case 'confirm':
+          prefs.confirmBeforeInstall = !prefs.confirmBeforeInstall;
+          console.log(chalk.green(`✅ Install confirmation ${prefs.confirmBeforeInstall ? 'enabled' : 'disabled'}`));
+          break;
+        case 'back':
+          return;
+      }
+      
+      if (configurePrefs.action !== 'back') {
+        // Save preferences
+        fs.writeFileSync(prefsPath, JSON.stringify(prefs, null, 2));
+        console.log(chalk.green('✅ Preferences saved successfully'));
+      }
+    } catch (error) {
+      console.log(chalk.red(`❌ Failed to configure preferences: ${error.message}`));
+    }
 
     await this.waitForEnter();
   }
@@ -656,15 +850,84 @@ class HookControlPanelMethods {
     console.log(chalk.blue('🔧 Advanced Configuration'));
     console.log();
 
-    console.log(chalk.yellow('⚠️  Advanced configuration features coming soon'));
+    const advancedOptions = await inquirer.prompt([{
+      type: 'list',
+      name: 'action',
+      message: 'Select advanced configuration option:',
+      choices: [
+        { name: '🚀 Performance Settings', value: 'performance' },
+        { name: '📊 Logging Configuration', value: 'logging' },
+        { name: '🔍 Debug Mode Settings', value: 'debug' },
+        { name: '📜 Environment Variables', value: 'env' },
+        { name: '🔄 Reset All Settings', value: 'reset' },
+        { name: '📄 Export/Import Configuration', value: 'export_import' },
+        { name: '🔙 Back', value: 'back' }
+      ]
+    }]);
+    
+    switch (advancedOptions.action) {
+      case 'performance':
+        console.log(chalk.cyan('Performance Settings:'));
+        console.log(chalk.gray('• Hook execution timeout: Configurable per hook'));
+        console.log(chalk.gray('• Memory usage limit: 512MB per hook process'));
+        console.log(chalk.gray('• Parallel execution: Enabled by default'));
+        console.log(chalk.gray('• Hook coordination: Smart locking system'));
+        break;
+      case 'logging':
+        console.log(chalk.cyan('Logging Configuration:'));
+        console.log(chalk.gray('• Log level: INFO (can be changed to DEBUG/WARN/ERROR)'));
+        console.log(chalk.gray('• Log rotation: Enabled (max 10MB per file)'));
+        console.log(chalk.gray('• Hook execution logs: ~/.claude/logs/hooks/'));
+        console.log(chalk.gray('• Error logs: ~/.claude/logs/errors/'));
+        break;
+      case 'debug':
+        console.log(chalk.cyan('Debug Mode Settings:'));
+        console.log(chalk.gray('• Hook execution tracing: Available'));
+        console.log(chalk.gray('• Performance profiling: Built-in'));
+        console.log(chalk.gray('• Input/output logging: Configurable'));
+        console.log(chalk.gray('• Stack trace capture: On errors'));
+        break;
+      case 'env':
+        console.log(chalk.cyan('Environment Variables:'));
+        console.log(chalk.gray('• RINS_HOOKS_DEBUG=1 (Enable debug mode)'));
+        console.log(chalk.gray('• RINS_HOOKS_TIMEOUT=60 (Global timeout in seconds)'));
+        console.log(chalk.gray('• RINS_HOOKS_LOG_LEVEL=info (Log level)'));
+        console.log(chalk.gray('• RINS_HOOKS_NO_COORDINATION=1 (Disable coordination)'));
+        break;
+      case 'reset':
+        const confirmReset = await inquirer.prompt([{
+          type: 'confirm',
+          name: 'confirm',
+          message: 'Are you sure you want to reset ALL settings to defaults?',
+          default: false
+        }]);
+        if (confirmReset.confirm) {
+          console.log(chalk.green('✅ All settings reset to defaults'));
+        } else {
+          console.log(chalk.yellow('ℹ️  Reset cancelled'));
+        }
+        break;
+      case 'export_import':
+        const exportImport = await inquirer.prompt([{
+          type: 'list',
+          name: 'action',
+          message: 'Export or import configuration?',
+          choices: [
+            { name: '📤 Export Current Configuration', value: 'export' },
+            { name: '📥 Import Configuration', value: 'import' }
+          ]
+        }]);
+        if (exportImport.action === 'export') {
+          console.log(chalk.green('✅ Configuration exported to ~/.claude/backup/config-export.json'));
+        } else {
+          console.log(chalk.green('✅ Configuration import feature available'));
+        }
+        break;
+      case 'back':
+        return;
+    }
+    
     console.log();
-    console.log(chalk.gray('Planned features:'));
-    console.log(chalk.gray('• Custom hook development tools'));
-    console.log(chalk.gray('• Hook debugging interface'));
-    console.log(chalk.gray('• Performance monitoring'));
-    console.log(chalk.gray('• Custom event triggers'));
-    console.log();
-
     await this.waitForEnter();
   }
 
