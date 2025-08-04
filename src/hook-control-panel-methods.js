@@ -10,6 +10,17 @@ const { execSync } = require('child_process');
  */
 
 class HookControlPanelMethods {
+  constructor() {
+    // Initialize core components if not already done
+    if (!this.configManager) {
+      const ConfigManager = require('./config');
+      this.configManager = new ConfigManager();
+    }
+    if (!this.installer) {
+      const Installer = require('./installer');
+      this.installer = new Installer();
+    }
+  }
   /**
    * Auto-update settings management
    */
