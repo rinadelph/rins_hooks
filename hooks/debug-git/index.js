@@ -191,6 +191,62 @@ class DebugGitHook {
   }
 
   /**
+   * Check for recent git errors by examining git output
+   */
+  checkRecentGitErrors() {
+    const errors = [];
+    
+    try {
+      const { execSync } = require('child_process');
+      
+      // Try a simple git operation to see if it fails
+      try {
+        execSync('git status --porcelain', { stdio: 'pipe' });
+      } catch (statusError) {
+        errors.push(`🚨 Git status failed: ${statusError.message}`);
+      }
+
+      // Check if we can read the git log (repository corruption check)
+      try {
+        execSync('git log -1 --oneline', { stdio: 'pipe' });
+      } catch (logError) {
+        errors.push(`🚨 Git log failed: ${logError.message}`);
+      }
+
+      // Check if index is readable
+      try {
+        execSync('git diff --cached --name-only', { stdio: 'pipe' });
+      } catch (indexError) {
+        errors.push(`🚨 Git index read failed: ${indexError.message}`);
+      }
+
+      // Check for specific lock file issues
+      const gitDir = path.join(process.cwd(), '.git');
+      if (fs.existsSync(gitDir)) {
+        const lockFiles = fs.readdirSync(gitDir).filter(file => file.endsWith('.lock'));
+        if (lockFiles.length > 0) {
+          errors.push(`🔒 Active git locks: ${lockFiles.join(', ')}`);
+        }
+      }
+
+      // Check current git configuration for issues
+      try {
+        const config = execSync('git config --list', { encoding: 'utf8', stdio: 'pipe' });
+        if (!config.includes('user.name') || !config.includes('user.email')) {
+          errors.push(`⚠️  Git user configuration incomplete (missing name or email)`);
+        }
+      } catch (configError) {
+        errors.push(`🚨 Git config read failed: ${configError.message}`);
+      }
+
+    } catch (error) {
+      errors.push(`🚨 Git error check failed: ${error.message}`);
+    }
+
+    return errors;
+  }
+
+  /**
    * Log activity for debugging
    */
   logActivity(data) {
