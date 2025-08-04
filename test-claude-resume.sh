@@ -191,6 +191,47 @@ test_claude_resume() {
         echo "=== END TEST 4: ENVIRONMENT DEBUG ==="
     } | tee -a "$SESSION_LOG" "$DEBUG_LOG"
     
+    # Test 5: Interactive session with automatic interruption and capture
+    echo -e "${BLUE}Test 5: Interactive session with auto-interruption${NC}"
+    {
+        echo "=== TEST 5: INTERACTIVE SESSION CAPTURE ==="
+        echo "Timestamp: $(date)"
+        echo "This test runs claude -r interactively and captures everything including interruptions"
+        echo
+        
+        # Use expect if available, otherwise use timeout with specific interrupt handling
+        if command -v expect >/dev/null 2>&1; then
+            echo "Using expect for interactive session capture..."
+            expect -c "
+                set timeout 30
+                log_file $DEBUG_LOG.interactive
+                spawn claude -r --debug
+                expect {
+                    \"Select a session\" { send \"q\r\"; exp_continue }
+                    \"›\" { send \"q\r\"; exp_continue }
+                    timeout { send \"\003\"; exp_continue }
+                    eof { exit 0 }
+                }
+            " || echo "Expect session completed or interrupted"
+        else
+            echo "Using timeout with interrupt simulation..."
+            # Run in background to capture all output
+            (
+                timeout 15s claude -r --debug 2>&1 || true
+                echo "=== SESSION ENDED OR INTERRUPTED ==="
+            ) | tee -a "$DEBUG_LOG.interactive" &
+            
+            INTERACTIVE_PID=$!
+            
+            # Wait a few seconds then send interrupt
+            sleep 8
+            kill -INT $INTERACTIVE_PID 2>/dev/null || true
+            wait $INTERACTIVE_PID 2>/dev/null || true
+        fi
+        
+        echo "=== END TEST 5: INTERACTIVE CAPTURE ==="
+    } | tee -a "$SESSION_LOG" "$DEBUG_LOG"
+    
     # Clean up background monitoring
     if [ -n "${MONITOR_PID:-}" ]; then
         kill $MONITOR_PID 2>/dev/null || true
