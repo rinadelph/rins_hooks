@@ -272,8 +272,8 @@ class HookControlPanel {
     // Initialize and scan environment
     await this.initialize();
 
-    console.log(chalk.blue('🎛️  Complete Hook Management Center'));
-    console.log(chalk.gray('100% self-contained interface - no CLI commands needed'));
+    console.log(chalk.blue('🎣 Rapala - Claude Code Enhancement Center'));
+    console.log(chalk.gray('Hooks • Tools • Resources • Prompts • MCPs'));
     console.log();
 
     while (true) {
