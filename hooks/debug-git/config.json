@@ -1,0 +1,12 @@
+{
+  "name": "debug-git",
+  "version": "1.0.0",
+  "description": "Debug git command failures by showing errors to the model",
+  "author": "rins_hooks",
+  "tags": ["debug", "git", "troubleshooting", "development"],
+  "events": ["PreToolUse"],
+  "matcher": "Edit|Write|MultiEdit",
+  "timeout": 10,
+  "requirements": [],
+  "platforms": ["linux", "darwin", "win32"]
+}
