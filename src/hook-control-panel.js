@@ -286,29 +286,32 @@ class HookControlPanel {
     while (true) {
       console.clear();
       
-      // Header with navigation indicators
-      console.log(chalk.blue('🎣 Rapala - Claude Code Enhancement Center'));
+      // Header with better styling
+      console.log(chalk.cyan('╭───────────────────────────────────────────────────────────────╮'));
+      console.log(chalk.cyan('│') + chalk.bold.blue('          🎣 Rapala - Claude Code Enhancement Center           ') + chalk.cyan('│'));
+      console.log(chalk.cyan('╰───────────────────────────────────────────────────────────────╯'));
       console.log();
       
-      // Section navigation bar
+      // Enhanced section navigation bar with better highlighting
       const navBar = sections.map((section, index) => {
         const name = sectionNames[index];
         if (index === currentSection) {
-          return chalk.bgBlue.white(` ${name} `);
+          return chalk.bgCyan.black(` ${name} `);
         } else {
-          return chalk.gray(` ${name} `);
+          return chalk.dim(` ${name} `);
         }
-      }).join('  ');
+      }).join(chalk.gray(' │ '));
       
-      console.log(`${navBar}`);
-      console.log(chalk.gray('← → Navigate sections • ↵ Enter section • Q Quit'));
+      console.log(`  ${navBar}`);
+      console.log();
+      console.log(chalk.dim('  ← → Navigate sections • ↵ Enter section • I Install • M Manage • V View • Q Quit'));
       console.log();
 
       // Show current section overview
       await this.displaySectionOverview(sections[currentSection]);
       
-      // Direct keypress - no prompts
-      console.log(chalk.gray('← → arrow keys to navigate | Enter (manage) | I (install) | M (manage) | V (view) | Q (quit)'));
+      // Clean keypress instruction
+      console.log(chalk.bgBlack.white('  Press: ← → Navigate • Enter Manage • I Install • M Manage • V View • Q Quit  '));
       
       const key = await this.waitForDirectKeypress();
 
@@ -349,43 +352,60 @@ class HookControlPanel {
   }
 
   /**
-   * Display clean overview for a specific section
+   * Display enhanced overview for a specific section
    */
   async displaySectionOverview(sectionType) {
     const sectionData = this.enhancementStates[sectionType];
     const totalInstalled = sectionData.user.length + sectionData.project.length + sectionData.local.length;
     const totalAvailable = sectionData.available.length;
 
-    // Section summary
-    console.log(chalk.cyan(`${this.getSectionTitle(sectionType)} Overview:`));
+    // Section header with icon
+    const sectionIcons = {
+      hooks: '🔗',
+      tools: '🔧', 
+      resources: '📚',
+      prompts: '💬',
+      mcps: '🤖'
+    };
+    
+    const icon = sectionIcons[sectionType] || '📋';
+    console.log(chalk.bold.cyan(`  ${icon} ${this.getSectionTitle(sectionType)} Overview`));
+    console.log(chalk.gray('  ───────────────────────────────────'));
     console.log();
     
+    // Enhanced stats display
     if (totalInstalled === 0) {
-      console.log(chalk.gray('   No items installed in this section'));
-      console.log(chalk.cyan(`   ${totalAvailable} items available to install`));
+      console.log(chalk.yellow('    📦 No items installed yet'));
+      console.log(chalk.cyan(`    🎯 ${totalAvailable} items ready to install`));
     } else {
-      console.log(chalk.green(`   ✓ ${totalInstalled} installed`));
-      console.log(chalk.gray(`   ${totalAvailable - totalInstalled} more available`));
+      console.log(chalk.green(`    ✅ ${totalInstalled} items installed`));
+      if (totalAvailable - totalInstalled > 0) {
+        console.log(chalk.cyan(`    📦 ${totalAvailable - totalInstalled} more available`));
+      }
       
-      // Show first few installed items as preview
+      // Show installed items with better formatting
       const allInstalled = [...sectionData.user, ...sectionData.project, ...sectionData.local];
       const preview = allInstalled.slice(0, 3);
       
       console.log();
-      console.log(chalk.blue('   Installed items:'));
+      console.log(chalk.blue('    📋 Recently installed:'));
       preview.forEach(item => {
         const scope = this.getScopeIcon(item, sectionData);
-        console.log(chalk.gray(`   • ${item.name} ${scope}`));
+        const scopeText = scope === '👤' ? 'user' : scope === '📁' ? 'project' : 'local';
+        console.log(`      • ${chalk.green(item.name)} ${chalk.dim(`(${scopeText})`)}`);
       });
       
       if (allInstalled.length > 3) {
-        console.log(chalk.gray(`   ... and ${allInstalled.length - 3} more`));
+        console.log(chalk.dim(`      ... and ${allInstalled.length - 3} more`));
       }
     }
     
     console.log();
-    console.log(chalk.gray(this.getSectionDescription(sectionType)));
+    console.log(chalk.italic.gray(`    ${this.getSectionDescription(sectionType)}`));
     console.log();
+    
+    // Bottom instruction bar
+    console.log(chalk.dim('  ────────────────────────────────────────────────────────────────'));
   }
 
   /**
