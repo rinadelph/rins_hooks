@@ -94,6 +94,7 @@ class HookGenerator {
       tags: ['generated', 'dynamic', hookSpec.matcher?.toLowerCase() || 'general'],
       platforms: ['linux', 'darwin', 'win32'],
       events: [hookSpec.event],
+      matcher: hookSpec.matcher, // Store matcher for router
       installationType: 'generated'
     };
     
