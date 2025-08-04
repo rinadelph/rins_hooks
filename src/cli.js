@@ -9,6 +9,7 @@ const Installer = require('./installer');
 const ConfigManager = require('./config');
 const Utils = require('./utils');
 const VersionCheck = require('./version-check');
+const HookManager = require('./hook-manager');
 
 const program = new Command();
 
