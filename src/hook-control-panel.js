@@ -432,25 +432,36 @@ class HookControlPanel {
     while (true) {
       if (debug) console.log(`DEBUG: enterSection loop iteration for ${sectionType}`);
       console.clear();
-      console.log(chalk.blue(`🎣 Rapala - ${this.getSectionTitle(sectionType)} Management`));
+      
+      // Header with same styling as main interface
+      console.log(chalk.cyan('╭───────────────────────────────────────────────────────────────╮'));
+      console.log(chalk.cyan('│') + chalk.bold.blue(`         🎣 Rapala - ${this.getSectionTitle(sectionType)} Management         `) + chalk.cyan('│'));
+      console.log(chalk.cyan('╰───────────────────────────────────────────────────────────────╯'));
       console.log();
 
-      // Show detailed section content
+      // Show detailed section content with consistent styling
       await this.displayDetailedSection(sectionType);
+
+      // Action buttons with consistent styling
+      console.log();
+      console.log(chalk.cyan('──────────────────────────────────────────────────────────────'));
+      console.log(chalk.bold('Actions: ') + chalk.dim('📦 Install • ⚙️  Manage • 📊 View • 🔄 Update • ← Back • Q Quit'));
+      console.log();
 
       const action = await inquirer.prompt([{
         type: 'list',
         name: 'choice',
-        message: `${this.getSectionTitle(sectionType)} actions:`,
+        message: chalk.cyan(`${this.getSectionTitle(sectionType)} actions:`),
         choices: [
-          { name: '📦 Install items', value: 'install' },
-          { name: '⚙️ Manage installed items', value: 'manage' },
-          { name: '📊 View all items', value: 'view' },
-          { name: '🔄 Update items', value: 'update' },
-          new inquirer.Separator(),
-          { name: '← Back to sections', value: 'back' },
-          { name: 'Q Quit Rapala', value: 'quit' }
-        ]
+          { name: chalk.blue('📦 Install items'), value: 'install' },
+          { name: chalk.green('⚙️ Manage installed items'), value: 'manage' },
+          { name: chalk.magenta('📊 View all items'), value: 'view' },
+          { name: chalk.yellow('🔄 Update items'), value: 'update' },
+          new inquirer.Separator('────────────────────────────'),
+          { name: chalk.gray('← Back to sections'), value: 'back' },
+          { name: chalk.red('Q Quit Rapala'), value: 'quit' }
+        ],
+        pageSize: 10
       }]);
 
       if (debug) console.log(`DEBUG: User selected action: ${action.choice}`);
