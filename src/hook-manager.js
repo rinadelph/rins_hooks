@@ -234,7 +234,7 @@ class HookManager {
         
         for (const hook of matcher.hooks) {
           const hookName = path.basename(path.dirname(hook.command));
-          console.log(chalk.gray(`    • ${hookName} (timeout: ${hook.timeout || 30}s)`));
+          console.log(chalk.gray(`    • ${hookName}`));
         }
       }
     }
