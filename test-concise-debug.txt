@@ -1,0 +1,3 @@
+Testing the new concise debug output
+Should show brief git status instead of verbose details
+Timestamp: 2025-08-04T20:35:00.000Z
