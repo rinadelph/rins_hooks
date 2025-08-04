@@ -4,7 +4,7 @@
   "description": "Debug git command failures by showing errors to the model",
   "author": "rins_hooks",
   "tags": ["debug", "git", "troubleshooting", "development"],
-  "events": ["PreToolUse"],
+  "events": ["PostToolUse"],
   "matcher": "Edit|Write|MultiEdit",
   "timeout": 10,
   "requirements": [],
