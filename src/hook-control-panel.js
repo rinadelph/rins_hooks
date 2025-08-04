@@ -606,12 +606,47 @@ class HookControlPanel {
     // Section icon
     const sectionIcon = this.getCategoryIcon(sectionType);
     
-    // Content with consistent styling
-    if (allInstalled.length > 0) {
+    // Separate hooks by type if this is the hooks section
+    if (sectionType === 'hooks' && allInstalled.length > 0) {
+      const claudeCodeHooks = allInstalled.filter(item => item.hookType === 'claude-code');
+      const rapalaHooks = allInstalled.filter(item => item.hookType === 'rapala-generated');
+
+      if (claudeCodeHooks.length > 0) {
+        console.log(`  ${chalk.bold.blue('🔧 Claude Code Hooks')} ${chalk.gray(`(${claudeCodeHooks.length})`)}`);
+        console.log(chalk.cyan('  ─────────────────────────────'));
+        
+        claudeCodeHooks.slice(0, 3).forEach(item => {
+          const scope = this.getScopeIcon(item, sectionData);
+          const description = (item.description || 'No description').substring(0, 35) + '...';
+          console.log(`    ${chalk.blue('•')} ${chalk.bold(item.name)} ${scope} ${chalk.gray('- ' + description)}`);
+        });
+        
+        if (claudeCodeHooks.length > 3) {
+          console.log(`    ${chalk.gray(`... and ${claudeCodeHooks.length - 3} more`)}`);
+        }
+        console.log();
+      }
+
+      if (rapalaHooks.length > 0) {
+        console.log(`  ${chalk.bold.magenta('🎣 Rapala Generated Hooks')} ${chalk.gray(`(${rapalaHooks.length})`)}`);
+        console.log(chalk.cyan('  ─────────────────────────────'));
+        
+        rapalaHooks.slice(0, 3).forEach(item => {
+          const scope = this.getScopeIcon(item, sectionData);
+          const description = (item.description || 'No description').substring(0, 35) + '...';
+          console.log(`    ${chalk.magenta('🎣')} ${chalk.bold(item.name)} ${scope} ${chalk.gray('- ' + description)}`);
+        });
+        
+        if (rapalaHooks.length > 3) {
+          console.log(`    ${chalk.gray(`... and ${rapalaHooks.length - 3} more`)}`);
+        }
+        console.log();
+      }
+    } else if (allInstalled.length > 0) {
+      // For non-hook sections, use original display
       console.log(`  ${chalk.bold.green('✅ Installed')} ${chalk.gray(`(${allInstalled.length})`)}`);
       console.log(chalk.cyan('  ─────────────────────────────'));
       
-      // Show recently installed first, limit to 3, more compact
       const recentInstalled = allInstalled.slice(0, 3);
       recentInstalled.forEach(item => {
         const scope = this.getScopeIcon(item, sectionData);
@@ -629,10 +664,16 @@ class HookControlPanel {
       console.log(`  ${chalk.bold.yellow('📦 Available')} ${chalk.gray(`(${available.length})`)}`);
       console.log(chalk.cyan('  ─────────────────────────────'));
       
-      // Show top 3 available items, more compact
+      // Show hook types for available items if in hooks section
       available.slice(0, 3).forEach(item => {
         const description = (item.description || 'No description').substring(0, 40) + '...';
-        console.log(`    ${chalk.yellow('•')} ${chalk.bold(item.name)} ${chalk.gray('- ' + description)}`);
+        if (sectionType === 'hooks') {
+          const typeIcon = item.hookType === 'rapala-generated' ? '🎣' : '•';
+          const typeColor = item.hookType === 'rapala-generated' ? chalk.magenta : chalk.yellow;
+          console.log(`    ${typeColor(typeIcon)} ${chalk.bold(item.name)} ${chalk.gray('- ' + description)}`);
+        } else {
+          console.log(`    ${chalk.yellow('•')} ${chalk.bold(item.name)} ${chalk.gray('- ' + description)}`);
+        }
       });
       
       if (available.length > 3) {
