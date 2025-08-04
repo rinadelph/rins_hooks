@@ -188,6 +188,9 @@ class HookControlPanel {
       const name = item.name || '';
       const description = item.description || '';
 
+      // Add hook type classification
+      item.hookType = this.classifyHookType(item);
+
       // Categorization logic based on name, tags, and description
       if (this.isHook(name, tags, description)) {
         categories.hooks.push(item);
@@ -206,6 +209,32 @@ class HookControlPanel {
     });
 
     return categories;
+  }
+
+  /**
+   * Classify hook type: Claude Code built-in vs Rapala generated
+   */
+  classifyHookType(item) {
+    // Check if hook has installationType indicating it's generated
+    if (item.installationType === 'generated') {
+      return 'rapala-generated';
+    }
+
+    // Check for Rapala hook generator patterns
+    if (item.author === 'Rapala Hook Generator' || 
+        (item.tags && item.tags.includes('generated')) ||
+        (item.tags && item.tags.includes('dynamic'))) {
+      return 'rapala-generated';
+    }
+
+    // Check for timestamp-based naming (generated hooks pattern)
+    const timestampPattern = /-\d{6,}$/;
+    if (timestampPattern.test(item.name)) {
+      return 'rapala-generated';
+    }
+
+    // Everything else is a traditional Claude Code hook
+    return 'claude-code';
   }
 
   /**
