@@ -1,0 +1,11 @@
+{
+  "name": "rapala-command",
+  "description": "Enable /rapala slash commands for generating Claude Code hooks from natural language",
+  "version": "1.0.0",
+  "author": "Rapala Hook Management System",
+  "tags": ["command", "generation", "slash-command", "utility"],
+  "platforms": ["linux", "darwin", "win32"],
+  "requirements": [],
+  "matcher": "",
+  "installationType": "hook"
+}
