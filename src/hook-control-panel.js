@@ -444,9 +444,8 @@ class HookControlPanel {
 
       // Action buttons with consistent styling
       console.log();
-      console.log(chalk.cyan('──────────────────────────────────────────────────────────────'));
-      console.log(chalk.bold('Actions: ') + chalk.dim('📦 Install • ⚙️  Manage • 📊 View • 🔄 Update • ← Back • Q Quit'));
-      console.log();
+      console.log(chalk.cyan('──────────────────────────────────────────────────'));
+      console.log(chalk.bold('Actions: ') + chalk.dim('📦 Install • ⚙️ Manage • 📊 View • 🔄 Update • ← Back • Q Quit'));
 
       const action = await inquirer.prompt([{
         type: 'list',
