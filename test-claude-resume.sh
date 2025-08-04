@@ -183,7 +183,7 @@ test_claude_resume() {
         echo "Command: echo '$TEST_PROMPT' | claude -r --debug"
         echo
         
-        CLAUDE_DEBUG=1 CLAUDE_VERBOSE=1 timeout 45s sh -c "echo '$TEST_PROMPT' | claude -r --debug 2>&1" || {
+        CLAUDE_DEBUG=1 CLAUDE_VERBOSE=1 timeout 10s sh -c "echo '$TEST_PROMPT' | claude -r --debug 2>&1" || {
             echo "Environment debug test failed or timed out (exit code: $?)"
             echo "This is expected if the session requires interactive input"
         }
