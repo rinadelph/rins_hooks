@@ -606,6 +606,9 @@ class HookControlPanel {
       }]);
 
       switch (installAction.action) {
+        case 'view_all':
+          await this.viewAllHooksWithStatus(availableHooks);
+          break;
         case 'single':
           await this.installSingleHook(uninstalledHooks);
           break;
