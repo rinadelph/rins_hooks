@@ -138,7 +138,7 @@ program
 
         if (status.user.length === 0 && status.project.length === 0 && status.local.length === 0) {
           console.log(chalk.yellow('ℹ️  No hooks installed.'));
-          console.log(chalk.cyan('Run `rins_hooks install` to get started.'));
+          console.log(chalk.cyan('Run `rapala install` to get started.'));
         }
       } else {
         // Interactive control panel
