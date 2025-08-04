@@ -648,8 +648,8 @@ class HookControlPanel {
     // Summary stats with styling
     const totalCount = allInstalled.length + available.length;
     if (totalCount > 0) {
-      console.log(chalk.cyan('  ───────────────────────────────────'));
-      console.log(`  ${sectionIcon} ${chalk.bold(this.getSectionTitle(sectionType))} overview: ${chalk.green(allInstalled.length)} installed • ${chalk.yellow(available.length)} available`);
+      console.log(chalk.cyan('  ─────────────────────────────'));
+      console.log(`  ${sectionIcon} ${chalk.bold(this.getSectionTitle(sectionType))}: ${chalk.green(allInstalled.length)} installed • ${chalk.yellow(available.length)} available`);
     }
   }
 
