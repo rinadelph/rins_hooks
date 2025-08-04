@@ -282,28 +282,21 @@ function getTmuxInfo() {
       try {
         const { execSync } = require('child_process');
         
-        // Get current session name
-        const sessionName = execSync('tmux display-message -p "#S"', { 
+        // Get comprehensive tmux info in one call for accuracy
+        const tmuxInfo = execSync('tmux display-message -p "#S:#I:#W.#P"', { 
           encoding: 'utf8', 
           stdio: 'pipe',
           timeout: 1000 
         }).trim();
         
-        // Get current pane info  
-        const paneInfo = execSync('tmux display-message -p "#P"', { 
+        // Also get the absolute pane ID for additional context
+        const absolutePaneId = execSync('tmux display-message -p "#{pane_id}"', { 
           encoding: 'utf8', 
           stdio: 'pipe',
           timeout: 1000 
         }).trim();
         
-        // Get window info for extra context
-        const windowInfo = execSync('tmux display-message -p "#I:#W"', { 
-          encoding: 'utf8', 
-          stdio: 'pipe',
-          timeout: 1000 
-        }).trim();
-        
-        return `${sessionName}:${windowInfo}.${paneInfo}`;
+        return `${tmuxInfo}${absolutePaneId}`;
       } catch (tmuxError) {
         // If tmux commands fail, just indicate we're in tmux
         return 'tmux-session';
