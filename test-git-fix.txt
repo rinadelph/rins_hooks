@@ -1,0 +1,9 @@
+Testing git hook fixes:
+
+1. ✅ Removed "Generated with Claude Code via rins_hooks" from commit messages
+2. ✅ Added git staging verification with retry logic  
+3. ✅ Enhanced error reporting with detailed git command output
+4. ✅ Added git lock conflict detection and cleanup
+5. ✅ Improved file staging validation before commit
+
+This file should trigger both auto-commit and git-agentmcp hooks to test the fixes.
