@@ -333,12 +333,17 @@ class HookControlPanel {
         case 'enter':
           if (debug) console.log(`DEBUG: Entering section: ${sections[currentSection]}`);
           const shouldQuit = await this.enterSection(sections[currentSection], debug);
-          if (debug) console.log(`DEBUG: enterSection returned: ${shouldQuit}`);
+          if (debug) console.log(`DEBUG: enterSection returned: ${shouldQuit}, type: ${typeof shouldQuit}`);
           if (shouldQuit === true) {
             if (debug) console.log('DEBUG: Quitting from enterSection');
             return;
           }
-          if (debug) console.log('DEBUG: Continuing after enterSection');
+          if (shouldQuit === false) {
+            if (debug) console.log('DEBUG: Back to sections - continuing navigation loop');
+          } else {
+            if (debug) console.log(`DEBUG: Unexpected return value from enterSection: ${shouldQuit}`);
+          }
+          if (debug) console.log('DEBUG: About to continue navigation loop');
           break;
         case 'i':
           await this.installSectionItems(sections[currentSection]);
