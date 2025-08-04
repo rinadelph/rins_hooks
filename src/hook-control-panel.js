@@ -307,10 +307,20 @@ class HookControlPanel {
       // Show current section overview
       await this.displaySectionOverview(sections[currentSection]);
       
-      // Simple keypress navigation
-      console.log(chalk.gray('Press: ← → (navigate) | Enter (manage) | I (install) | M (manage) | V (view) | Q (quit)'));
-      
-      const navigation = await this.waitForKeypress();
+      // Simple single key navigation
+      const navigation = await inquirer.prompt([{
+        type: 'expand',
+        name: 'action',
+        message: `${sectionNames[currentSection]} Section:`,
+        choices: [
+          { key: 'h', name: '← Previous section', value: 'left' },
+          { key: 'l', name: '→ Next section', value: 'right' },
+          { key: 'i', name: 'Install items', value: 'i' },
+          { key: 'm', name: 'Manage items', value: 'm' },
+          { key: 'v', name: 'View items', value: 'v' },
+          { key: 'q', name: 'Quit Rapala', value: 'q' }
+        ]
+      }]);
 
       // Handle navigation and direct actions
       switch (navigation) {
