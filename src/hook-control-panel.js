@@ -254,6 +254,461 @@ class HookControlPanel {
   }
 
   /**
+   * Show comprehensive status with all details
+   */
+  async showComprehensiveStatus() {
+    console.log(chalk.blue('📊 Comprehensive System Status'));
+    console.log();
+
+    // Environment details
+    console.log(chalk.cyan('🌍 Environment Details:'));
+    console.log(`   ${chalk.green('Current Directory:')} ${this.currentDir}`);
+    console.log(`   ${chalk.green('Project Type:')} ${this.projectContext.type}`);
+    console.log(`   ${chalk.green('Has Git:')} ${this.projectContext.hasGit ? '✅ Yes' : '❌ No'}`);
+    console.log(`   ${chalk.green('Claude Config:')} ${this.projectContext.hasClaudeConfig ? '✅ Found' : '❌ Not found'}`);
+    console.log();
+
+    // Hook installation details by scope
+    console.log(chalk.cyan('🎣 Hook Details by Scope:'));
+    
+    if (this.hookStates.user.length > 0) {
+      console.log(chalk.blue(`👤 User Level (${this.hookStates.user.length} hooks):`));
+      this.hookStates.user.forEach(hook => {
+        console.log(`   ✅ ${hook.name} - ${hook.description || 'No description'}`);
+      });
+      console.log();
+    }
+
+    if (this.hookStates.project.length > 0) {
+      console.log(chalk.blue(`📁 Project Level (${this.hookStates.project.length} hooks):`));
+      this.hookStates.project.forEach(hook => {
+        console.log(`   ✅ ${hook.name} - ${hook.description || 'No description'}`);
+      });
+      console.log();
+    }
+
+    if (this.hookStates.local.length > 0) {
+      console.log(chalk.blue(`🔒 Local Level (${this.hookStates.local.length} hooks):`));
+      this.hookStates.local.forEach(hook => {
+        console.log(`   ✅ ${hook.name} - ${hook.description || 'No description'}`);
+      });
+      console.log();
+    }
+
+    // Available hooks
+    const installedNames = [...this.hookStates.user, ...this.hookStates.project, ...this.hookStates.local].map(h => h.name);
+    const uninstalled = this.hookStates.available.filter(h => !installedNames.includes(h.name));
+    
+    if (uninstalled.length > 0) {
+      console.log(chalk.blue(`📦 Available for Installation (${uninstalled.length} hooks):`));
+      uninstalled.forEach(hook => {
+        console.log(`   📋 ${hook.name} - ${hook.description}`);
+      });
+      console.log();
+    }
+
+    // System settings
+    console.log(chalk.cyan('⚙️  System Settings:'));
+    console.log(`   ${chalk.green('Auto-Update:')} ${this.hookStates.autoUpdate ? '✅ Enabled' : '❌ Disabled'}`);
+    console.log(`   ${chalk.green('Version Check:')} Available`);
+    console.log();
+
+    await this.waitForEnter();
+  }
+
+  /**
+   * Perform deep scan of current directory and environment
+   */
+  async performDeepScan() {
+    console.log(chalk.blue('🔍 Deep Environment Scan'));
+    console.log();
+
+    console.log(chalk.cyan('Scanning file system...'));
+    
+    // Scan for various config files
+    const configFiles = [
+      { name: 'package.json', type: 'Node.js project' },
+      { name: 'pyproject.toml', type: 'Python project' },
+      { name: 'Cargo.toml', type: 'Rust project' },
+      { name: '.gitignore', type: 'Git repository' },
+      { name: 'README.md', type: 'Documentation' },
+      { name: '.env', type: 'Environment variables' },
+      { name: '.claude/settings.json', type: 'Claude project config' },
+      { name: '.claude/settings.local.json', type: 'Claude local config' }
+    ];
+
+    console.log(chalk.blue('📄 Configuration Files Found:'));
+    configFiles.forEach(({ name, type }) => {
+      const exists = fs.existsSync(path.join(this.currentDir, name));
+      console.log(`   ${exists ? '✅' : '❌'} ${name} (${type})`);
+    });
+    console.log();
+
+    // Scan for hook-related directories
+    console.log(chalk.blue('📁 Hook-Related Directories:'));
+    const hookDirs = [
+      '.claude',
+      '.claude/hook-locks',
+      'hooks',
+      'scripts'
+    ];
+
+    hookDirs.forEach(dir => {
+      const dirPath = path.join(this.currentDir, dir);
+      const exists = fs.existsSync(dirPath);
+      console.log(`   ${exists ? '✅' : '❌'} ${dir} ${exists ? `(${fs.readdirSync(dirPath).length} items)` : ''}`);
+    });
+    console.log();
+
+    // Git information if available
+    if (this.projectContext.hasGit) {
+      console.log(chalk.blue('🔄 Git Information:'));
+      try {
+        const branch = execSync('git branch --show-current', { encoding: 'utf8', cwd: this.currentDir }).trim();
+        const status = execSync('git status --porcelain', { encoding: 'utf8', cwd: this.currentDir }).trim();
+        const lastCommit = execSync('git log -1 --oneline', { encoding: 'utf8', cwd: this.currentDir }).trim();
+        
+        console.log(`   ${chalk.green('Current Branch:')} ${branch}`);
+        console.log(`   ${chalk.green('Working Tree:')} ${status ? '🔶 Has changes' : '✅ Clean'}`);
+        console.log(`   ${chalk.green('Last Commit:')} ${lastCommit}`);
+        console.log();
+      } catch (error) {
+        console.log(`   ❌ Could not read git information: ${error.message}`);
+        console.log();
+      }
+    }
+
+    await this.waitForEnter();
+  }
+
+  /**
+   * Complete individual hook management
+   */
+  async manageIndividualHooksComplete() {
+    console.log(chalk.blue('⚙️  Individual Hook Management'));
+    console.log();
+
+    const allHooks = [...this.hookStates.user, ...this.hookStates.project, ...this.hookStates.local];
+    
+    if (allHooks.length === 0) {
+      console.log(chalk.yellow('ℹ️  No hooks installed to manage.'));
+      console.log(chalk.cyan('Install hooks first using the "Install & Configure Hooks" option.'));
+      await this.waitForEnter();
+      return;
+    }
+
+    // Select hook to manage
+    const hookChoices = allHooks.map(hook => {
+      const scope = this.hookStates.user.includes(hook) ? '👤' : 
+                    this.hookStates.project.includes(hook) ? '📁' : '🔒';
+      return {
+        name: `${hook.name} ${scope} - ${hook.description || 'No description'}`,
+        value: hook,
+        short: hook.name
+      };
+    });
+
+    const selectedHook = await inquirer.prompt([{
+      type: 'list',
+      name: 'hook',
+      message: 'Select a hook to manage:',
+      choices: hookChoices,
+      pageSize: 10
+    }]);
+
+    // Management options
+    const actions = await inquirer.prompt([{
+      type: 'list',
+      name: 'action',
+      message: `What would you like to do with ${selectedHook.hook.name}?`,
+      choices: [
+        { name: '📊 View Detailed Information', value: 'details' },
+        { name: '⚙️  Configure Hook Settings', value: 'configure' },
+        { name: '🔄 Update This Hook', value: 'update' },
+        { name: '📁 Change Installation Scope', value: 'move' },
+        { name: '⏸️  Disable Hook', value: 'disable' },
+        { name: '▶️  Enable Hook', value: 'enable' },
+        { name: '❌ Uninstall Hook', value: 'uninstall' },
+        new inquirer.Separator(),
+        { name: '🔙 Back to Main Menu', value: 'back' }
+      ]
+    }]);
+
+    const hook = selectedHook.hook;
+
+    switch (actions.action) {
+      case 'details':
+        await this.showHookDetailsComplete(hook);
+        break;
+      case 'configure':
+        await this.configureHookComplete(hook);
+        break;
+      case 'update':
+        await this.updateSingleHookComplete(hook);
+        break;
+      case 'move':
+        await this.moveHookScopeComplete(hook);
+        break;
+      case 'disable':
+        await this.disableHookComplete(hook);
+        break;
+      case 'enable':
+        await this.enableHookComplete(hook);
+        break;
+      case 'uninstall':
+        await this.uninstallHookComplete(hook);
+        break;
+      case 'back':
+        return;
+    }
+  }
+
+  /**
+   * Complete hook installation interface
+   */
+  async installHooksComplete() {
+    console.log(chalk.blue('📦 Complete Hook Installation'));
+    console.log();
+
+    // Use the enhanced installer but make it truly complete
+    await this.installer.enhancedInteractiveInstall();
+  }
+
+  /**
+   * Complete update system
+   */
+  async updateSystemComplete() {
+    console.log(chalk.blue('🔄 Complete Update System'));
+    console.log();
+
+    const updateOptions = await inquirer.prompt([{
+      type: 'list',
+      name: 'action',
+      message: 'What would you like to do?',
+      choices: [
+        { name: '🔍 Check for Updates', value: 'check' },
+        { name: '🔄 Update All Hooks', value: 'update_all' },
+        { name: '⚙️  Auto-Update Settings', value: 'auto_settings' },
+        { name: '📊 Update History', value: 'history' },
+        { name: '🔙 Back to Main Menu', value: 'back' }
+      ]
+    }]);
+
+    switch (updateOptions.action) {
+      case 'check':
+        await this.checkForUpdatesComplete();
+        break;
+      case 'update_all':
+        await this.updateAllHooksComplete();
+        break;
+      case 'auto_settings':
+        await this.autoUpdateSettingsComplete();
+        break;
+      case 'history':
+        await this.showUpdateHistoryComplete();
+        break;
+      case 'back':
+        return;
+    }
+  }
+
+  /**
+   * Complete Agent-MCP management
+   */
+  async manageAgentMCPComplete() {
+    console.log(chalk.blue('🤖 Complete Agent-MCP Management'));
+    console.log();
+
+    const AgentMCPManager = require('./agent-mcp-manager');
+    const agentManager = new AgentMCPManager();
+    await agentManager.interactiveSetup();
+  }
+
+  /**
+   * Complete clean and optimize
+   */
+  async cleanAndOptimizeComplete() {
+    console.log(chalk.blue('🧹 Complete Clean & Optimize'));
+    console.log();
+
+    const cleanOptions = await inquirer.prompt([{
+      type: 'checkbox',
+      name: 'operations',
+      message: 'Select optimization operations:',
+      choices: [
+        { name: '🧹 Remove Duplicate Hooks', value: 'duplicates', checked: true },
+        { name: '⚙️  Optimize Configuration Files', value: 'config', checked: true },
+        { name: '🔧 Clean Lock Files', value: 'locks', checked: true },
+        { name: '📊 Validate All Configurations', value: 'validate', checked: false },
+        { name: '📁 Clean Temporary Files', value: 'temp', checked: false }
+      ]
+    }]);
+
+    if (cleanOptions.operations.length === 0) {
+      console.log(chalk.yellow('ℹ️  No operations selected.'));
+      return;
+    }
+
+    console.log(chalk.cyan('\n🔄 Performing optimization operations...'));
+
+    for (const operation of cleanOptions.operations) {
+      switch (operation) {
+        case 'duplicates':
+          console.log(chalk.blue('🧹 Removing duplicate hooks...'));
+          await this.removeDuplicateHooks();
+          break;
+        case 'config':
+          console.log(chalk.blue('⚙️  Optimizing configuration files...'));
+          await this.optimizeConfigFiles();
+          break;
+        case 'locks':
+          console.log(chalk.blue('🔧 Cleaning lock files...'));
+          await this.cleanLockFiles();
+          break;
+        case 'validate':
+          console.log(chalk.blue('📊 Validating configurations...'));
+          await this.validateConfigurations();
+          break;
+        case 'temp':
+          console.log(chalk.blue('📁 Cleaning temporary files...'));
+          await this.cleanTempFiles();
+          break;
+      }
+    }
+
+    console.log(chalk.green('\n✅ Optimization complete!'));
+    await this.waitForEnter();
+  }
+
+  /**
+   * Complete bulk operations
+   */
+  async bulkOperationsComplete() {
+    console.log(chalk.blue('🔧 Complete Bulk Operations'));
+    console.log();
+
+    const allHooks = [...this.hookStates.user, ...this.hookStates.project, ...this.hookStates.local];
+    
+    if (allHooks.length === 0) {
+      console.log(chalk.yellow('ℹ️  No hooks installed for bulk operations.'));
+      await this.waitForEnter();
+      return;
+    }
+
+    const bulkAction = await inquirer.prompt([{
+      type: 'list',
+      name: 'action',
+      message: 'Select bulk operation:',
+      choices: [
+        { name: '🔄 Update All Hooks', value: 'update_all' },
+        { name: '⏸️  Disable Multiple Hooks', value: 'disable_multiple' },
+        { name: '▶️  Enable Multiple Hooks', value: 'enable_multiple' },
+        { name: '📁 Move Multiple Hooks', value: 'move_multiple' },
+        { name: '❌ Uninstall Multiple Hooks', value: 'uninstall_multiple' },
+        { name: '📊 Bulk Configuration', value: 'configure_multiple' },
+        new inquirer.Separator(),
+        { name: '🔙 Back to Main Menu', value: 'back' }
+      ]
+    }]);
+
+    if (bulkAction.action === 'back') return;
+
+    // Select hooks for bulk operation
+    const hookChoices = allHooks.map(hook => {
+      const scope = this.hookStates.user.includes(hook) ? '👤' : 
+                    this.hookStates.project.includes(hook) ? '📁' : '🔒';
+      return {
+        name: `${hook.name} ${scope} - ${hook.description || 'No description'}`,
+        value: hook,
+        short: hook.name
+      };
+    });
+
+    const selectedHooks = await inquirer.prompt([{
+      type: 'checkbox',
+      name: 'hooks',
+      message: `Select hooks for ${bulkAction.action.replace('_', ' ')}:`,
+      choices: hookChoices,
+      validate: (answer) => {
+        if (answer.length === 0) {
+          return 'Please select at least one hook.';
+        }
+        return true;
+      }
+    }]);
+
+    // Confirm bulk operation
+    const confirm = await inquirer.prompt([{
+      type: 'confirm',
+      name: 'confirm',
+      message: `Are you sure you want to ${bulkAction.action.replace('_', ' ')} ${selectedHooks.hooks.length} hooks?`,
+      default: false
+    }]);
+
+    if (!confirm.confirm) {
+      console.log(chalk.yellow('ℹ️  Operation cancelled.'));
+      return;
+    }
+
+    // Perform bulk operation
+    await this.performBulkOperation(bulkAction.action, selectedHooks.hooks);
+  }
+
+  /**
+   * Complete system settings
+   */
+  async systemSettingsComplete() {
+    console.log(chalk.blue('⚙️  Complete System Settings'));
+    console.log();
+
+    const settingsOptions = await inquirer.prompt([{
+      type: 'list',
+      name: 'category',
+      message: 'Select settings category:',
+      choices: [
+        { name: '🔄 Auto-Update Settings', value: 'auto_update' },
+        { name: '🎛️  Hook Execution Settings', value: 'execution' },
+        { name: '📁 Installation Preferences', value: 'installation' },
+        { name: '🔧 Advanced Configuration', value: 'advanced' },
+        { name: '📊 System Information', value: 'system_info' },
+        new inquirer.Separator(),
+        { name: '🔙 Back to Main Menu', value: 'back' }
+      ]
+    }]);
+
+    switch (settingsOptions.category) {
+      case 'auto_update':
+        await this.autoUpdateSettingsComplete();
+        break;
+      case 'execution':
+        await this.hookExecutionSettingsComplete();
+        break;
+      case 'installation':
+        await this.installationPreferencesComplete();
+        break;
+      case 'advanced':
+        await this.advancedConfigurationComplete();
+        break;
+      case 'system_info':
+        await this.showSystemInformationComplete();
+        break;
+      case 'back':
+        return;
+    }
+  }
+
+  /**
+   * Wait for user to press Enter
+   */
+  async waitForEnter() {
+    await inquirer.prompt([{
+      type: 'input',
+      name: 'continue',
+      message: 'Press Enter to continue...'
+    }]);
+  }
+
+  /**
    * Get comprehensive status of all hooks
    */
   async getComprehensiveStatus() {
