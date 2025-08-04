@@ -133,7 +133,7 @@ class Installer {
    * Enhanced interactive installation with rich TUI like AgentMCP
    */
   async enhancedInteractiveInstall(options = {}) {
-    console.log(chalk.blue('🚀 Rins Hooks Interactive Manager'));
+    console.log(chalk.blue('🎣 Rapala Interactive Manager'));
     console.log(chalk.gray('Comprehensive hook management with intelligent installation'));
     console.log();
 
