@@ -318,10 +318,10 @@ class Installer {
   }
 
   /**
-   * Individual hook selection with rich display
+   * Individual hook selection with rich display - Rapala categorized view
    */
   async individualInstallation(uninstalledHooks, options) {
-    // Get ALL hooks with installation status
+    // Get ALL hooks with installation status and categorize using Rapala system
     const status = await this.configManager.getInstallationStatus();
     const allInstalledHooks = [...status.user, ...status.project, ...status.local];
     const availableHooks = await this.getAvailableHooks();
@@ -332,8 +332,12 @@ class Installer {
         chalk.green('✅ (installed)') : 
         chalk.cyan('📦 (available)');
       
+      // Determine Rapala category
+      const category = this.determineRapalaCategory(hook);
+      const categoryIcon = this.getCategoryIcon(category);
+      
       const tagsText = hook.tags.length > 0 ? chalk.gray(`[${hook.tags.join(', ')}]`) : '';
-      const name = `${hook.name} ${installStatus} ${tagsText}\n    ${chalk.gray(hook.description)}`;
+      const name = `${categoryIcon} ${hook.name} ${installStatus} ${tagsText}\n    ${chalk.gray(hook.description)}`;
       
       return {
         name,
@@ -345,18 +349,100 @@ class Installer {
     const selection = await inquirer.prompt([{
       type: 'checkbox',
       name: 'hooks',
-      message: 'Select hooks to install (✅ = already installed, 📦 = available):',
+      message: 'Select enhancements to install (🔗=Hook, 🔧=Tool, 📚=Resource, 💬=Prompt, 🤖=MCP):',
       choices,
       pageSize: 15
     }]);
 
     if (selection.hooks.length === 0) {
-      console.log(chalk.yellow('ℹ️  No hooks selected.'));
+      console.log(chalk.yellow('ℹ️  No enhancements selected.'));
       return;
     }
 
     const scope = await this.selectScope(options);
     await this.installHooks(selection.hooks, { ...options, [scope]: true });
+  }
+
+  /**
+   * Determine Rapala category for a hook
+   */
+  determineRapalaCategory(hook) {
+    const name = hook.name || '';
+    const tags = hook.tags || [];
+    const description = hook.description || '';
+
+    if (this.isHook(name, tags, description)) return 'hooks';
+    if (this.isTool(name, tags, description)) return 'tools';
+    if (this.isResource(name, tags, description)) return 'resources';
+    if (this.isPrompt(name, tags, description)) return 'prompts';
+    if (this.isMCP(name, tags, description)) return 'mcps';
+    return 'hooks'; // Default fallback
+  }
+
+  /**
+   * Get category icon
+   */
+  getCategoryIcon(category) {
+    const icons = {
+      hooks: '🔗',
+      tools: '🔧',
+      resources: '📚',
+      prompts: '💬',
+      mcps: '🤖'
+    };
+    return icons[category] || '🔗';
+  }
+
+  /**
+   * Classification methods for Rapala categories
+   */
+  isHook(name, tags, description) {
+    const hookIndicators = [
+      'hook', 'extended-thinking', 'notification', 'auto-commit', 'git-agentmcp', 
+      'code-formatter', 'version-checker', 'debug-git'
+    ];
+    const hookTags = ['automation', 'git', 'commit', 'formatting', 'notification', 'debug'];
+    
+    return hookIndicators.some(indicator => name.includes(indicator)) ||
+           hookTags.some(tag => tags.includes(tag)) ||
+           description.toLowerCase().includes('hook');
+  }
+
+  isTool(name, tags, description) {
+    const toolIndicators = ['task-blocker', 'no-coauthor', 'file-locking'];
+    const toolTags = ['block', 'permissions', 'locking', 'settings'];
+    
+    return toolIndicators.some(indicator => name.includes(indicator)) ||
+           toolTags.some(tag => tags.includes(tag)) ||
+           description.toLowerCase().includes('block') ||
+           description.toLowerCase().includes('disable') ||
+           description.toLowerCase().includes('prevent');
+  }
+
+  isResource(name, tags, description) {
+    const resourceIndicators = ['resource', 'doc', 'guide', 'template'];
+    const resourceTags = ['documentation', 'reference', 'template', 'guide'];
+    
+    return resourceIndicators.some(indicator => name.includes(indicator)) ||
+           resourceTags.some(tag => tags.includes(tag));
+  }
+
+  isPrompt(name, tags, description) {
+    const promptIndicators = ['prompt', 'context', 'instruction'];
+    const promptTags = ['prompt', 'context', 'instruction', 'template'];
+    
+    return promptIndicators.some(indicator => name.includes(indicator)) ||
+           promptTags.some(tag => tags.includes(tag));
+  }
+
+  isMCP(name, tags, description) {
+    const mcpIndicators = ['agent-registry', 'mcp'];
+    const mcpTags = ['agent-tracking', 'registry', 'session-management', 'collaboration', 'multi-agent', 'agent-mcp'];
+    
+    return mcpIndicators.some(indicator => name.includes(indicator)) ||
+           mcpTags.some(tag => tags.includes(tag)) ||
+           description.toLowerCase().includes('agent') ||
+           description.toLowerCase().includes('multi-agent');
   }
 
   /**
