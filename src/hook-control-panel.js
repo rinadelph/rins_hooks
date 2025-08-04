@@ -273,37 +273,51 @@ class HookControlPanel {
   }
 
   /**
-   * Main interactive status and control interface - 100% Self-Contained
+   * Main interactive status and control interface - Clean Sectioned Design
    */
   async showInteractiveStatus() {
     // Initialize and scan environment
     await this.initialize();
 
-    console.log(chalk.blue('🎣 Rapala - Claude Code Enhancement Center'));
-    console.log(chalk.gray('Hooks • Tools • Resources • Prompts • MCPs'));
-    console.log();
+    let currentSection = 0;
+    const sections = ['hooks', 'tools', 'resources', 'prompts', 'mcps'];
+    const sectionNames = ['Hooks', 'Tools', 'Resources', 'Prompts', 'MCPs'];
 
     while (true) {
-      // Show comprehensive environment overview
-      await this.displayEnvironmentOverview();
+      console.clear();
       
-      // Main menu with all functionality
-      const mainAction = await inquirer.prompt([{
+      // Header with navigation indicators
+      console.log(chalk.blue('🎣 Rapala - Claude Code Enhancement Center'));
+      console.log();
+      
+      // Section navigation bar
+      const navBar = sections.map((section, index) => {
+        const name = sectionNames[index];
+        if (index === currentSection) {
+          return chalk.bgBlue.white(` ${name} `);
+        } else {
+          return chalk.gray(` ${name} `);
+        }
+      }).join('  ');
+      
+      console.log(`${navBar}`);
+      console.log(chalk.gray('← → Navigate sections • ↵ Enter section • Q Quit'));
+      console.log();
+
+      // Show current section overview
+      await this.displaySectionOverview(sections[currentSection]);
+      
+      // Navigation prompt
+      const navigation = await inquirer.prompt([{
         type: 'list',
         name: 'action',
-        message: 'What would you like to do?',
+        message: `${sectionNames[currentSection]} Section:`,
         choices: [
-          { name: '📊 Environment & Hook Status', value: 'status' },
-          { name: '🔍 Scan & Analyze Current Directory', value: 'scan' },
-          { name: '⚙️  Individual Hook Management', value: 'manage' },
-          { name: '📦 Install & Configure Hooks', value: 'install' },
-          { name: '🔄 Update System & Hooks', value: 'update' },
-          { name: '🤖 Agent-MCP Management', value: 'agentmcp' },
-          { name: '🧹 Clean & Optimize', value: 'clean' },
-          { name: '🔧 Bulk Operations', value: 'bulk' },
-          { name: '⚙️  System Settings', value: 'settings' },
+          { name: '↵ Enter this section', value: 'enter' },
+          { name: '← Previous section', value: 'prev', disabled: currentSection === 0 },
+          { name: '→ Next section', value: 'next', disabled: currentSection === sections.length - 1 },
           new inquirer.Separator(),
-          { name: '🚪 Exit Management Center', value: 'exit' }
+          { name: 'Q Quit Rapala', value: 'quit' }
         ]
       }]);
 
