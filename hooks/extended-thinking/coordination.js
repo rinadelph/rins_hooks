@@ -21,34 +21,97 @@ class HookCoordination {
    */
   shouldRun(hookName, eventType, operationId) {
     try {
-      // Ensure lock directory exists
-      if (!fs.existsSync(this.lockDir)) {
-        fs.mkdirSync(this.lockDir, { recursive: true });
+      // For thinking hooks, allow multiple executions for tool events
+      // but prevent rapid duplicates within a short time window
+      if (this.isThinkingHook(hookName)) {
+        return this.shouldRunThinkingHook(hookName, eventType, operationId);
       }
 
-      const lockKey = `${hookName}-${eventType}-${operationId}`;
-      const lockFile = path.join(this.lockDir, `${lockKey}.lock`);
-      
-      // Check if lock exists and is still valid
-      if (fs.existsSync(lockFile)) {
-        const lockData = this.readLockFile(lockFile);
-        if (lockData && this.isLockValid(lockData)) {
-          // Operation already being handled
-          return false;
-        } else {
-          // Stale lock, remove it
-          this.removeLock(lockFile);
-        }
-      }
-
-      // Create lock for this operation
-      this.createLock(lockFile, { hookName, eventType, operationId });
-      return true;
+      // For other hooks, use strict coordination
+      return this.shouldRunStrictCoordination(hookName, eventType, operationId);
 
     } catch (error) {
       // If coordination fails, allow the hook to run (fail open)
       return true;
     }
+  }
+
+  /**
+   * Check if this is a thinking-related hook that should run frequently
+   */
+  isThinkingHook(hookName) {
+    return hookName.includes('thinking') || hookName.includes('extended');
+  }
+
+  /**
+   * Coordination logic for thinking hooks - allow multiple executions but prevent spam
+   */
+  shouldRunThinkingHook(hookName, eventType, operationId) {
+    // Ensure lock directory exists
+    if (!fs.existsSync(this.lockDir)) {
+      fs.mkdirSync(this.lockDir, { recursive: true });
+    }
+
+    // For UserPromptSubmit, prevent rapid duplicates of the same prompt
+    if (eventType === 'UserPromptSubmit') {
+      return this.shouldRunStrictCoordination(hookName, eventType, operationId);
+    }
+
+    // For PreToolUse and PostToolUse, allow them to run but prevent spam
+    // Use a shorter time window (1 second) to prevent rapid-fire duplicates
+    const lockKey = `${hookName}-${eventType}-${operationId}`;
+    const lockFile = path.join(this.lockDir, `${lockKey}.lock`);
+    
+    if (fs.existsSync(lockFile)) {
+      const lockData = this.readLockFile(lockFile);
+      if (lockData && this.isRecentExecution(lockData, 1000)) { // 1 second window
+        return false; // Too recent, skip
+      } else {
+        this.removeLock(lockFile);
+      }
+    }
+
+    // Create lock with shorter timeout for thinking hooks
+    this.createLock(lockFile, { hookName, eventType, operationId });
+    return true;
+  }
+
+  /**
+   * Strict coordination for non-thinking hooks
+   */
+  shouldRunStrictCoordination(hookName, eventType, operationId) {
+    // Ensure lock directory exists
+    if (!fs.existsSync(this.lockDir)) {
+      fs.mkdirSync(this.lockDir, { recursive: true });
+    }
+
+    const lockKey = `${hookName}-${eventType}-${operationId}`;
+    const lockFile = path.join(this.lockDir, `${lockKey}.lock`);
+    
+    // Check if lock exists and is still valid
+    if (fs.existsSync(lockFile)) {
+      const lockData = this.readLockFile(lockFile);
+      if (lockData && this.isLockValid(lockData)) {
+        // Operation already being handled
+        return false;
+      } else {
+        // Stale lock, remove it
+        this.removeLock(lockFile);
+      }
+    }
+
+    // Create lock for this operation
+    this.createLock(lockFile, { hookName, eventType, operationId });
+    return true;
+  }
+
+  /**
+   * Check if execution was recent (for spam prevention)
+   */
+  isRecentExecution(lockData, timeWindow) {
+    const now = Date.now();
+    const lockAge = now - lockData.timestamp;
+    return lockAge < timeWindow;
   }
 
   /**
