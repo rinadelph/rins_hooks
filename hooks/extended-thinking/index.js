@@ -95,7 +95,7 @@ class ExtendedThinkingHook extends HookBase {
   /**
    * Handle PreToolUse events - Thinking before tool execution
    */
-  handlePreToolUse(input, stateManager, toggles) {
+  handlePreToolUse(input, stateManager, toggles, coordination, operationId) {
     const toolName = input.tool_name;
 
     // Deep thinking: comprehensive analysis before any tool
