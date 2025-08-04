@@ -28,7 +28,6 @@ File: {{filePath}}
 Tool: {{toolName}}
 
 # Revert: git log --grep="PID: {{pid}}"
-🤖 Generated with Claude Code via rins_hooks
 Co-Authored-By: Claude <noreply@anthropic.com>`,
   excludePatterns: [
     /\.log$/,
