@@ -176,8 +176,10 @@ After optimization, your configuration now has:
 
 ## 🛡️ **Protection Mechanisms**
 
-### 1. **Duplicate Prevention**
-- Same hook won't execute multiple times for identical operations
+### 1. **Smart Duplicate Prevention**
+- **Thinking Hooks**: Can run after every tool call but prevent spam (1-second window)
+- **Standard Hooks**: Won't execute multiple times for identical operations  
+- **User Prompts**: Prevent duplicate processing of same prompt content
 - Lock files prevent race conditions between parallel executions
 - Automatic cleanup of stale locks
 
