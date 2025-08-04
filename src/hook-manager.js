@@ -41,7 +41,7 @@ class HookManager {
 
     // Update settings
     settings.hooks = cleaned;
-    await this.configManager.saveSettings(settings, scope);
+    await this.configManager.saveSettings(scope, settings);
 
     console.log(chalk.green(`✅ Optimization complete! Removed ${totalRemoved} duplicate/conflicting hooks`));
     
