@@ -328,21 +328,33 @@ class Installer {
    * Individual hook selection with rich display
    */
   async individualInstallation(uninstalledHooks, options) {
-    const choices = uninstalledHooks.map(hook => {
+    // Get ALL hooks with installation status
+    const status = await this.configManager.getInstallationStatus();
+    const allInstalledHooks = [...status.user, ...status.project, ...status.local];
+    const availableHooks = await this.getAvailableHooks();
+    
+    const choices = availableHooks.map(hook => {
+      const isInstalled = allInstalledHooks.find(installed => installed.name === hook.name);
+      const installStatus = isInstalled ? 
+        chalk.green('✅ (installed)') : 
+        chalk.cyan('📦 (available)');
+      
       const tagsText = hook.tags.length > 0 ? chalk.gray(`[${hook.tags.join(', ')}]`) : '';
-      const name = `${hook.name} ${tagsText}\n    ${chalk.gray(hook.description)}`;
+      const name = `${hook.name} ${installStatus} ${tagsText}\n    ${chalk.gray(hook.description)}`;
+      
       return {
         name,
-        value: hook.name
+        value: hook.name,
+        disabled: isInstalled ? 'Already installed' : false
       };
     });
 
     const selection = await inquirer.prompt([{
       type: 'checkbox',
       name: 'hooks',
-      message: 'Select hooks to install:',
+      message: 'Select hooks to install (✅ = already installed, 📦 = available):',
       choices,
-      pageSize: 10
+      pageSize: 15
     }]);
 
     if (selection.hooks.length === 0) {
