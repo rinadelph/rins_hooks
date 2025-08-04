@@ -25,8 +25,20 @@ class ExtendedThinkingHook extends HookBase {
       }
 
       const projectDir = input.cwd || null;
+      const coordination = new HookCoordination(projectDir);
+      const operationId = coordination.generateOperationId(input);
+      
+      // Check if this hook should run (prevent duplicates)
+      if (!coordination.shouldRun('extended-thinking', input.hook_event_name, operationId)) {
+        this.logActivity(input, `Skipping duplicate execution for ${input.hook_event_name}`);
+        return this.success();
+      }
+
       const stateManager = new ThinkingStateManager(projectDir);
       const toggles = stateManager.getToggles();
+
+      // Clean up old locks
+      coordination.cleanupOldLocks();
 
       // Handle different event types
       switch (input.hook_event_name) {
