@@ -1,0 +1,17 @@
+{
+  "name": "version-checker",
+  "description": "Checks for hook updates and manages version information across all installed hooks",
+  "version": "1.0.0",
+  "author": "rins_hooks",
+  "events": ["SessionStart"],
+  "installationType": "standard",
+  "supportedPlatforms": ["linux", "darwin", "win32"],
+  "dependencies": [],
+  "settings": {
+    "checkOnStartup": true,
+    "autoUpdate": false,
+    "notifyUpdates": true,
+    "versionFile": "hook-versions.json",
+    "updateCheckInterval": 86400
+  }
+}
