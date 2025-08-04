@@ -596,17 +596,26 @@ async function main() {
       process.exit(1);
     }
 
-    // Simplified and robust staging approach
+    // Check if file has any changes first
     const relativePath = path.relative(process.cwd(), filePath);
     
     try {
-      // Just add the file - git will handle whether it needs staging
+      // Check if file has unstaged changes
+      const diffOutput = await runGitCommand(['diff', relativePath]);
+      const statusOutput = await runGitCommand(['status', '--porcelain', relativePath]);
+      
+      if (!diffOutput.trim() && !statusOutput.trim()) {
+        console.log(`No changes to commit for ${relativePath}`);
+        process.exit(0);
+      }
+
+      // Add the file
       await runGitCommand(['add', filePath]);
       
-      // Verify something is staged for commit
+      // Double-check something is staged for commit
       const stagedFiles = await runGitCommand(['diff', '--cached', '--name-only']);
       if (!stagedFiles.trim()) {
-        console.log(`No changes to stage for ${relativePath}`);
+        console.log(`No changes staged for ${relativePath}`);
         process.exit(0);
       }
       
