@@ -400,6 +400,9 @@ create_summary() {
         echo
         echo "## Quick Access Commands"
         echo "\`\`\`bash"
+        echo "# View comprehensive master log (RECOMMENDED START HERE)"
+        echo "cat $LOG_DIR/claude-resume-master-$TIMESTAMP.log"
+        echo
         echo "# View main session log"
         echo "cat $SESSION_LOG"
         echo
@@ -409,7 +412,10 @@ create_summary() {
         echo "# View analysis"
         echo "cat $ANALYSIS_LOG"
         echo
-        echo "# Search for specific patterns"
+        echo "# Search for specific patterns in master log"
+        echo "grep -i 'pattern' $LOG_DIR/claude-resume-master-$TIMESTAMP.log"
+        echo
+        echo "# Search across all logs"
         echo "grep -i 'pattern' $LOG_DIR/*$TIMESTAMP*"
         echo "\`\`\`"
         
