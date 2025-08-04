@@ -405,7 +405,20 @@ program
 // Parse command line arguments
 program.parse(process.argv);
 
-// Show help if no command provided
+// Show interactive control panel if no command provided
 if (!process.argv.slice(2).length) {
-  program.outputHelp();
+  (async () => {
+    try {
+      console.log(chalk.blue('🚀 Welcome to Rins Hooks!'));
+      console.log(chalk.gray('Starting interactive control panel...'));
+      console.log();
+      
+      const HookControlPanel = require('./hook-control-panel');
+      const controlPanel = new HookControlPanel();
+      await controlPanel.showInteractiveStatus();
+    } catch (error) {
+      console.error(chalk.red('❌ Control panel failed:'), error.message);
+      program.outputHelp();
+    }
+  })();
 }
