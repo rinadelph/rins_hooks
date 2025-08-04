@@ -12,8 +12,181 @@ const { spawn } = require('child_process');
  * - Session-based agent identification
  * - Agent-MCP .agent directory integration
  * - Multi-agent coordination and activity logging
+ * - Built-in git hook conflict detection and coordination
  * - Direct Claude Code compliance (no HookBase dependency)
  */
+
+// ========================================
+// GIT HOOK COORDINATION SYSTEM
+// ========================================
+
+/**
+ * Git Hook Coordinator - Embedded conflict prevention
+ * Prevents multiple git hooks from running simultaneously
+ */
+class GitHookCoordinator {
+  constructor() {
+    this.hookName = 'git-agentmcp';
+    this.priority = 100; // Highest priority git hook
+    this.lockFile = path.join(process.cwd(), '.agent', 'git-hook.lock');
+    this.settingsPath = path.join(process.env.HOME, '.claude', 'settings.json');
+    
+    // Known git hooks and their priorities
+    this.gitHookPriority = {
+      'git-agentmcp': 100,  // This hook - highest priority
+      'auto-commit': 50,    // Basic functionality
+      'git-commit': 30      // Legacy
+    };
+  }
+
+  /**
+   * Check if this hook should run or defer to another
+   */
+  async shouldRunHook() {
+    try {
+      // Check for active git hook lock
+      if (this.isGitHookLocked()) {
+        console.log(`Git hook coordination: Another git hook is running, deferring...`);
+        return false;
+      }
+
+      // Quick check for obvious conflicts in settings
+      const conflictingHooks = this.detectQuickConflicts();
+      if (conflictingHooks.length > 0) {
+        const higherPriorityExists = conflictingHooks.some(h => 
+          this.gitHookPriority[h] > this.priority
+        );
+        
+        if (higherPriorityExists) {
+          console.log(`Git hook coordination: Higher priority hook detected, deferring...`);
+          return false;
+        }
+      }
+
+      // Create lock to indicate this hook is running
+      this.createGitHookLock();
+      return true;
+
+    } catch (error) {
+      // If coordination fails, default to running (safe fallback)
+      console.warn(`Git hook coordination warning: ${error.message}`);
+      return true;
+    }
+  }
+
+  /**
+   * Check if another git hook is currently running
+   */
+  isGitHookLocked() {
+    try {
+      if (!fs.existsSync(this.lockFile)) {
+        return false;
+      }
+
+      const stats = fs.statSync(this.lockFile);
+      const ageMs = Date.now() - stats.mtime.getTime();
+      
+      // If lock is older than 2 minutes, consider it stale
+      if (ageMs > 120000) {
+        fs.unlinkSync(this.lockFile);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
+   * Create lock file to indicate this hook is running
+   */
+  createGitHookLock() {
+    try {
+      const lockDir = path.dirname(this.lockFile);
+      if (!fs.existsSync(lockDir)) {
+        fs.mkdirSync(lockDir, { recursive: true });
+      }
+
+      fs.writeFileSync(this.lockFile, JSON.stringify({
+        hook: this.hookName,
+        pid: process.pid,
+        timestamp: new Date().toISOString()
+      }));
+    } catch (error) {
+      // Ignore lock creation errors
+    }
+  }
+
+  /**
+   * Release the git hook lock
+   */
+  releaseGitHookLock() {
+    try {
+      if (fs.existsSync(this.lockFile)) {
+        fs.unlinkSync(this.lockFile);
+      }
+    } catch (error) {
+      // Ignore lock cleanup errors
+    }
+  }
+
+  /**
+   * Quick detection of conflicting git hooks in settings
+   */
+  detectQuickConflicts() {
+    try {
+      if (!fs.existsSync(this.settingsPath)) {
+        return [];
+      }
+
+      const settings = JSON.parse(fs.readFileSync(this.settingsPath, 'utf8'));
+      const gitHooks = [];
+
+      if (settings.hooks && settings.hooks.PostToolUse) {
+        for (const hookGroup of settings.hooks.PostToolUse) {
+          if (hookGroup.matcher && hookGroup.matcher.includes('Edit|Write|MultiEdit')) {
+            for (const hook of hookGroup.hooks || []) {
+              const hookName = this.extractHookName(hook.command);
+              if (this.isGitHook(hookName) && hookName !== this.hookName) {
+                gitHooks.push(hookName);
+              }
+            }
+          }
+        }
+      }
+
+      return gitHooks;
+    } catch (error) {
+      return [];
+    }
+  }
+
+  /**
+   * Extract hook name from command path
+   */
+  extractHookName(command) {
+    const match = command.match(/hooks\/([^\/]+)\/index\.js/);
+    return match ? match[1] : null;
+  }
+
+  /**
+   * Check if hook is a git hook
+   */
+  isGitHook(hookName) {
+    const gitHookPatterns = [
+      'git-agentmcp',
+      'auto-commit', 
+      'git-commit',
+      'commit-hook',
+      'git-auto'
+    ];
+    
+    return gitHookPatterns.some(pattern => 
+      hookName && hookName.toLowerCase().includes(pattern.toLowerCase())
+    );
+  }
+}
 
 // Configuration
 const CONFIG = {
