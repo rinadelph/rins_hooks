@@ -177,14 +177,19 @@ test_claude_resume() {
     # Test 4: Environment variable debugging
     echo -e "${BLUE}Test 4: With environment debugging${NC}"
     {
-        echo "=== ENVIRONMENT DEBUG TEST ==="
-        echo "Setting debug environment variables..."
+        echo "=== TEST 4: ENVIRONMENT DEBUG TEST ==="
+        echo "Timestamp: $(date)"
+        echo "Setting debug environment variables: CLAUDE_DEBUG=1 CLAUDE_VERBOSE=1"
+        echo "Command: echo '$TEST_PROMPT' | claude -r --debug"
+        echo
         
         CLAUDE_DEBUG=1 CLAUDE_VERBOSE=1 timeout 45s sh -c "echo '$TEST_PROMPT' | claude -r --debug 2>&1" || {
-            echo "Environment debug test failed or timed out"
+            echo "Environment debug test failed or timed out (exit code: $?)"
+            echo "This is expected if the session requires interactive input"
         }
         echo
-    } >> "$DEBUG_LOG" 2>&1
+        echo "=== END TEST 4: ENVIRONMENT DEBUG ==="
+    } | tee -a "$SESSION_LOG" "$DEBUG_LOG"
     
     # Clean up background monitoring
     if [ -n "${MONITOR_PID:-}" ]; then
