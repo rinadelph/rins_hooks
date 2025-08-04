@@ -73,7 +73,7 @@ class ExtendedThinkingHook extends HookBase {
   /**
    * Handle UserPromptSubmit events - Deep thinking for all prompts
    */
-  handleUserPromptSubmit(input, stateManager, toggles) {
+  handleUserPromptSubmit(input, stateManager, toggles, coordination, operationId) {
     if (toggles.deepThinking) {
       const prompt = stateManager.getDeepThinkingPrompt();
       this.logActivity(input, 'Injecting deep thinking context for user prompt');
