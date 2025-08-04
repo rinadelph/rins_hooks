@@ -369,16 +369,18 @@ async function main() {
 
     // Verify the file was actually staged
     const stagedFiles = await runGitCommand(['diff', '--cached', '--name-only']);
+    const stagedFilesList = stagedFiles.trim().split('\n').filter(line => line.trim());
     const relativePath = path.relative(process.cwd(), filePath);
     
-    if (!stagedFiles.includes(relativePath) && !stagedFiles.includes(filePath)) {
+    if (!stagedFilesList.includes(relativePath) && !stagedFilesList.includes(filePath)) {
       // File wasn't staged, try force add
       console.warn(`File ${relativePath} not staged, attempting force add...`);
       await runGitCommand(['add', '--force', filePath]);
       
       // Check again
       const restagedFiles = await runGitCommand(['diff', '--cached', '--name-only']);
-      if (!restagedFiles.includes(relativePath) && !restagedFiles.includes(filePath)) {
+      const restagedFilesList = restagedFiles.trim().split('\n').filter(line => line.trim());
+      if (!restagedFilesList.includes(relativePath) && !restagedFilesList.includes(filePath)) {
         console.log(`File ${relativePath} has no changes to commit`);
         process.exit(0);
       }
