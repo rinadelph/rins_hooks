@@ -432,6 +432,52 @@ class HookControlPanel {
     }
   }
 
+  /**
+   * Wait for direct keypress without prompts
+   */
+  async waitForDirectKeypress() {
+    return new Promise((resolve) => {
+      const readline = require('readline');
+      
+      readline.emitKeypressEvents(process.stdin);
+      
+      if (process.stdin.isTTY) {
+        process.stdin.setRawMode(true);
+      }
+
+      const keyHandler = (chunk, key) => {
+        // Clean up
+        process.stdin.removeListener('keypress', keyHandler);
+        if (process.stdin.isTTY) {
+          process.stdin.setRawMode(false);
+        }
+
+        if (!key) return resolve('unknown');
+
+        // Handle different keys
+        if (key.name === 'left') {
+          resolve('left');
+        } else if (key.name === 'right') {
+          resolve('right');
+        } else if (key.name === 'return' || key.name === 'enter') {
+          resolve('enter');
+        } else if (key.name === 'i') {
+          resolve('i');
+        } else if (key.name === 'm') {
+          resolve('m');
+        } else if (key.name === 'v') {
+          resolve('v');
+        } else if (key.name === 'q' || (key.ctrl && key.name === 'c')) {
+          resolve('q');
+        } else {
+          // For any other key, just stay
+          resolve('stay');
+        }
+      };
+
+      process.stdin.on('keypress', keyHandler);
+    });
+  }
 
   /**
    * Helper methods for sectioned interface
