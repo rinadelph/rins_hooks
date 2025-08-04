@@ -35,7 +35,12 @@ class VersionCheckerHook {
       const versionData = await this.checkVersions(projectDir);
       
       if (versionData.hasUpdates) {
-        return this.reportUpdates(versionData);
+        // Check if auto-update is enabled
+        if (versionData.versionData.settings.autoUpdate) {
+          return await this.performAutoUpdate(versionData);
+        } else {
+          return this.reportUpdates(versionData);
+        }
       }
 
       return this.success();
