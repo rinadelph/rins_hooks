@@ -1,7 +1,7 @@
 {
   "name": "task-blocker",
   "description": "Blocks Claude from using Task tool and creating subagents",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "tags": ["task", "block", "subagent", "permissions"],
   "requirements": ["node"],
   "platforms": ["linux", "darwin", "win32"],
