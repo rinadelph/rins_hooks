@@ -196,6 +196,7 @@ const CONFIG = {
 
 Session: {{sessionId}}
 PID: {{pid}} (parent: {{parentPid}})
+Tmux: {{tmuxInfo}}
 Timestamp: {{timestamp}}
 File: {{filePath}}
 Tool: {{toolName}}
