@@ -97,45 +97,54 @@ program
     }
   });
 
-// Status command
+// Status command - Enhanced interactive control panel
 program
   .command('status')
-  .description('Show installed hooks status')
-  .action(async () => {
+  .description('Interactive hook management control panel')
+  .option('-s, --simple', 'Show simple status without interactive menu')
+  .action(async (options) => {
     try {
-      const configManager = new ConfigManager();
-      const status = await configManager.getInstallationStatus();
+      if (options.simple) {
+        // Simple status display
+        const configManager = new ConfigManager();
+        const status = await configManager.getInstallationStatus();
 
-      console.log(chalk.blue('📊 Installation Status'));
-      console.log();
-
-      if (status.user.length > 0) {
-        console.log(chalk.green('👤 User Level Hooks:'));
-        status.user.forEach(hook => {
-          console.log(chalk.green(`  ✅ ${hook.name}`), chalk.gray(`- ${hook.status}`));
-        });
+        console.log(chalk.blue('📊 Installation Status'));
         console.log();
-      }
 
-      if (status.project.length > 0) {
-        console.log(chalk.green('📁 Project Level Hooks:'));
-        status.project.forEach(hook => {
-          console.log(chalk.green(`  ✅ ${hook.name}`), chalk.gray(`- ${hook.status}`));
-        });
-        console.log();
-      }
+        if (status.user.length > 0) {
+          console.log(chalk.green('👤 User Level Hooks:'));
+          status.user.forEach(hook => {
+            console.log(chalk.green(`  ✅ ${hook.name}`), chalk.gray(`- ${hook.status}`));
+          });
+          console.log();
+        }
 
-      if (status.local.length > 0) {
-        console.log(chalk.green('🔒 Local Level Hooks:'));
-        status.local.forEach(hook => {
-          console.log(chalk.green(`  ✅ ${hook.name}`), chalk.gray(`- ${hook.status}`));
-        });
-        console.log();
-      }
+        if (status.project.length > 0) {
+          console.log(chalk.green('📁 Project Level Hooks:'));
+          status.project.forEach(hook => {
+            console.log(chalk.green(`  ✅ ${hook.name}`), chalk.gray(`- ${hook.status}`));
+          });
+          console.log();
+        }
 
-      if (status.user.length === 0 && status.project.length === 0 && status.local.length === 0) {
-        console.log(chalk.yellow('ℹ️  No hooks installed.'));
-        console.log(chalk.cyan('Run `rins_hooks install --interactive` to get started.'));
+        if (status.local.length > 0) {
+          console.log(chalk.green('🔒 Local Level Hooks:'));
+          status.local.forEach(hook => {
+            console.log(chalk.green(`  ✅ ${hook.name}`), chalk.gray(`- ${hook.status}`));
+          });
+          console.log();
+        }
+
+        if (status.user.length === 0 && status.project.length === 0 && status.local.length === 0) {
+          console.log(chalk.yellow('ℹ️  No hooks installed.'));
+          console.log(chalk.cyan('Run `rins_hooks install` to get started.'));
+        }
+      } else {
+        // Interactive control panel
+        const HookControlPanel = require('./hook-control-panel');
+        const controlPanel = new HookControlPanel();
+        await controlPanel.showInteractiveStatus();
       }
     } catch (error) {
       console.error(chalk.red('❌ Failed to get status:'), error.message);
