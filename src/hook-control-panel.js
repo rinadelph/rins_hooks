@@ -433,6 +433,62 @@ class HookControlPanel {
   }
 
   /**
+   * Wait for a single keypress and return the action
+   */
+  async waitForKeypress() {
+    return new Promise((resolve) => {
+      // Enable raw mode to capture individual keypresses
+      process.stdin.setRawMode(true);
+      process.stdin.resume();
+      process.stdin.setEncoding('utf8');
+
+      const onKeypress = (key) => {
+        // Clean up listener
+        process.stdin.setRawMode(false);
+        process.stdin.pause();
+        process.stdin.removeListener('data', onKeypress);
+
+        // Handle different key inputs
+        switch (key) {
+          case '\u001B[D': // Left arrow
+            resolve('left');
+            break;
+          case '\u001B[C': // Right arrow
+            resolve('right');
+            break;
+          case '\r': // Enter
+          case '\n':
+            resolve('enter');
+            break;
+          case 'i':
+          case 'I':
+            resolve('i');
+            break;
+          case 'm':
+          case 'M':
+            resolve('m');
+            break;
+          case 'v':
+          case 'V':
+            resolve('v');
+            break;
+          case 'q':
+          case 'Q':
+          case '\u0003': // Ctrl+C
+            resolve('q');
+            break;
+          default:
+            // For any other key, just stay in place
+            resolve('stay');
+            break;
+        }
+      };
+
+      process.stdin.on('data', onKeypress);
+    });
+  }
+
+  /**
    * Helper methods for sectioned interface
    */
   getSectionTitle(sectionType) {
