@@ -366,35 +366,93 @@ program
   .option('-u, --update [hook]', 'Update all hooks or specific hook')
   .option('-l, --list', 'List all hooks with versions')
   .option('-r, --reset', 'Reset version tracking')
+  .option('--auto-on', 'Enable automatic updates')
+  .option('--auto-off', 'Disable automatic updates')
+  .option('--auto-status', 'Show auto-update status')
   .action(async (options) => {
     try {
-      const updateScript = path.join(__dirname, '..', 'hooks', 'version-checker', 'update.js');
+      const versionCheckerPath = path.join(__dirname, '..', 'hooks', 'version-checker', 'index.js');
       
-      if (!require('fs').existsSync(updateScript)) {
+      if (!require('fs').existsSync(versionCheckerPath)) {
         console.log(chalk.yellow('⚠️  Version checker hook not found.'));
         console.log(chalk.cyan('Install it with: rins_hooks install version-checker'));
         return;
       }
 
-      const { spawn } = require('child_process');
-      
-      let command = 'check'; // default
-      if (options.update) {
-        command = typeof options.update === 'string' ? `update ${options.update}` : 'update';
-      } else if (options.list) {
-        command = 'list';
-      } else if (options.reset) {
-        command = 'reset';
+      // Handle auto-update options
+      if (options.autoOn) {
+        const { spawn } = require('child_process');
+        const child = spawn('node', [versionCheckerPath, '--enable-auto-update'], {
+          stdio: 'inherit'
+        });
+        child.on('exit', (code) => process.exit(code));
+        return;
       }
 
-      const child = spawn('node', [updateScript, ...command.split(' ')], {
-        stdio: 'inherit',
-        cwd: process.cwd()
-      });
+      if (options.autoOff) {
+        const { spawn } = require('child_process');
+        const child = spawn('node', [versionCheckerPath, '--disable-auto-update'], {
+          stdio: 'inherit'
+        });
+        child.on('exit', (code) => process.exit(code));
+        return;
+      }
 
-      child.on('exit', (code) => {
-        process.exit(code);
-      });
+      if (options.autoStatus) {
+        const { spawn } = require('child_process');
+        const child = spawn('node', [versionCheckerPath, '--status'], {
+          stdio: 'inherit'
+        });
+        child.on('exit', (code) => process.exit(code));
+        return;
+      }
+
+      // Handle update operations
+      console.log(chalk.blue('🔄 Hook Update Manager'));
+      console.log();
+
+      if (options.check || (!options.update && !options.list && !options.reset)) {
+        console.log(chalk.cyan('🔍 Checking for hook updates...'));
+        console.log(chalk.gray('This will check all installed hooks for available updates.'));
+        console.log();
+        
+        // Show current auto-update status
+        const VersionCheckerHook = require('../hooks/version-checker/index.js');
+        const status = VersionCheckerHook.getAutoUpdateStatus();
+        console.log(chalk.blue('📊 Auto-Update Status:'), status.autoUpdate ? chalk.green('✅ ENABLED') : chalk.red('❌ DISABLED'));
+        
+        if (!status.autoUpdate) {
+          console.log(chalk.yellow('ℹ️  Auto-update is disabled. Use --auto-on to enable automatic updates.'));
+        }
+        console.log();
+      }
+
+      // Legacy update script fallback
+      const updateScript = path.join(__dirname, '..', 'hooks', 'version-checker', 'update.js');
+      if (require('fs').existsSync(updateScript)) {
+        const { spawn } = require('child_process');
+        
+        let command = 'check'; // default
+        if (options.update) {
+          command = typeof options.update === 'string' ? `update ${options.update}` : 'update';
+        } else if (options.list) {
+          command = 'list';
+        } else if (options.reset) {
+          command = 'reset';
+        }
+
+        const child = spawn('node', [updateScript, ...command.split(' ')], {
+          stdio: 'inherit',
+          cwd: process.cwd()
+        });
+
+        child.on('exit', (code) => {
+          process.exit(code);
+        });
+      } else {
+        console.log(chalk.gray('💡 Use the control panel for comprehensive hook management:'));
+        console.log(chalk.cyan('   rins_hooks status'));
+      }
 
     } catch (error) {
       console.error(chalk.red('❌ Update command failed:'), error.message);
