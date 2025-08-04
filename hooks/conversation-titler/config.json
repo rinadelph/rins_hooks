@@ -1,0 +1,29 @@
+{
+  "name": "conversation-titler",
+  "description": "Automatically generates meaningful conversation titles instead of generic resumed conversation titles",
+  "version": "1.0.0",
+  "tags": ["conversation", "title", "automation", "resume"],
+  "requirements": ["node"],
+  "platforms": ["linux", "darwin", "win32"],
+  "matcher": "Edit|Write|MultiEdit|Bash|Read|Glob|Grep",
+  "timeout": 30,
+  "defaultConfig": {
+    "enabled": true,
+    "titleLength": 60,
+    "includeEmoji": true,
+    "blacklistPatterns": [
+      "This session is being continued",
+      "Claude Code conversation", 
+      "Resumed conversation"
+    ],
+    "titleTemplates": {
+      "code": "💻 Code: {{summary}}",
+      "analysis": "🔍 Analysis: {{summary}}",
+      "debug": "🐛 Debug: {{summary}}",
+      "git": "🔄 Git: {{summary}}",
+      "docs": "📝 Docs: {{summary}}",
+      "config": "⚙️ Config: {{summary}}",
+      "default": "{{emoji}} {{summary}}"
+    }
+  }
+}
