@@ -1,0 +1,4 @@
+Testing staging fix - enhanced logic should work now
+Timestamp: 2025-08-04T19:39:00.000Z
+This should commit successfully with the improved staging verification.
+Current pane should be detected as pane 2 (rins_hooks_continue:1:bash.2)
