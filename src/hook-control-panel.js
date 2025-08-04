@@ -795,8 +795,13 @@ class HookControlPanel {
 
     const choices = allInstalled.map(item => {
       const scope = this.getScopeIcon(item, sectionData);
+      // Add hook type differentiation to the display
+      let typeIcon = '';
+      if (sectionType === 'hooks') {
+        typeIcon = item.hookType === 'rapala-generated' ? '🎣 ' : '🔧 ';
+      }
       return {
-        name: `${item.name} ${scope} - ${item.description || 'No description'}`,
+        name: `${typeIcon}${item.name} ${scope} - ${item.description || 'No description'}`,
         value: item,
         short: item.name
       };
@@ -807,7 +812,9 @@ class HookControlPanel {
       name: 'item',
       message: `Select ${this.getSectionTitle(sectionType).toLowerCase().slice(0, -1)} to manage:`,
       choices,
-      pageSize: 10
+      pageSize: 10,
+      // Enable arrow key navigation and prevent infinite scroll
+      loop: false
     }]);
 
     // Individual item management (reuse existing logic)
