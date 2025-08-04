@@ -1,0 +1,8 @@
+Testing smart coordination with extended thinking...
+
+Updated to test multiple hooks:
+- extended-thinking (should run via PostToolUse)  
+- git-agentmcp (should run via PostToolUse)
+- auto-commit (should run via PostToolUse if installed)
+
+Let's see how they coordinate!
