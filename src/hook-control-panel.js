@@ -625,22 +625,19 @@ class HookControlPanel {
     }
 
     if (available.length > 0) {
-      console.log(`  ${chalk.bold.yellow('📦 Available')} ${chalk.gray(`(${available.length} items)`)}`);
-      console.log(chalk.cyan('  ───────────────────────────────────'));
-      console.log();
+      console.log(`  ${chalk.bold.yellow('📦 Available')} ${chalk.gray(`(${available.length})`)}`);
+      console.log(chalk.cyan('  ─────────────────────────────'));
       
-      // Show top 4 available items
-      available.slice(0, 4).forEach(item => {
-        const description = item.description || 'No description';
-        console.log(`    ${chalk.yellow('•')} ${chalk.bold(item.name)}`);
-        console.log(`      ${chalk.gray(description)}`);
-        console.log();
+      // Show top 3 available items, more compact
+      available.slice(0, 3).forEach(item => {
+        const description = (item.description || 'No description').substring(0, 40) + '...';
+        console.log(`    ${chalk.yellow('•')} ${chalk.bold(item.name)} ${chalk.gray('- ' + description)}`);
       });
       
-      if (available.length > 4) {
-        console.log(`    ${chalk.gray(`... and ${available.length - 4} more`)}`);
-        console.log();
+      if (available.length > 3) {
+        console.log(`    ${chalk.gray(`... and ${available.length - 3} more`)}`);
       }
+      console.log();
     }
 
     if (allInstalled.length === 0 && available.length === 0) {
