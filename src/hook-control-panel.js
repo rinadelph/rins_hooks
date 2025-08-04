@@ -312,8 +312,8 @@ class HookControlPanel {
       
       const key = await this.waitForDirectKeypress();
 
-      // Handle navigation and direct actions
-      switch (navigation.action) {
+      // Handle direct keypress
+      switch (key) {
         case 'left':
           if (currentSection > 0) {
             currentSection--;
@@ -323,6 +323,10 @@ class HookControlPanel {
           if (currentSection < sections.length - 1) {
             currentSection++;
           }
+          break;
+        case 'enter':
+          const exitRequested = await this.enterSection(sections[currentSection]);
+          if (exitRequested) return;
           break;
         case 'i':
           await this.installSectionItems(sections[currentSection]);
