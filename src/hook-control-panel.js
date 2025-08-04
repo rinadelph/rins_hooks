@@ -290,9 +290,9 @@ class HookControlPanel {
       console.clear();
       
       // Header with better styling
-      console.log(chalk.cyan('╭───────────────────────────────────────────────────────────────╮'));
-      console.log(chalk.cyan('│') + chalk.bold.blue('          🎣 Rapala - Claude Code Enhancement Center           ') + chalk.cyan('│'));
-      console.log(chalk.cyan('╰───────────────────────────────────────────────────────────────╯'));
+      console.log(chalk.cyan('╭──────────────────────────────────────────────────╮'));
+      console.log(chalk.cyan('│') + chalk.bold.blue('      🎣 Rapala - Enhancement Center       ') + chalk.cyan('│'));
+      console.log(chalk.cyan('╰──────────────────────────────────────────────────╯'));
       console.log();
       
       // Enhanced section navigation bar with better highlighting
