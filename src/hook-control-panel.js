@@ -328,8 +328,8 @@ class HookControlPanel {
           }
           break;
         case 'enter':
-          const exitRequested = await this.enterSection(sections[currentSection]);
-          if (exitRequested) return;
+          const shouldQuit = await this.enterSection(sections[currentSection]);
+          if (shouldQuit === true) return; // Only quit if explicitly true
           break;
         case 'i':
           await this.installSectionItems(sections[currentSection]);
