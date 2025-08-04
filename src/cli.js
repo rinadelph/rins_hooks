@@ -314,6 +314,42 @@ program
     }
   });
 
+// Agent-MCP command
+program
+  .command('agentmcp')
+  .description('Manage Agent-MCP collaboration hooks')
+  .option('-i, --install [hooks...]', 'Install Agent-MCP hooks (all, or specify: registry, locking, tasks, git)')
+  .option('-s, --status', 'Show Agent-MCP hooks status')
+  .option('-u, --user', 'Install at user level (~/.claude/settings.json)')
+  .option('-p, --project', 'Install at project level (.claude/settings.json)')
+  .option('-l, --local', 'Install at local level (.claude/settings.local.json)')
+  .option('--interactive', 'Interactive Agent-MCP setup with TUI')
+  .action(async (options) => {
+    try {
+      console.log(chalk.blue('🤖 Agent-MCP Hook Manager'));
+      console.log(chalk.gray('Multi-agent collaboration system for Claude Code'));
+      console.log();
+
+      const AgentMCPManager = require('./agent-mcp-manager');
+      const manager = new AgentMCPManager();
+
+      if (options.status) {
+        await manager.showStatus();
+      } else if (options.interactive) {
+        await manager.interactiveSetup(options);
+      } else if (options.install) {
+        const hooks = Array.isArray(options.install) ? options.install : ['all'];
+        await manager.installHooks(hooks, options);
+      } else {
+        // Default: show interactive menu
+        await manager.interactiveSetup(options);
+      }
+    } catch (error) {
+      console.error(chalk.red('❌ Agent-MCP command failed:'), error.message);
+      process.exit(1);
+    }
+  });
+
 // Update command
 program
   .command('update')
