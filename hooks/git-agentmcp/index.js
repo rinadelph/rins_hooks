@@ -341,6 +341,7 @@ function generateCommitMessage(toolName, filePath, input) {
   const fileName = path.basename(filePath);
   const agentId = extractAgentId(input);
   const timestamp = new Date().toISOString();
+  const tmuxInfo = getTmuxInfo();
 
   // Determine action based on tool
   let action = 'feat';
@@ -356,6 +357,7 @@ function generateCommitMessage(toolName, filePath, input) {
     .replace(/\{\{sessionId\}\}/g, agentId)
     .replace(/\{\{pid\}\}/g, process.pid)
     .replace(/\{\{parentPid\}\}/g, process.ppid)
+    .replace(/\{\{tmuxInfo\}\}/g, tmuxInfo)
     .replace(/\{\{timestamp\}\}/g, timestamp);
 
   // Truncate if too long
