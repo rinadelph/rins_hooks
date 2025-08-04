@@ -15,10 +15,12 @@ class HookGenerator {
    * @param {string} description - Natural language description of the hook
    * @param {string} projectPath - Optional project path for context
    */
-  async generateHook(description, projectPath = process.cwd()) {
-    console.log(chalk.blue('🎣 Rapala Hook Generator'));
-    console.log(chalk.gray(`Analyzing: "${description}"`));
-    console.log();
+  async generateHook(description, projectPath = process.cwd(), silent = false) {
+    if (!silent) {
+      console.log(chalk.blue('🎣 Rapala Hook Generator'));
+      console.log(chalk.gray(`Analyzing: "${description}"`));
+      console.log();
+    }
 
     const hookConfig = this.parseDescription(description);
     
@@ -31,14 +33,16 @@ class HookGenerator {
       return;
     }
 
-    console.log(chalk.green('✅ Hook configuration generated:'));
-    console.log(chalk.cyan(JSON.stringify(hookConfig, null, 2)));
-    console.log();
+    if (!silent) {
+      console.log(chalk.green('✅ Hook configuration generated:'));
+      console.log(chalk.cyan(JSON.stringify(hookConfig, null, 2)));
+      console.log();
 
-    // Ask if user wants to install via Rapala
-    console.log(chalk.blue('📦 Ready to install with Rapala'));
-    console.log(chalk.gray('Run the following command to install:'));
-    console.log(chalk.white(`rapala install-custom "${JSON.stringify(hookConfig).replace(/"/g, '\\"')}"`));
+      // Ask if user wants to install via Rapala
+      console.log(chalk.blue('📦 Ready to install with Rapala'));
+      console.log(chalk.gray('Run the following command to install:'));
+      console.log(chalk.white(`rapala install-custom "${JSON.stringify(hookConfig).replace(/"/g, '\\"')}"`));
+    }
     
     return hookConfig;
   }
