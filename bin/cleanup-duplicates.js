@@ -42,32 +42,54 @@ class DuplicateCleanup {
       for (const [eventName, eventHooks] of Object.entries(settings.hooks)) {
         if (!Array.isArray(eventHooks)) continue;
 
+        // Track seen hook commands across ALL hook groups in this event
+        const seenHooksInEvent = new Set();
+        const uniqueHookGroups = [];
+
         for (let i = 0; i < eventHooks.length; i++) {
           const hookGroup = eventHooks[i];
-          if (!hookGroup.hooks || !Array.isArray(hookGroup.hooks)) continue;
+          if (!hookGroup.hooks || !Array.isArray(hookGroup.hooks)) {
+            uniqueHookGroups.push(hookGroup);
+            continue;
+          }
 
-          // Track seen hook commands to identify duplicates
-          const seenCommands = new Set();
-          const uniqueHooks = [];
+          // Track unique hooks within this group
+          const uniqueHooksInGroup = [];
+          let hasUniqueHooks = false;
 
           for (const hook of hookGroup.hooks) {
-            if (!hook.command) continue;
+            if (!hook.command) {
+              uniqueHooksInGroup.push(hook);
+              continue;
+            }
 
             // Extract hook name from command path
             const hookName = this.extractHookName(hook.command);
+            const hookKey = `${hookName}-${hook.command}`;
             
-            if (!seenCommands.has(hookName)) {
-              seenCommands.add(hookName);
-              uniqueHooks.push(hook);
+            if (!seenHooksInEvent.has(hookKey)) {
+              seenHooksInEvent.add(hookKey);
+              uniqueHooksInGroup.push(hook);
+              hasUniqueHooks = true;
             } else {
               console.log(chalk.yellow(`   Removing duplicate: ${hookName} from ${eventName}`));
               duplicatesRemoved++;
             }
           }
 
-          // Update the hooks array with unique hooks only
-          cleanedSettings.hooks[eventName][i].hooks = uniqueHooks;
+          // Only keep hook groups that have unique hooks or non-hook entries
+          if (hasUniqueHooks || uniqueHooksInGroup.length > 0) {
+            if (uniqueHooksInGroup.length > 0) {
+              uniqueHookGroups.push({
+                ...hookGroup,
+                hooks: uniqueHooksInGroup
+              });
+            }
+          }
         }
+
+        // Update the event with unique hook groups only
+        cleanedSettings.hooks[eventName] = uniqueHookGroups;
       }
 
       if (duplicatesRemoved > 0) {
