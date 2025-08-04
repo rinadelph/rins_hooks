@@ -833,15 +833,34 @@ class HookControlPanel {
   }
 
   async selectInstallScope() {
+    console.log(`  ${chalk.bold.cyan('📍 Installation Scope')}`);
+    console.log(chalk.cyan('  ───────────────────────────'));
+    console.log();
+    console.log(`    ${chalk.gray('Choose where to install these enhancements:')}`);
+    console.log();
+
     const scope = await inquirer.prompt([{
       type: 'list',
       name: 'scope',
-      message: 'Installation scope:',
+      message: chalk.cyan('Select installation scope:'),
       choices: [
-        { name: '👤 User Level - All projects', value: 'user' },
-        { name: '📁 Project Level - This project only (committed)', value: 'project' },
-        { name: '🔒 Local Level - This project only (not committed)', value: 'local' }
-      ]
+        { 
+          name: `${chalk.blue('👤 User Level')} - ${chalk.gray('Available in all Claude Code projects')}`, 
+          value: 'user',
+          short: 'User'
+        },
+        { 
+          name: `${chalk.green('📁 Project Level')} - ${chalk.gray('This project only (committed to git)')}`, 
+          value: 'project',
+          short: 'Project'
+        },
+        { 
+          name: `${chalk.yellow('🔒 Local Level')} - ${chalk.gray('This project only (not committed)')}`, 
+          value: 'local',
+          short: 'Local'
+        }
+      ],
+      pageSize: 5
     }]);
     return scope.scope;
   }
