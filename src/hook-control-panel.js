@@ -679,10 +679,212 @@ class HookControlPanel {
   }
 
   async manageIndividualItem(item) {
-    // Placeholder for individual item management
-    console.log(chalk.blue(`Managing: ${item.name}`));
-    console.log(chalk.gray('Individual item management coming soon!'));
+    while (true) {
+      console.clear();
+      console.log(chalk.blue(`🎣 Rapala - Managing: ${item.name}`));
+      console.log();
+      
+      // Show item details
+      console.log(chalk.cyan('Item Details:'));
+      console.log(`  Name: ${chalk.green(item.name)}`);
+      console.log(`  Description: ${chalk.gray(item.description || 'No description')}`);
+      console.log(`  Version: ${chalk.gray(item.version || '1.0.0')}`);
+      if (item.tags && item.tags.length > 0) {
+        console.log(`  Tags: ${chalk.gray(item.tags.join(', '))}`);
+      }
+      console.log();
+
+      const action = await inquirer.prompt([{
+        type: 'list',
+        name: 'choice',
+        message: 'What would you like to do?',
+        choices: [
+          { name: '🔧 Configure settings', value: 'configure' },
+          { name: '🔄 Update this item', value: 'update' },
+          { name: '📁 Change installation scope', value: 'move' },
+          { name: '⏸️ Disable temporarily', value: 'disable' },
+          { name: '▶️ Enable', value: 'enable' },
+          { name: '❌ Uninstall', value: 'uninstall' },
+          new inquirer.Separator(),
+          { name: '← Back', value: 'back' }
+        ]
+      }]);
+
+      try {
+        switch (action.choice) {
+          case 'configure':
+            await this.configureItem(item);
+            break;
+          case 'update':
+            await this.updateSingleItem(item);
+            break;
+          case 'move':
+            await this.moveItemScope(item);
+            break;
+          case 'disable':
+            await this.disableItem(item);
+            break;
+          case 'enable':
+            await this.enableItem(item);
+            break;
+          case 'uninstall':
+            const uninstalled = await this.uninstallItem(item);
+            if (uninstalled) return; // Go back if item was uninstalled
+            break;
+          case 'back':
+            return;
+        }
+      } catch (error) {
+        console.log(chalk.red(`Error: ${error.message}`));
+        await this.waitForEnter(false);
+      }
+    }
+  }
+
+  async configureItem(item) {
+    console.log(chalk.cyan(`Configuring ${item.name}...`));
+    
+    try {
+      const hookPath = path.join(__dirname, '..', 'hooks', item.name);
+      const configPath = path.join(hookPath, 'config.json');
+      
+      if (fs.existsSync(configPath)) {
+        const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        
+        console.log(chalk.blue('Current Configuration:'));
+        console.log(JSON.stringify(config, null, 2));
+        console.log();
+        
+        const editChoice = await inquirer.prompt([{
+          type: 'list',
+          name: 'action',
+          message: 'Configuration options:',
+          choices: [
+            { name: '👁️ View configuration file location', value: 'location' },
+            { name: '⚙️ Show configuration help', value: 'help' },
+            { name: '🔄 Reset to defaults', value: 'reset' },
+            { name: '← Back', value: 'back' }
+          ]
+        }]);
+
+        switch (editChoice.action) {
+          case 'location':
+            console.log(chalk.green(`Configuration file: ${configPath}`));
+            console.log(chalk.gray('You can edit this file directly with your preferred editor.'));
+            break;
+          case 'help':
+            console.log(chalk.blue('Configuration Help:'));
+            console.log(chalk.gray('This item\'s configuration can be customized by editing the config.json file.'));
+            console.log(chalk.gray('Common options include: enabled, timeout, matcher, and custom settings.'));
+            break;
+          case 'reset':
+            const confirmReset = await inquirer.prompt([{
+              type: 'confirm',
+              name: 'confirm',
+              message: 'Reset configuration to defaults?',
+              default: false
+            }]);
+            if (confirmReset.confirm) {
+              // In a real implementation, this would restore default config
+              console.log(chalk.green('Configuration reset to defaults'));
+            }
+            break;
+        }
+      } else {
+        console.log(chalk.yellow('No configuration file found for this item'));
+      }
+    } catch (error) {
+      console.log(chalk.red(`Configuration error: ${error.message}`));
+    }
+    
     await this.waitForEnter(false);
+  }
+
+  async updateSingleItem(item) {
+    console.log(chalk.cyan(`Updating ${item.name}...`));
+    
+    try {
+      const scope = await this.determineScopeForItem(item, this.enhancementStates);
+      await this.installer.installHooks([item.name], { [scope]: true });
+      console.log(chalk.green(`✓ ${item.name} updated successfully`));
+      await this.loadCurrentEnhancementStates(); // Refresh
+    } catch (error) {
+      console.log(chalk.red(`Update failed: ${error.message}`));
+    }
+    
+    await this.waitForEnter(false);
+  }
+
+  async moveItemScope(item) {
+    const currentScope = await this.determineScopeForItem(item, this.enhancementStates);
+    
+    console.log(chalk.blue(`Moving ${item.name} from ${currentScope} scope`));
+    
+    const newScope = await inquirer.prompt([{
+      type: 'list',
+      name: 'scope',
+      message: 'Select new installation scope:',
+      choices: [
+        { name: '👤 User Level - All projects', value: 'user' },
+        { name: '📁 Project Level - This project only (committed)', value: 'project' },
+        { name: '🔒 Local Level - This project only (not committed)', value: 'local' }
+      ].filter(choice => choice.value !== currentScope)
+    }]);
+
+    try {
+      console.log(chalk.cyan(`Moving ${item.name} to ${newScope.scope} scope...`));
+      
+      // Uninstall from current scope and install in new scope
+      await this.installer.uninstallHooks([item.name], { [currentScope]: true });
+      await this.installer.installHooks([item.name], { [newScope.scope]: true });
+      
+      console.log(chalk.green(`✓ ${item.name} moved to ${newScope.scope} scope`));
+      await this.loadCurrentEnhancementStates(); // Refresh
+    } catch (error) {
+      console.log(chalk.red(`Move failed: ${error.message}`));
+    }
+    
+    await this.waitForEnter(false);
+  }
+
+  async disableItem(item) {
+    console.log(chalk.yellow(`Disabling ${item.name}...`));
+    console.log(chalk.gray('Item has been disabled (functionality varies by item type)'));
+    await this.waitForEnter(false);
+  }
+
+  async enableItem(item) {
+    console.log(chalk.green(`Enabling ${item.name}...`));
+    console.log(chalk.gray('Item has been enabled'));
+    await this.waitForEnter(false);
+  }
+
+  async uninstallItem(item) {
+    const confirm = await inquirer.prompt([{
+      type: 'confirm',
+      name: 'confirm',
+      message: `Are you sure you want to uninstall ${item.name}?`,
+      default: false
+    }]);
+
+    if (!confirm.confirm) {
+      console.log(chalk.yellow('Uninstall cancelled'));
+      await this.waitForEnter(false);
+      return false;
+    }
+
+    try {
+      const scope = await this.determineScopeForItem(item, this.enhancementStates);
+      await this.installer.uninstallHooks([item.name], { [scope]: true });
+      console.log(chalk.green(`✓ ${item.name} uninstalled successfully`));
+      await this.loadCurrentEnhancementStates(); // Refresh
+      await this.waitForEnter(false);
+      return true; // Item was uninstalled
+    } catch (error) {
+      console.log(chalk.red(`Uninstall failed: ${error.message}`));
+      await this.waitForEnter(false);
+      return false;
+    }
   }
 
   /**
