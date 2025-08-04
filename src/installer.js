@@ -122,7 +122,7 @@ class Installer {
 
       console.log();
       console.log(chalk.green('✅ Interactive installation completed!'));
-      console.log(chalk.cyan('Run `rins_hooks status` to verify the installation.'));
+      console.log(chalk.cyan('Run `rapala status` to verify the installation.'));
 
     } catch (error) {
       throw new Error(`Interactive installation failed: ${error.message}`);
@@ -521,7 +521,7 @@ class Installer {
     // Show available for installation
     if (categories.uninstalled.length > 0) {
       console.log(chalk.gray(`📋 Available for installation: ${categories.uninstalled.length} hooks`));
-      console.log(chalk.cyan('Run `rins_hooks install` to add more hooks.'));
+      console.log(chalk.cyan('Run `rapala install` to add more hooks.'));
     }
   }
 
