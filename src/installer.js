@@ -667,8 +667,7 @@ class Installer {
           hooks: [
             {
               type: 'command',
-              command: `node "${hookScriptPath}"`,
-              timeout: hook.timeout || 30
+              command: `node "${hookScriptPath}"`
             }
           ]
         };
