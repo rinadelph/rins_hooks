@@ -26,8 +26,8 @@ class DebugGitHook {
    */
   async execute(input) {
     try {
-      // Only run on PreToolUse for file modification tools
-      if (!input || input.hook_event_name !== 'PreToolUse') {
+      // Only run on PostToolUse for file modification tools
+      if (!input || input.hook_event_name !== 'PostToolUse') {
         return this.success();
       }
 
@@ -38,37 +38,46 @@ class DebugGitHook {
         return this.success();
       }
 
-      // Log the tool call for debugging
-      this.logActivity({
-        timestamp: new Date().toISOString(),
-        event: 'PreToolUse_Debug',
-        tool_name,
-        tool_input: this.sanitizeInput(tool_input),
-        session_id: input.session_id
-      });
-
       // Check if we're in a git repository
       if (!this.isInGitRepo()) {
         return this.success();
       }
 
-      // Check for potential git issues that might cause problems
+      // Give other git hooks a moment to complete
+      await this.sleep(100);
+
+      // Check for git issues that occurred during the tool execution
       const gitIssues = this.checkGitStatus();
+      const recentGitErrors = this.checkRecentGitErrors();
       
-      if (gitIssues.length > 0) {
+      const allIssues = [...gitIssues, ...recentGitErrors];
+      
+      // Log the tool call and results for debugging
+      this.logActivity({
+        timestamp: new Date().toISOString(),
+        event: 'PostToolUse_GitDebug',
+        tool_name,
+        tool_input: this.sanitizeInput(tool_input),
+        session_id: input.session_id,
+        git_issues: allIssues
+      });
+      
+      if (allIssues.length > 0) {
         // Use exit code 2 to show the issues to the model
         const errorMessage = [
-          '🔍 Git Debug Hook - Potential Issues Detected:',
+          '🔍 Git Debug Hook - Issues After Tool Execution:',
           '',
-          ...gitIssues,
+          ...allIssues,
           '',
-          'These issues might cause git hooks to fail. Consider resolving before proceeding.',
-          `Tool being executed: ${tool_name}`,
-          `File: ${tool_input?.file_path || tool_input?.filePath || 'unknown'}`
+          'These git issues occurred after the tool executed. This might help debug git hook failures.',
+          `Tool that just executed: ${tool_name}`,
+          `File: ${tool_input?.file_path || tool_input?.filePath || 'unknown'}`,
+          '',
+          'Debug info logged to: .agent/session-activity/debug-hook.jsonl'
         ].join('\n');
 
         console.error(errorMessage);
-        process.exit(2); // Show to model and block tool call
+        process.exit(2); // Show to model and block further execution
       }
 
       return this.success();
@@ -84,6 +93,13 @@ class DebugGitHook {
       
       return this.success();
     }
+  }
+
+  /**
+   * Sleep for specified milliseconds
+   */
+  sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   /**
