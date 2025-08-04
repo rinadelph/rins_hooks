@@ -321,72 +321,110 @@ class HookControlPanel {
         ]
       }]);
 
-      try {
-        let shouldExit = false;
-        let shouldRefresh = false;
-        
-        switch (mainAction.action) {
-          case 'status':
-            shouldExit = await this.showComprehensiveStatus();
-            break;
-          case 'scan':
-            shouldExit = await this.performDeepScan();
-            break;
-          case 'manage':
-            shouldExit = await this.manageIndividualHooksComplete();
-            break;
-          case 'install':
-            shouldExit = await this.installHooksComplete();
-            break;
-          case 'update':
-            shouldExit = await this.updateSystemComplete();
-            break;
-          case 'agentmcp':
-            shouldExit = await this.manageAgentMCPComplete();
-            break;
-          case 'clean':
-            shouldExit = await this.cleanAndOptimizeComplete();
-            break;
-          case 'bulk':
-            shouldExit = await this.bulkOperationsComplete();
-            break;
-          case 'settings':
-            shouldExit = await this.systemSettingsComplete();
-            break;
-          case 'exit':
-            console.log(chalk.green('👋 Hook management complete!'));
-            return;
-        }
-        
-        // Handle exit request from submenu
-        if (shouldExit === 'exit') {
-          console.log(chalk.green('👋 Hook management complete!'));
+      // Handle navigation
+      switch (navigation.action) {
+        case 'prev':
+          currentSection = Math.max(0, currentSection - 1);
+          break;
+        case 'next':
+          currentSection = Math.min(sections.length - 1, currentSection + 1);
+          break;
+        case 'enter':
+          const exitRequested = await this.enterSection(sections[currentSection]);
+          if (exitRequested) return;
+          break;
+        case 'quit':
+          console.log(chalk.green('👋 Thank you for using Rapala!'));
           return;
-        }
-        
-      } catch (error) {
-        console.error(chalk.red(`❌ Operation failed: ${error.message}`));
-        
-        const errorAction = await inquirer.prompt([{
-          type: 'list',
-          name: 'action',
-          message: 'An error occurred. What would you like to do?',
-          choices: [
-            { name: '🔙 Return to Main Menu', value: 'back' },
-            { name: '🚪 Exit Management Center', value: 'exit' }
-          ]
-        }]);
-        
-        if (errorAction.action === 'exit') {
-          return;
-        }
       }
+    }
+  }
 
-      // Clear screen and continue
-      console.clear();
-      console.log(chalk.blue('🎛️  Complete Hook Management Center'));
-      console.log(chalk.gray('Returning to main menu...'));
+  /**
+   * Display clean overview for a specific section
+   */
+  async displaySectionOverview(sectionType) {
+    const sectionData = this.enhancementStates[sectionType];
+    const totalInstalled = sectionData.user.length + sectionData.project.length + sectionData.local.length;
+    const totalAvailable = sectionData.available.length;
+
+    // Section summary
+    console.log(chalk.cyan(`${this.getSectionTitle(sectionType)} Overview:`));
+    console.log();
+    
+    if (totalInstalled === 0) {
+      console.log(chalk.gray('   No items installed in this section'));
+      console.log(chalk.cyan(`   ${totalAvailable} items available to install`));
+    } else {
+      console.log(chalk.green(`   ✓ ${totalInstalled} installed`));
+      console.log(chalk.gray(`   ${totalAvailable - totalInstalled} more available`));
+      
+      // Show first few installed items as preview
+      const allInstalled = [...sectionData.user, ...sectionData.project, ...sectionData.local];
+      const preview = allInstalled.slice(0, 3);
+      
       console.log();
+      console.log(chalk.blue('   Installed items:'));
+      preview.forEach(item => {
+        const scope = this.getScopeIcon(item, sectionData);
+        console.log(chalk.gray(`   • ${item.name} ${scope}`));
+      });
+      
+      if (allInstalled.length > 3) {
+        console.log(chalk.gray(`   ... and ${allInstalled.length - 3} more`));
+      }
+    }
+    
+    console.log();
+    console.log(chalk.gray(this.getSectionDescription(sectionType)));
+    console.log();
+  }
+
+  /**
+   * Enter a specific section for management
+   */
+  async enterSection(sectionType) {
+    while (true) {
+      console.clear();
+      console.log(chalk.blue(`🎣 Rapala - ${this.getSectionTitle(sectionType)} Management`));
+      console.log();
+
+      // Show detailed section content
+      await this.displayDetailedSection(sectionType);
+
+      const action = await inquirer.prompt([{
+        type: 'list',
+        name: 'choice',
+        message: `${this.getSectionTitle(sectionType)} actions:`,
+        choices: [
+          { name: '📦 Install items', value: 'install' },
+          { name: '⚙️ Manage installed items', value: 'manage' },
+          { name: '📊 View all items', value: 'view' },
+          { name: '🔄 Update items', value: 'update' },
+          new inquirer.Separator(),
+          { name: '← Back to sections', value: 'back' },
+          { name: 'Q Quit Rapala', value: 'quit' }
+        ]
+      }]);
+
+      switch (action.choice) {
+        case 'install':
+          await this.installSectionItems(sectionType);
+          break;
+        case 'manage':
+          await this.manageSectionItems(sectionType);
+          break;
+        case 'view':
+          await this.viewSectionItems(sectionType);
+          break;
+        case 'update':
+          await this.updateSectionItems(sectionType);
+          break;
+        case 'back':
+          return false;
+        case 'quit':
+          return true;
+      }
     }
   }
 
