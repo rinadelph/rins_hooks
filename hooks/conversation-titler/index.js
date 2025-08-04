@@ -76,14 +76,17 @@ class ConversationTitlerHook extends HookBase {
 
   encodeProjectPath(projectPath) {
     // Convert /home/user/project to -home-user-project (Claude's encoding pattern)
-    return projectPath.replace(/\//g, '-').replace(/^-/, '');
+    return projectPath.replace(/\//g, '-');
   }
 
   async findCurrentSummaryFile(projectDir, sessionId) {
     try {
       const files = await fs.readdir(projectDir);
       
-      // Look for small JSONL files (summaries are ~1KB)
+      // Look for small JSONL files (summaries are ~1KB) and get the most recent one
+      let mostRecentFile = null;
+      let mostRecentTime = 0;
+      
       for (const file of files) {
         if (!file.endsWith('.jsonl')) continue;
         
@@ -94,17 +97,21 @@ class ConversationTitlerHook extends HookBase {
         if (stats.size > 5000) continue;
         
         const content = await fs.readFile(filePath, 'utf8');
-        // Check if this summary file contains recent entries
+        // Check if this summary file contains summary entries
         if (content.includes('"type":"summary"')) {
-          return filePath;
+          // Use modification time to find the most recent
+          if (stats.mtime.getTime() > mostRecentTime) {
+            mostRecentTime = stats.mtime.getTime();
+            mostRecentFile = filePath;
+          }
         }
       }
+      
+      return mostRecentFile;
     } catch (error) {
       // Directory or files might not exist yet
       return null;
     }
-    
-    return null;
   }
 
   async getCurrentTitle(summaryFile) {
