@@ -307,17 +307,6 @@ class HookManager {
               description: `Hook file not found: ${hookPath}`
             });
           }
-
-          // Check for reasonable timeouts
-          const timeout = hook.timeout || 30;
-          if (timeout > 300) {
-            issues.push({
-              type: 'long_timeout',
-              eventType,
-              timeout,
-              description: `Very long timeout (${timeout}s) for ${eventType} hook`
-            });
-          }
         }
       }
     }
