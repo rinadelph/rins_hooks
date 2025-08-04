@@ -468,7 +468,7 @@ program.parse(process.argv);
 if (!process.argv.slice(2).length) {
   (async () => {
     try {
-      console.log(chalk.blue('🚀 Welcome to Rins Hooks!'));
+      console.log(chalk.blue('🎣 Welcome to Rapala!'));
       console.log(chalk.gray('Starting interactive control panel...'));
       console.log();
       
