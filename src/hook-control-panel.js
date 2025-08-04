@@ -404,9 +404,20 @@ class HookControlPanel {
 
     // Section header with icon - horizontal layout
     const icon = this.getCategoryIcon(sectionType);
-    const stats = totalInstalled > 0 ? 
-      `${chalk.green(totalInstalled + ' installed')} ${totalAvailable > totalInstalled ? chalk.cyan('│ ' + (totalAvailable - totalInstalled) + ' available') : ''}` :
-      chalk.yellow('No items installed') + chalk.cyan(' │ ' + totalAvailable + ' available');
+    
+    // For hooks section, show breakdown by type
+    let stats;
+    if (sectionType === 'hooks' && totalInstalled > 0) {
+      const allInstalled = [...sectionData.user, ...sectionData.project, ...sectionData.local];
+      const claudeCodeHooks = allInstalled.filter(item => item.hookType === 'claude-code');
+      const rapalaHooks = allInstalled.filter(item => item.hookType === 'rapala-generated');
+      
+      stats = `${chalk.blue(claudeCodeHooks.length + ' Claude Code')} ${chalk.gray('│')} ${chalk.magenta(rapalaHooks.length + ' Rapala')} ${totalAvailable > totalInstalled ? chalk.cyan('│ ' + (totalAvailable - totalInstalled) + ' available') : ''}`;
+    } else {
+      stats = totalInstalled > 0 ? 
+        `${chalk.green(totalInstalled + ' installed')} ${totalAvailable > totalInstalled ? chalk.cyan('│ ' + (totalAvailable - totalInstalled) + ' available') : ''}` :
+        chalk.yellow('No items installed') + chalk.cyan(' │ ' + totalAvailable + ' available');
+    }
     
     console.log(`${icon} ${chalk.bold.white(this.getSectionTitle(sectionType))} │ ${stats}`);
     
@@ -416,7 +427,8 @@ class HookControlPanel {
       const preview = allInstalled.slice(0, 3);
       const itemList = preview.map(item => {
         const scopeIcon = this.getScopeIcon(item, sectionData);
-        return `${item.name}${scopeIcon}`;
+        const typeIcon = (sectionType === 'hooks' && item.hookType === 'rapala-generated') ? '🎣' : '';
+        return `${typeIcon}${item.name}${scopeIcon}`;
       }).join(chalk.gray(' │ '));
       
       console.log(chalk.gray('Recent: ') + itemList + (allInstalled.length > 3 ? chalk.dim(' │ +' + (allInstalled.length - 3) + ' more') : ''));
