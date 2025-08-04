@@ -264,6 +264,50 @@ program
     }
   });
 
+// Update command
+program
+  .command('update')
+  .description('Check for and manage hook updates')
+  .option('-c, --check', 'Check for available updates')
+  .option('-u, --update [hook]', 'Update all hooks or specific hook')
+  .option('-l, --list', 'List all hooks with versions')
+  .option('-r, --reset', 'Reset version tracking')
+  .action(async (options) => {
+    try {
+      const updateScript = path.join(__dirname, '..', 'hooks', 'version-checker', 'update.js');
+      
+      if (!require('fs').existsSync(updateScript)) {
+        console.log(chalk.yellow('⚠️  Version checker hook not found.'));
+        console.log(chalk.cyan('Install it with: rins_hooks install version-checker'));
+        return;
+      }
+
+      const { spawn } = require('child_process');
+      
+      let command = 'check'; // default
+      if (options.update) {
+        command = typeof options.update === 'string' ? `update ${options.update}` : 'update';
+      } else if (options.list) {
+        command = 'list';
+      } else if (options.reset) {
+        command = 'reset';
+      }
+
+      const child = spawn('node', [updateScript, ...command.split(' ')], {
+        stdio: 'inherit',
+        cwd: process.cwd()
+      });
+
+      child.on('exit', (code) => {
+        process.exit(code);
+      });
+
+    } catch (error) {
+      console.error(chalk.red('❌ Update command failed:'), error.message);
+      process.exit(1);
+    }
+  });
+
 // Parse command line arguments
 program.parse(process.argv);
 
