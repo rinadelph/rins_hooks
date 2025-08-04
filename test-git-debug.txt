@@ -1,0 +1,15 @@
+Testing git debug hook system:
+
+✅ Fixed git hook co-author credits (removed from commit messages)
+✅ Added intelligent git staging verification with retry logic  
+✅ Created debug-git hook that runs in PostToolUse after git hooks
+✅ Debug hook checks for git errors and shows them to the model
+✅ No-coauthor hook automatically migrates itself to SessionStart
+✅ Enhanced error reporting with detailed git command output
+
+This write should trigger:
+1. git-agentmcp hook (creates commit with PID tracking)
+2. auto-commit hook (attempts to create commit)
+3. debug-git hook (checks for any issues and reports to model)
+
+If there are git issues, the debug hook will use exit code 2 to show them to me.
