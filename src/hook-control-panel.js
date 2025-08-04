@@ -331,8 +331,14 @@ class HookControlPanel {
           }
           break;
         case 'enter':
-          const shouldQuit = await this.enterSection(sections[currentSection]);
-          if (shouldQuit === true) return; // Only quit if explicitly true
+          if (debug) console.log(`DEBUG: Entering section: ${sections[currentSection]}`);
+          const shouldQuit = await this.enterSection(sections[currentSection], debug);
+          if (debug) console.log(`DEBUG: enterSection returned: ${shouldQuit}`);
+          if (shouldQuit === true) {
+            if (debug) console.log('DEBUG: Quitting from enterSection');
+            return;
+          }
+          if (debug) console.log('DEBUG: Continuing after enterSection');
           break;
         case 'i':
           await this.installSectionItems(sections[currentSection]);
