@@ -267,6 +267,60 @@ function extractAgentId(input) {
   return input.session_id || `session-${process.ppid}`;
 }
 
+function getTmuxInfo() {
+  try {
+    const tmuxSession = process.env.TMUX_SESSION;
+    const tmuxPane = process.env.TMUX_PANE;
+    
+    // Try to get tmux info from environment variables
+    if (tmuxSession && tmuxPane) {
+      return `${tmuxSession}:${tmuxPane}`;
+    }
+    
+    // Fallback: Try to detect tmux through TMUX environment variable
+    if (process.env.TMUX) {
+      try {
+        const { execSync } = require('child_process');
+        
+        // Get current session name
+        const sessionName = execSync('tmux display-message -p "#S"', { 
+          encoding: 'utf8', 
+          stdio: 'pipe',
+          timeout: 1000 
+        }).trim();
+        
+        // Get current pane info  
+        const paneInfo = execSync('tmux display-message -p "#P"', { 
+          encoding: 'utf8', 
+          stdio: 'pipe',
+          timeout: 1000 
+        }).trim();
+        
+        // Get window info for extra context
+        const windowInfo = execSync('tmux display-message -p "#I:#W"', { 
+          encoding: 'utf8', 
+          stdio: 'pipe',
+          timeout: 1000 
+        }).trim();
+        
+        return `${sessionName}:${windowInfo}.${paneInfo}`;
+      } catch (tmuxError) {
+        // If tmux commands fail, just indicate we're in tmux
+        return 'tmux-session';
+      }
+    }
+    
+    // Check if we're in a terminal that might be tmux
+    if (process.env.TERM && process.env.TERM.includes('tmux')) {
+      return 'tmux-detected';
+    }
+    
+    return 'no-tmux';
+  } catch (error) {
+    return 'tmux-unknown';
+  }
+}
+
 function shouldExcludeFile(filePath) {
   const fileName = path.basename(filePath);
   const relativePath = path.relative(process.cwd(), filePath);
