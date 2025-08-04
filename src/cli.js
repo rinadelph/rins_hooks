@@ -7,6 +7,7 @@ const { version } = require('../package.json');
 const Installer = require('./installer');
 const ConfigManager = require('./config');
 const Utils = require('./utils');
+const VersionCheck = require('./version-check');
 
 const program = new Command();
 
