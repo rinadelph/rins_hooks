@@ -434,9 +434,9 @@ class HookControlPanel {
       console.clear();
       
       // Header with same styling as main interface
-      console.log(chalk.cyan('╭───────────────────────────────────────────────────────────────╮'));
-      console.log(chalk.cyan('│') + chalk.bold.blue(`         🎣 Rapala - ${this.getSectionTitle(sectionType)} Management         `) + chalk.cyan('│'));
-      console.log(chalk.cyan('╰───────────────────────────────────────────────────────────────╯'));
+      console.log(chalk.cyan('╭──────────────────────────────────────────────────╮'));
+      console.log(chalk.cyan('│') + chalk.bold.blue(`    🎣 ${this.getSectionTitle(sectionType)} Management     `) + chalk.cyan('│'));
+      console.log(chalk.cyan('╰──────────────────────────────────────────────────╯'));
       console.log();
 
       // Show detailed section content with consistent styling
