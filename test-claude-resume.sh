@@ -106,7 +106,7 @@ test_claude_resume() {
         echo "Command: echo '$TEST_PROMPT' | claude -r"
         echo
         
-        timeout 30s script -q -c "echo '$TEST_PROMPT' | claude -r 2>&1" "$SCREEN_LOG.script1" || {
+        timeout 10s script -q -c "echo '$TEST_PROMPT' | claude -r 2>&1" "$SCREEN_LOG.script1" || {
             echo "Script command timed out or failed (exit code: $?)"
             echo "Attempting to capture any partial output..."
             cat "$SCREEN_LOG.script1" 2>/dev/null || echo "No script output captured"
