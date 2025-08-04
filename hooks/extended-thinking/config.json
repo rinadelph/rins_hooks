@@ -1,7 +1,7 @@
 {
   "name": "extended-thinking",
   "description": "Provides extended thinking capabilities with user control through toggles and explicit commands",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "author": "rins_hooks",
   "events": ["UserPromptSubmit", "PreToolUse", "PostToolUse"],
   "installationType": "standard",
