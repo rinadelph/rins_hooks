@@ -5,6 +5,33 @@ const fs = require('fs');
 const path = require('path');
 const HookBase = require('../../src/hook-base');
 
+/**
+ * Check if higher priority git hook exists and should handle this
+ */
+function shouldDeferToHigherPriorityHook() {
+  try {
+    const settingsPath = path.join(process.env.HOME, '.claude', 'settings.json');
+    if (!fs.existsSync(settingsPath)) return false;
+
+    const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    if (!settings.hooks || !settings.hooks.PostToolUse) return false;
+
+    // Check if git-agentmcp is configured (higher priority)
+    for (const hookGroup of settings.hooks.PostToolUse) {
+      for (const hook of hookGroup.hooks || []) {
+        if (hook.command && hook.command.includes('git-agentmcp')) {
+          console.log('Auto-commit: Deferring to git-agentmcp (higher priority)');
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  } catch (error) {
+    return false; // If coordination fails, run anyway
+  }
+}
+
 class AutoCommitHook extends HookBase {
   constructor(config = {}) {
     super('auto-commit', config);
