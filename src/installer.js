@@ -887,6 +887,49 @@ class Installer {
       throw new Error(`Uninstall all failed: ${error.message}`);
     }
   }
+
+  /**
+   * Check for duplicate hook installations across all scopes
+   * @param {Array} hooksToInstall - Array of hooks to check
+   * @param {Object} options - Installation options
+   * @returns {Array} Array of duplicate hook information
+   */
+  async checkForDuplicateHooks(hooksToInstall, options = {}) {
+    try {
+      const duplicates = [];
+      const status = await this.configManager.getInstallationStatus();
+      
+      // Combine all installed hooks from all scopes
+      const allInstalled = [
+        ...status.user.map(h => ({ ...h, scope: 'user' })),
+        ...status.project.map(h => ({ ...h, scope: 'project' })),
+        ...status.local.map(h => ({ ...h, scope: 'local' }))
+      ];
+      
+      // Check each hook to install against installed hooks
+      for (const hookToInstall of hooksToInstall) {
+        const existingHooks = allInstalled.filter(installed => installed.name === hookToInstall.name);
+        
+        for (const existingHook of existingHooks) {
+          // Determine target scope for current installation
+          const targetScope = options.user ? 'user' : options.project ? 'project' : options.local ? 'local' : 'user';
+          
+          // Always warn about duplicates, regardless of scope
+          duplicates.push({
+            name: hookToInstall.name,
+            scope: existingHook.scope,
+            targetScope: targetScope,
+            existing: existingHook
+          });
+        }
+      }
+      
+      return duplicates;
+    } catch (error) {
+      console.warn(chalk.yellow(`⚠️  Could not check for duplicates: ${error.message}`));
+      return [];
+    }
+  }
 }
 
 module.exports = Installer;
