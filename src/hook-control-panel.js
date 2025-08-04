@@ -307,22 +307,10 @@ class HookControlPanel {
       // Show current section overview
       await this.displaySectionOverview(sections[currentSection]);
       
-      // Direct navigation with keypress
-      const navigation = await inquirer.prompt([{
-        type: 'rawlist',
-        name: 'action',
-        message: `${sectionNames[currentSection]} Section - Use ← → arrows, Enter to manage, Q to quit:`,
-        choices: [
-          { name: 'Enter - Open section management', value: 'enter' },
-          { name: 'I - Install items in this section', value: 'install' },
-          { name: 'M - Manage installed items', value: 'manage' },
-          { name: 'V - View all items', value: 'view' },
-          { name: '← - Previous section', value: 'prev', disabled: currentSection === 0 },
-          { name: '→ - Next section', value: 'next', disabled: currentSection === sections.length - 1 },
-          { name: 'Q - Quit Rapala', value: 'quit' }
-        ],
-        pageSize: 10
-      }]);
+      // Simple keypress navigation
+      console.log(chalk.gray('Press: ← → (navigate) | Enter (manage) | I (install) | M (manage) | V (view) | Q (quit)'));
+      
+      const navigation = await this.waitForKeypress();
 
       // Handle navigation and direct actions
       switch (navigation.action) {
