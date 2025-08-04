@@ -488,7 +488,7 @@ program
       } else {
         // Generate from description
         console.log(chalk.cyan(`💬 Processing: "${description}"`));
-        const config = await generator.generateHook(description);
+        const config = await generator.generateHook(description, process.cwd(), true); // silent mode
         if (config) {
           hookConfigs = [config];
         }
