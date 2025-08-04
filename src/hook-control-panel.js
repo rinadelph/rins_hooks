@@ -685,7 +685,7 @@ class HookControlPanel {
     console.log(chalk.cyan('  ─────────────────────────────'));
 
     const choices = available.map(item => ({
-      name: `${chalk.bold(item.name)}\n    ${chalk.gray(item.description || 'No description')}`,
+      name: `${chalk.bold(item.name)} - ${chalk.gray((item.description || 'No description').substring(0, 50) + '...')}`,
       value: item.name,
       short: item.name
     }));
