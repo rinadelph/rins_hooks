@@ -308,6 +308,111 @@ class VersionCheckerHook {
   }
 
   /**
+   * Perform automatic update of hooks
+   * @param {Object} versionData - Version check results
+   */
+  async performAutoUpdate(versionData) {
+    const { updates, totalHooks } = versionData;
+    
+    try {
+      // Find the rins_hooks installation
+      const rinsHooksCmd = this.findRinsHooksCommand();
+      
+      let context = `## 🔄 Auto-Updating Hooks\n\n`;
+      context += `Found ${updates.length} update(s) out of ${totalHooks} installed hooks. Auto-updating...\n\n`;
+
+      const updateResults = [];
+      
+      for (const update of updates) {
+        const { hook, currentVersion, previousVersion, updateType } = update;
+        const emoji = this.getUpdateEmoji(updateType);
+        
+        try {
+          // Attempt to update this hook
+          context += `${emoji} **${hook.name}** ${previousVersion} → ${currentVersion}\n`;
+          context += `   ${hook.description || 'No description available'}\n`;
+          
+          // Use rins_hooks to install/update the hook
+          if (rinsHooksCmd) {
+            execSync(`${rinsHooksCmd} install ${hook.name} --user`, { 
+              stdio: 'pipe',
+              timeout: 30000 
+            });
+            context += `   ✅ Updated successfully\n`;
+            updateResults.push({ hook: hook.name, status: 'success' });
+          } else {
+            context += `   ⚠️  Could not find rins_hooks command - skipping\n`;
+            updateResults.push({ hook: hook.name, status: 'skipped' });
+          }
+        } catch (updateError) {
+          context += `   ❌ Update failed: ${updateError.message}\n`;
+          updateResults.push({ hook: hook.name, status: 'failed', error: updateError.message });
+        }
+        
+        context += `\n`;
+      }
+
+      // Summary
+      const successful = updateResults.filter(r => r.status === 'success').length;
+      const failed = updateResults.filter(r => r.status === 'failed').length;
+      const skipped = updateResults.filter(r => r.status === 'skipped').length;
+
+      context += `### 📊 Update Summary:\n`;
+      if (successful > 0) context += `- ✅ Successfully updated: ${successful} hooks\n`;
+      if (failed > 0) context += `- ❌ Failed to update: ${failed} hooks\n`;
+      if (skipped > 0) context += `- ⚠️  Skipped: ${skipped} hooks\n`;
+      context += `\n`;
+
+      context += `### 📋 Management Commands:\n`;
+      context += `- Run \`rins_hooks status\` for hook control panel\n`;
+      context += `- Run \`rins_hooks agentmcp\` for Agent-MCP management\n`;
+      context += `- Use \`/hooks\` to review configurations\n\n`;
+      
+      context += `*Auto-update completed at ${new Date().toLocaleString()}*`;
+
+      // Return the update context
+      const result = {
+        hookSpecificOutput: {
+          hookEventName: 'SessionStart',
+          additionalContext: context
+        }
+      };
+
+      console.log(JSON.stringify(result));
+      process.exit(0);
+
+    } catch (error) {
+      // Fall back to notification if auto-update fails
+      console.error(`Auto-update failed: ${error.message}`);
+      return this.reportUpdates(versionData);
+    }
+  }
+
+  /**
+   * Find the rins_hooks command (global or local)
+   */
+  findRinsHooksCommand() {
+    try {
+      // Try global installation first
+      execSync('which rins_hooks', { stdio: 'pipe' });
+      return 'rins_hooks';
+    } catch (error) {
+      try {
+        // Try npx for local installation
+        execSync('which npx', { stdio: 'pipe' });
+        return 'npx rins_hooks';
+      } catch (npxError) {
+        // Check if we're running from the rins_hooks project directory
+        const localCmd = path.join(process.cwd(), 'src', 'cli.js');
+        if (fs.existsSync(localCmd)) {
+          return `node ${localCmd}`;
+        }
+        return null;
+      }
+    }
+  }
+
+  /**
    * Return success result
    */
   success() {
