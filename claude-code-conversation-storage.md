@@ -1,4 +1,4 @@
-# Claude Code Conversation Storage Analysis
+# Claude Code Complete Architecture & Conversation Manipulation Guide
 
 *Analysis Date: August 4, 2025*  
 *Test Directory: `/home/alejandro/Code/MCP/Hooks/Git/rins_hooks`*
