@@ -167,46 +167,70 @@ class HookControlPanel {
       }]);
 
       try {
+        let shouldExit = false;
+        let shouldRefresh = false;
+        
         switch (mainAction.action) {
           case 'status':
-            await this.showComprehensiveStatus();
+            shouldExit = await this.showComprehensiveStatus();
             break;
           case 'scan':
-            await this.performDeepScan();
+            shouldExit = await this.performDeepScan();
             break;
           case 'manage':
-            await this.manageIndividualHooksComplete();
+            shouldExit = await this.manageIndividualHooksComplete();
             break;
           case 'install':
-            await this.installHooksComplete();
+            shouldExit = await this.installHooksComplete();
             break;
           case 'update':
-            await this.updateSystemComplete();
+            shouldExit = await this.updateSystemComplete();
             break;
           case 'agentmcp':
-            await this.manageAgentMCPComplete();
+            shouldExit = await this.manageAgentMCPComplete();
             break;
           case 'clean':
-            await this.cleanAndOptimizeComplete();
+            shouldExit = await this.cleanAndOptimizeComplete();
             break;
           case 'bulk':
-            await this.bulkOperationsComplete();
+            shouldExit = await this.bulkOperationsComplete();
             break;
           case 'settings':
-            await this.systemSettingsComplete();
+            shouldExit = await this.systemSettingsComplete();
             break;
           case 'exit':
             console.log(chalk.green('👋 Hook management complete!'));
             return;
         }
+        
+        // Handle exit request from submenu
+        if (shouldExit === 'exit') {
+          console.log(chalk.green('👋 Hook management complete!'));
+          return;
+        }
+        
       } catch (error) {
         console.error(chalk.red(`❌ Operation failed: ${error.message}`));
-        console.log(chalk.gray('Returning to main menu...'));
+        
+        const errorAction = await inquirer.prompt([{
+          type: 'list',
+          name: 'action',
+          message: 'An error occurred. What would you like to do?',
+          choices: [
+            { name: '🔙 Return to Main Menu', value: 'back' },
+            { name: '🚪 Exit Management Center', value: 'exit' }
+          ]
+        }]);
+        
+        if (errorAction.action === 'exit') {
+          return;
+        }
       }
 
-      // Continue automatically (no asking)
-      console.log();
-      console.log(chalk.gray('─'.repeat(60)));
+      // Clear screen and continue
+      console.clear();
+      console.log(chalk.blue('🎛️  Complete Hook Management Center'));
+      console.log(chalk.gray('Returning to main menu...'));
       console.log();
     }
   }
@@ -257,209 +281,291 @@ class HookControlPanel {
    * Show comprehensive status with all details
    */
   async showComprehensiveStatus() {
-    console.log(chalk.blue('📊 Comprehensive System Status'));
-    console.log();
-
-    // Environment details
-    console.log(chalk.cyan('🌍 Environment Details:'));
-    console.log(`   ${chalk.green('Current Directory:')} ${this.currentDir}`);
-    console.log(`   ${chalk.green('Project Type:')} ${this.projectContext.type}`);
-    console.log(`   ${chalk.green('Has Git:')} ${this.projectContext.hasGit ? '✅ Yes' : '❌ No'}`);
-    console.log(`   ${chalk.green('Claude Config:')} ${this.projectContext.hasClaudeConfig ? '✅ Found' : '❌ Not found'}`);
-    console.log();
-
-    // Hook installation details by scope
-    console.log(chalk.cyan('🎣 Hook Details by Scope:'));
-    
-    if (this.hookStates.user.length > 0) {
-      console.log(chalk.blue(`👤 User Level (${this.hookStates.user.length} hooks):`));
-      this.hookStates.user.forEach(hook => {
-        console.log(`   ✅ ${hook.name} - ${hook.description || 'No description'}`);
-      });
+    while (true) {
+      console.clear();
+      console.log(chalk.blue('📊 Comprehensive System Status'));
       console.log();
-    }
 
-    if (this.hookStates.project.length > 0) {
-      console.log(chalk.blue(`📁 Project Level (${this.hookStates.project.length} hooks):`));
-      this.hookStates.project.forEach(hook => {
-        console.log(`   ✅ ${hook.name} - ${hook.description || 'No description'}`);
-      });
+      // Environment details
+      console.log(chalk.cyan('🌍 Environment Details:'));
+      console.log(`   ${chalk.green('Current Directory:')} ${this.currentDir}`);
+      console.log(`   ${chalk.green('Project Type:')} ${this.projectContext.type}`);
+      console.log(`   ${chalk.green('Has Git:')} ${this.projectContext.hasGit ? '✅ Yes' : '❌ No'}`);
+      console.log(`   ${chalk.green('Claude Config:')} ${this.projectContext.hasClaudeConfig ? '✅ Found' : '❌ Not found'}`);
       console.log();
-    }
 
-    if (this.hookStates.local.length > 0) {
-      console.log(chalk.blue(`🔒 Local Level (${this.hookStates.local.length} hooks):`));
-      this.hookStates.local.forEach(hook => {
-        console.log(`   ✅ ${hook.name} - ${hook.description || 'No description'}`);
-      });
+      // Hook installation details by scope
+      console.log(chalk.cyan('🎣 Hook Details by Scope:'));
+      
+      if (this.hookStates.user.length > 0) {
+        console.log(chalk.blue(`👤 User Level (${this.hookStates.user.length} hooks):`));
+        this.hookStates.user.forEach(hook => {
+          console.log(`   ✅ ${hook.name} - ${hook.description || 'No description'}`);
+        });
+        console.log();
+      }
+
+      if (this.hookStates.project.length > 0) {
+        console.log(chalk.blue(`📁 Project Level (${this.hookStates.project.length} hooks):`));
+        this.hookStates.project.forEach(hook => {
+          console.log(`   ✅ ${hook.name} - ${hook.description || 'No description'}`);
+        });
+        console.log();
+      }
+
+      if (this.hookStates.local.length > 0) {
+        console.log(chalk.blue(`🔒 Local Level (${this.hookStates.local.length} hooks):`));
+        this.hookStates.local.forEach(hook => {
+          console.log(`   ✅ ${hook.name} - ${hook.description || 'No description'}`);
+        });
+        console.log();
+      }
+
+      // Available hooks
+      const installedNames = [...this.hookStates.user, ...this.hookStates.project, ...this.hookStates.local].map(h => h.name);
+      const uninstalled = this.hookStates.available.filter(h => !installedNames.includes(h.name));
+      
+      if (uninstalled.length > 0) {
+        console.log(chalk.blue(`📦 Available for Installation (${uninstalled.length} hooks):`));
+        uninstalled.forEach(hook => {
+          console.log(`   📋 ${hook.name} - ${hook.description}`);
+        });
+        console.log();
+      }
+
+      // System settings
+      console.log(chalk.cyan('⚙️  System Settings:'));
+      console.log(`   ${chalk.green('Auto-Update:')} ${this.hookStates.autoUpdate ? '✅ Enabled' : '❌ Disabled'}`);
+      console.log(`   ${chalk.green('Version Check:')} Available`);
       console.log();
+
+      const action = await this.waitForEnter();
+      
+      if (action === 'back') {
+        return 'back';
+      } else if (action === 'exit') {
+        return 'exit';
+      } else if (action === 'refresh') {
+        await this.loadCurrentHookStates();
+        continue; // Refresh this view
+      }
     }
-
-    // Available hooks
-    const installedNames = [...this.hookStates.user, ...this.hookStates.project, ...this.hookStates.local].map(h => h.name);
-    const uninstalled = this.hookStates.available.filter(h => !installedNames.includes(h.name));
-    
-    if (uninstalled.length > 0) {
-      console.log(chalk.blue(`📦 Available for Installation (${uninstalled.length} hooks):`));
-      uninstalled.forEach(hook => {
-        console.log(`   📋 ${hook.name} - ${hook.description}`);
-      });
-      console.log();
-    }
-
-    // System settings
-    console.log(chalk.cyan('⚙️  System Settings:'));
-    console.log(`   ${chalk.green('Auto-Update:')} ${this.hookStates.autoUpdate ? '✅ Enabled' : '❌ Disabled'}`);
-    console.log(`   ${chalk.green('Version Check:')} Available`);
-    console.log();
-
-    await this.waitForEnter();
   }
 
   /**
    * Perform deep scan of current directory and environment
    */
   async performDeepScan() {
-    console.log(chalk.blue('🔍 Deep Environment Scan'));
-    console.log();
+    while (true) {
+      console.clear();
+      console.log(chalk.blue('🔍 Deep Environment Scan'));
+      console.log();
 
-    console.log(chalk.cyan('Scanning file system...'));
-    
-    // Scan for various config files
-    const configFiles = [
-      { name: 'package.json', type: 'Node.js project' },
-      { name: 'pyproject.toml', type: 'Python project' },
-      { name: 'Cargo.toml', type: 'Rust project' },
-      { name: '.gitignore', type: 'Git repository' },
-      { name: 'README.md', type: 'Documentation' },
-      { name: '.env', type: 'Environment variables' },
-      { name: '.claude/settings.json', type: 'Claude project config' },
-      { name: '.claude/settings.local.json', type: 'Claude local config' }
-    ];
+      console.log(chalk.cyan('Scanning file system...'));
+      
+      // Scan for various config files
+      const configFiles = [
+        { name: 'package.json', type: 'Node.js project' },
+        { name: 'pyproject.toml', type: 'Python project' },
+        { name: 'Cargo.toml', type: 'Rust project' },
+        { name: '.gitignore', type: 'Git repository' },
+        { name: 'README.md', type: 'Documentation' },
+        { name: '.env', type: 'Environment variables' },
+        { name: '.claude/settings.json', type: 'Claude project config' },
+        { name: '.claude/settings.local.json', type: 'Claude local config' }
+      ];
 
-    console.log(chalk.blue('📄 Configuration Files Found:'));
-    configFiles.forEach(({ name, type }) => {
-      const exists = fs.existsSync(path.join(this.currentDir, name));
-      console.log(`   ${exists ? '✅' : '❌'} ${name} (${type})`);
-    });
-    console.log();
+      console.log(chalk.blue('📄 Configuration Files Found:'));
+      configFiles.forEach(({ name, type }) => {
+        const exists = fs.existsSync(path.join(this.currentDir, name));
+        console.log(`   ${exists ? '✅' : '❌'} ${name} (${type})`);
+      });
+      console.log();
 
-    // Scan for hook-related directories
-    console.log(chalk.blue('📁 Hook-Related Directories:'));
-    const hookDirs = [
-      '.claude',
-      '.claude/hook-locks',
-      'hooks',
-      'scripts'
-    ];
+      // Scan for hook-related directories
+      console.log(chalk.blue('📁 Hook-Related Directories:'));
+      const hookDirs = [
+        '.claude',
+        '.claude/hook-locks',
+        'hooks',
+        'scripts'
+      ];
 
-    hookDirs.forEach(dir => {
-      const dirPath = path.join(this.currentDir, dir);
-      const exists = fs.existsSync(dirPath);
-      console.log(`   ${exists ? '✅' : '❌'} ${dir} ${exists ? `(${fs.readdirSync(dirPath).length} items)` : ''}`);
-    });
-    console.log();
+      hookDirs.forEach(dir => {
+        const dirPath = path.join(this.currentDir, dir);
+        const exists = fs.existsSync(dirPath);
+        console.log(`   ${exists ? '✅' : '❌'} ${dir} ${exists ? `(${fs.readdirSync(dirPath).length} items)` : ''}`);
+      });
+      console.log();
 
-    // Git information if available
-    if (this.projectContext.hasGit) {
-      console.log(chalk.blue('🔄 Git Information:'));
-      try {
-        const branch = execSync('git branch --show-current', { encoding: 'utf8', cwd: this.currentDir }).trim();
-        const status = execSync('git status --porcelain', { encoding: 'utf8', cwd: this.currentDir }).trim();
-        const lastCommit = execSync('git log -1 --oneline', { encoding: 'utf8', cwd: this.currentDir }).trim();
-        
-        console.log(`   ${chalk.green('Current Branch:')} ${branch}`);
-        console.log(`   ${chalk.green('Working Tree:')} ${status ? '🔶 Has changes' : '✅ Clean'}`);
-        console.log(`   ${chalk.green('Last Commit:')} ${lastCommit}`);
-        console.log();
-      } catch (error) {
-        console.log(`   ❌ Could not read git information: ${error.message}`);
-        console.log();
+      // Git information if available
+      if (this.projectContext.hasGit) {
+        console.log(chalk.blue('🔄 Git Information:'));
+        try {
+          const branch = execSync('git branch --show-current', { encoding: 'utf8', cwd: this.currentDir }).trim();
+          const status = execSync('git status --porcelain', { encoding: 'utf8', cwd: this.currentDir }).trim();
+          const lastCommit = execSync('git log -1 --oneline', { encoding: 'utf8', cwd: this.currentDir }).trim();
+          
+          console.log(`   ${chalk.green('Current Branch:')} ${branch}`);
+          console.log(`   ${chalk.green('Working Tree:')} ${status ? '🔶 Has changes' : '✅ Clean'}`);
+          console.log(`   ${chalk.green('Last Commit:')} ${lastCommit}`);
+          console.log();
+        } catch (error) {
+          console.log(`   ❌ Could not read git information: ${error.message}`);
+          console.log();
+        }
+      }
+
+      const action = await this.waitForEnter();
+      
+      if (action === 'back') {
+        return 'back';
+      } else if (action === 'exit') {
+        return 'exit';
+      } else if (action === 'refresh') {
+        await this.detectProjectContext();
+        continue; // Refresh this view
       }
     }
-
-    await this.waitForEnter();
   }
 
   /**
    * Complete individual hook management
    */
   async manageIndividualHooksComplete() {
-    console.log(chalk.blue('⚙️  Individual Hook Management'));
-    console.log();
+    while (true) {
+      console.clear();
+      console.log(chalk.blue('⚙️  Individual Hook Management'));
+      console.log();
 
-    const allHooks = [...this.hookStates.user, ...this.hookStates.project, ...this.hookStates.local];
-    
-    if (allHooks.length === 0) {
-      console.log(chalk.yellow('ℹ️  No hooks installed to manage.'));
-      console.log(chalk.cyan('Install hooks first using the "Install & Configure Hooks" option.'));
-      await this.waitForEnter();
-      return;
-    }
+      const allHooks = [...this.hookStates.user, ...this.hookStates.project, ...this.hookStates.local];
+      
+      if (allHooks.length === 0) {
+        console.log(chalk.yellow('ℹ️  No hooks installed to manage.'));
+        console.log(chalk.cyan('Install hooks first using the "Install & Configure Hooks" option.'));
+        
+        const action = await inquirer.prompt([{
+          type: 'list',
+          name: 'action',
+          message: 'What would you like to do?',
+          choices: [
+            { name: '📦 Go to Install & Configure Hooks', value: 'install' },
+            { name: '🔙 Return to Main Menu', value: 'back' },
+            { name: '🚪 Exit Management Center', value: 'exit' }
+          ]
+        }]);
+        
+        if (action.action === 'install') {
+          const installResult = await this.installHooksComplete();
+          if (installResult === 'exit') return 'exit';
+          continue; // Refresh hook list
+        } else if (action.action === 'back') {
+          return 'back';
+        } else if (action.action === 'exit') {
+          return 'exit';
+        }
+      }
 
-    // Select hook to manage
-    const hookChoices = allHooks.map(hook => {
-      const scope = this.hookStates.user.includes(hook) ? '👤' : 
-                    this.hookStates.project.includes(hook) ? '📁' : '🔒';
-      return {
-        name: `${hook.name} ${scope} - ${hook.description || 'No description'}`,
-        value: hook,
-        short: hook.name
-      };
-    });
+      // Select hook to manage
+      const hookChoices = allHooks.map(hook => {
+        const scope = this.hookStates.user.includes(hook) ? '👤' : 
+                      this.hookStates.project.includes(hook) ? '📁' : '🔒';
+        return {
+          name: `${hook.name} ${scope} - ${hook.description || 'No description'}`,
+          value: hook,
+          short: hook.name
+        };
+      });
 
-    const selectedHook = await inquirer.prompt([{
-      type: 'list',
-      name: 'hook',
-      message: 'Select a hook to manage:',
-      choices: hookChoices,
-      pageSize: 10
-    }]);
-
-    // Management options
-    const actions = await inquirer.prompt([{
-      type: 'list',
-      name: 'action',
-      message: `What would you like to do with ${selectedHook.hook.name}?`,
-      choices: [
-        { name: '📊 View Detailed Information', value: 'details' },
-        { name: '⚙️  Configure Hook Settings', value: 'configure' },
-        { name: '🔄 Update This Hook', value: 'update' },
-        { name: '📁 Change Installation Scope', value: 'move' },
-        { name: '⏸️  Disable Hook', value: 'disable' },
-        { name: '▶️  Enable Hook', value: 'enable' },
-        { name: '❌ Uninstall Hook', value: 'uninstall' },
+      hookChoices.push(
         new inquirer.Separator(),
-        { name: '🔙 Back to Main Menu', value: 'back' }
-      ]
-    }]);
+        { name: '🔙 Return to Main Menu', value: 'back' },
+        { name: '🚪 Exit Management Center', value: 'exit' }
+      );
 
-    const hook = selectedHook.hook;
+      const selectedHook = await inquirer.prompt([{
+        type: 'list',
+        name: 'hook',
+        message: 'Select a hook to manage:',
+        choices: hookChoices,
+        pageSize: 12
+      }]);
 
-    switch (actions.action) {
-      case 'details':
-        await this.showHookDetailsComplete(hook);
-        break;
-      case 'configure':
-        await this.configureHookComplete(hook);
-        break;
-      case 'update':
-        await this.updateSingleHookComplete(hook);
-        break;
-      case 'move':
-        await this.moveHookScopeComplete(hook);
-        break;
-      case 'disable':
-        await this.disableHookComplete(hook);
-        break;
-      case 'enable':
-        await this.enableHookComplete(hook);
-        break;
-      case 'uninstall':
-        await this.uninstallHookComplete(hook);
-        break;
-      case 'back':
-        return;
+      if (selectedHook.hook === 'back') {
+        return 'back';
+      } else if (selectedHook.hook === 'exit') {
+        return 'exit';
+      }
+
+      // Management options for selected hook
+      while (true) {
+        console.clear();
+        console.log(chalk.blue(`⚙️  Managing Hook: ${selectedHook.hook.name}`));
+        console.log();
+
+        const actions = await inquirer.prompt([{
+          type: 'list',
+          name: 'action',
+          message: `What would you like to do with ${selectedHook.hook.name}?`,
+          choices: [
+            { name: '📊 View Detailed Information', value: 'details' },
+            { name: '⚙️  Configure Hook Settings', value: 'configure' },
+            { name: '🔄 Update This Hook', value: 'update' },
+            { name: '📁 Change Installation Scope', value: 'move' },
+            { name: '⏸️  Disable Hook', value: 'disable' },
+            { name: '▶️  Enable Hook', value: 'enable' },
+            { name: '❌ Uninstall Hook', value: 'uninstall' },
+            new inquirer.Separator(),
+            { name: '🔙 Back to Hook Selection', value: 'back_to_hooks' },
+            { name: '🏠 Return to Main Menu', value: 'back' },
+            { name: '🚪 Exit Management Center', value: 'exit' }
+          ]
+        }]);
+
+        const hook = selectedHook.hook;
+        let operationResult;
+
+        switch (actions.action) {
+          case 'details':
+            operationResult = await this.showHookDetailsComplete(hook);
+            break;
+          case 'configure':
+            operationResult = await this.configureHookComplete(hook);
+            break;
+          case 'update':
+            operationResult = await this.updateSingleHookComplete(hook);
+            break;
+          case 'move':
+            operationResult = await this.moveHookScopeComplete(hook);
+            break;
+          case 'disable':
+            operationResult = await this.disableHookComplete(hook);
+            break;
+          case 'enable':
+            operationResult = await this.enableHookComplete(hook);
+            break;
+          case 'uninstall':
+            operationResult = await this.uninstallHookComplete(hook);
+            if (operationResult !== 'exit') {
+              await this.loadCurrentHookStates(); // Refresh hook list
+              break; // Go back to hook selection
+            }
+            break;
+          case 'back_to_hooks':
+            break; // Break inner loop, go back to hook selection
+          case 'back':
+            return 'back';
+          case 'exit':
+            return 'exit';
+        }
+
+        if (operationResult === 'exit') {
+          return 'exit';
+        } else if (actions.action === 'back_to_hooks' || actions.action === 'uninstall') {
+          break; // Go back to hook selection
+        }
+        // Otherwise continue in the hook management loop
+      }
     }
   }
 
@@ -467,11 +573,246 @@ class HookControlPanel {
    * Complete hook installation interface
    */
   async installHooksComplete() {
-    console.log(chalk.blue('📦 Complete Hook Installation'));
-    console.log();
+    while (true) {
+      console.clear();
+      console.log(chalk.blue('📦 Complete Hook Installation'));
+      console.log();
 
-    // Use the enhanced installer but make it truly complete
-    await this.installer.enhancedInteractiveInstall();
+      // Get available hooks and already installed
+      const availableHooks = await this.installer.getAvailableHooks();
+      const installedNames = [...this.hookStates.user, ...this.hookStates.project, ...this.hookStates.local].map(h => h.name);
+      const uninstalledHooks = availableHooks.filter(h => !installedNames.includes(h.name));
+
+      console.log(chalk.cyan(`📋 Available Hooks (${availableHooks.length} total, ${uninstalledHooks.length} not installed):`));
+      console.log();
+
+      // Show all hooks with detailed installation status
+      availableHooks.forEach(hook => {
+        const isInstalled = installedNames.includes(hook.name);
+        const icon = isInstalled ? '✅' : '📦';
+        const status = isInstalled ? chalk.green('(installed)') : chalk.cyan('(available)');
+        
+        // Show where it's installed if applicable
+        let installLocation = '';
+        if (isInstalled) {
+          const locations = [];
+          if (this.hookStates.user.find(h => h.name === hook.name)) locations.push('👤 user');
+          if (this.hookStates.project.find(h => h.name === hook.name)) locations.push('📁 project');  
+          if (this.hookStates.local.find(h => h.name === hook.name)) locations.push('🔒 local');
+          if (locations.length > 0) {
+            installLocation = chalk.gray(` [${locations.join(', ')}]`);
+          }
+        }
+        
+        console.log(`   ${icon} ${hook.name} ${status}${installLocation}`);
+        console.log(chalk.gray(`      ${hook.description}`));
+        if (hook.tags && hook.tags.length > 0) {
+          console.log(chalk.cyan(`      Tags: ${hook.tags.join(', ')}`));
+        }
+        console.log();
+      });
+
+      const installAction = await inquirer.prompt([{
+        type: 'list',
+        name: 'action',
+        message: 'What would you like to do?',
+        choices: [
+          { name: '📦 Install Single Hook', value: 'single' },
+          { name: '📦 Install Multiple Hooks', value: 'multiple' },
+          { name: '🔄 Install All Available Hooks', value: 'all' },
+          { name: '🎛️  Advanced Installation Options', value: 'advanced' },
+          new inquirer.Separator(),
+          { name: '🔙 Return to Main Menu', value: 'back' },
+          { name: '🚪 Exit Management Center', value: 'exit' }
+        ]
+      }]);
+
+      switch (installAction.action) {
+        case 'single':
+          await this.installSingleHook(uninstalledHooks);
+          break;
+        case 'multiple':
+          await this.installMultipleHooks(uninstalledHooks);
+          break;
+        case 'all':
+          await this.installAllHooks(uninstalledHooks);
+          break;
+        case 'advanced':
+          await this.installer.enhancedInteractiveInstall();
+          break;
+        case 'back':
+          return 'back';
+        case 'exit':
+          return 'exit';
+      }
+
+      // Refresh hook states after installation
+      await this.loadCurrentHookStates();
+    }
+  }
+
+  async installSingleHook(availableHooks) {
+    if (availableHooks.length === 0) {
+      console.log(chalk.yellow('ℹ️  All available hooks are already installed!'));
+      const action = await this.waitForEnter();
+      return action;
+    }
+
+    const hookChoices = availableHooks.map(hook => ({
+      name: `${hook.name} - ${hook.description}`,
+      value: hook,
+      short: hook.name
+    }));
+
+    hookChoices.push(
+      new inquirer.Separator(),
+      { name: '🔙 Back to Installation Menu', value: 'back' }
+    );
+
+    const selectedHook = await inquirer.prompt([{
+      type: 'list',
+      name: 'hook',
+      message: 'Select a hook to install:',
+      choices: hookChoices,
+      pageSize: 10
+    }]);
+
+    if (selectedHook.hook === 'back') return;
+
+    const scope = await inquirer.prompt([{
+      type: 'list',
+      name: 'scope',
+      message: 'Select installation scope:',
+      choices: [
+        { name: '👤 User Level - All Claude Code projects', value: 'user' },
+        { name: '📁 Project Level - This project only (committed)', value: 'project' },
+        { name: '🔒 Local Level - This project only (not committed)', value: 'local' }
+      ]
+    }]);
+
+    try {
+      console.log(chalk.cyan(`Installing ${selectedHook.hook.name}...`));
+      await this.installer.installHook(selectedHook.hook.name, scope.scope);
+      console.log(chalk.green(`✅ ${selectedHook.hook.name} installed successfully!`));
+    } catch (error) {
+      console.log(chalk.red(`❌ Installation failed: ${error.message}`));
+    }
+
+    const action = await this.waitForEnter();
+    return action;
+  }
+
+  async installMultipleHooks(availableHooks) {
+    if (availableHooks.length === 0) {
+      console.log(chalk.yellow('ℹ️  All available hooks are already installed!'));
+      const action = await this.waitForEnter();
+      return action;
+    }
+
+    const hookChoices = availableHooks.map(hook => ({
+      name: `${hook.name} - ${hook.description}`,
+      value: hook,
+      short: hook.name
+    }));
+
+    const selectedHooks = await inquirer.prompt([{
+      type: 'checkbox',
+      name: 'hooks',
+      message: 'Select hooks to install:',
+      choices: hookChoices,
+      validate: (answer) => {
+        if (answer.length === 0) {
+          return 'Please select at least one hook.';
+        }
+        return true;
+      }
+    }]);
+
+    const scope = await inquirer.prompt([{
+      type: 'list',
+      name: 'scope',
+      message: 'Select installation scope for all selected hooks:',
+      choices: [
+        { name: '👤 User Level - All Claude Code projects', value: 'user' },
+        { name: '📁 Project Level - This project only (committed)', value: 'project' },
+        { name: '🔒 Local Level - This project only (not committed)', value: 'local' }
+      ]
+    }]);
+
+    console.log(chalk.cyan(`Installing ${selectedHooks.hooks.length} hooks...`));
+
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const hook of selectedHooks.hooks) {
+      try {
+        await this.installer.installHook(hook.name, scope.scope);
+        console.log(chalk.green(`  ✅ ${hook.name} installed successfully`));
+        successCount++;
+      } catch (error) {
+        console.log(chalk.red(`  ❌ ${hook.name} failed: ${error.message}`));
+        failCount++;
+      }
+    }
+
+    console.log();
+    console.log(chalk.green(`✅ Installation complete: ${successCount} successful, ${failCount} failed`));
+
+    const action = await this.waitForEnter();
+    return action;
+  }
+
+  async installAllHooks(availableHooks) {
+    if (availableHooks.length === 0) {
+      console.log(chalk.yellow('ℹ️  All available hooks are already installed!'));
+      const action = await this.waitForEnter();
+      return action;
+    }
+
+    const confirm = await inquirer.prompt([{
+      type: 'confirm',
+      name: 'confirm',
+      message: `Install all ${availableHooks.length} available hooks?`,
+      default: false
+    }]);
+
+    if (!confirm.confirm) {
+      console.log(chalk.yellow('ℹ️  Installation cancelled'));
+      return;
+    }
+
+    const scope = await inquirer.prompt([{
+      type: 'list',
+      name: 'scope',
+      message: 'Select installation scope for all hooks:',
+      choices: [
+        { name: '👤 User Level - All Claude Code projects', value: 'user' },
+        { name: '📁 Project Level - This project only (committed)', value: 'project' },
+        { name: '🔒 Local Level - This project only (not committed)', value: 'local' }
+      ]
+    }]);
+
+    console.log(chalk.cyan(`Installing all ${availableHooks.length} hooks...`));
+
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const hook of availableHooks) {
+      try {
+        await this.installer.installHook(hook.name, scope.scope);
+        console.log(chalk.green(`  ✅ ${hook.name} installed successfully`));
+        successCount++;
+      } catch (error) {
+        console.log(chalk.red(`  ❌ ${hook.name} failed: ${error.message}`));
+        failCount++;
+      }
+    }
+
+    console.log();
+    console.log(chalk.green(`✅ Installation complete: ${successCount} successful, ${failCount} failed`));
+
+    const action = await this.waitForEnter();
+    return action;
   }
 
   /**
@@ -698,14 +1039,30 @@ class HookControlPanel {
   }
 
   /**
-   * Wait for user to press Enter
+   * Interactive continue prompt with options
    */
-  async waitForEnter() {
-    await inquirer.prompt([{
-      type: 'input',
-      name: 'continue',
-      message: 'Press Enter to continue...'
-    }]);
+  async waitForEnter(showBackOption = true) {
+    if (showBackOption) {
+      const action = await inquirer.prompt([{
+        type: 'list',
+        name: 'action',
+        message: 'What would you like to do next?',
+        choices: [
+          { name: '🔙 Return to Main Menu', value: 'back' },
+          { name: '🔄 Refresh This View', value: 'refresh' },
+          { name: '🚪 Exit Management Center', value: 'exit' }
+        ]
+      }]);
+      
+      return action.action;
+    } else {
+      await inquirer.prompt([{
+        type: 'input',
+        name: 'continue',
+        message: 'Press Enter to continue...'
+      }]);
+      return 'continue';
+    }
   }
 
   /**
