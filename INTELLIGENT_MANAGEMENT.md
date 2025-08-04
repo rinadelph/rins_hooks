@@ -195,12 +195,13 @@ After optimization, your configuration now has:
 
 ## 🎯 **Benefits**
 
-1. **No More Duplicates**: Extended thinking hook runs exactly once per operation
-2. **Better Performance**: Eliminates redundant hook executions
-3. **Cleaner Logs**: No more duplicate debug messages
-4. **Reliable Coordination**: Prevents race conditions in multi-hook scenarios
-5. **Easy Management**: Simple commands to clean and optimize configuration
-6. **Smart Installation**: Automatic conflict detection and resolution
+1. **Smart Execution**: Extended thinking runs after every tool call when needed, prevents spam
+2. **Balanced Approach**: User prompts protected from duplicates, tool events allowed multiple times
+3. **Better Performance**: Eliminates unnecessary hook executions while allowing useful ones
+4. **Cleaner Logs**: Reduced duplicate messages but preserved useful thinking context
+5. **Reliable Coordination**: Prevents race conditions in multi-hook scenarios
+6. **Easy Management**: Simple commands to clean and optimize configuration
+7. **Smart Installation**: Automatic conflict detection and resolution
 
 ## 🚀 **Usage Examples**
 
