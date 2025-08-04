@@ -888,6 +888,29 @@ class HookControlPanel {
   }
 
   /**
+   * Determine which scope an item belongs to
+   */
+  async determineScopeForItem(item, enhancementStates) {
+    // Check all categories to find which scope the item is in
+    for (const [categoryName, categoryData] of Object.entries(enhancementStates)) {
+      if (categoryName === 'updates' || categoryName === 'autoUpdate') continue;
+      
+      if (categoryData.user && categoryData.user.find(i => i.name === item.name)) return 'user';
+      if (categoryData.project && categoryData.project.find(i => i.name === item.name)) return 'project'; 
+      if (categoryData.local && categoryData.local.find(i => i.name === item.name)) return 'local';
+    }
+    
+    // Fallback to checking legacy hookStates if enhancementStates doesn't have it
+    if (this.hookStates) {
+      if (this.hookStates.user.find(i => i.name === item.name)) return 'user';
+      if (this.hookStates.project.find(i => i.name === item.name)) return 'project';
+      if (this.hookStates.local.find(i => i.name === item.name)) return 'local';
+    }
+    
+    return 'user'; // Default fallback
+  }
+
+  /**
    * Display comprehensive environment overview
    */
   async displayEnvironmentOverview() {
