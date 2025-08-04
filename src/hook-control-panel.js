@@ -420,7 +420,8 @@ class HookControlPanel {
   /**
    * Enter a specific section for management
    */
-  async enterSection(sectionType) {
+  async enterSection(sectionType, debug = false) {
+    if (debug) console.log(`DEBUG: enterSection called with ${sectionType}`);
     while (true) {
       console.clear();
       console.log(chalk.blue(`🎣 Rapala - ${this.getSectionTitle(sectionType)} Management`));
