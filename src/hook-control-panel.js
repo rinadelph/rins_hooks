@@ -324,7 +324,7 @@ class HookControlPanel {
         pageSize: 10
       }]);
 
-      // Handle navigation
+      // Handle navigation and direct actions
       switch (navigation.action) {
         case 'prev':
           currentSection = Math.max(0, currentSection - 1);
@@ -335,6 +335,15 @@ class HookControlPanel {
         case 'enter':
           const exitRequested = await this.enterSection(sections[currentSection]);
           if (exitRequested) return;
+          break;
+        case 'install':
+          await this.installSectionItems(sections[currentSection]);
+          break;
+        case 'manage':
+          await this.manageSectionItems(sections[currentSection]);
+          break;
+        case 'view':
+          await this.viewSectionItems(sections[currentSection]);
           break;
         case 'quit':
           console.log(chalk.green('👋 Thank you for using Rapala!'));
