@@ -1,0 +1,2 @@
+Testing conversation-titler hook trigger
+This should activate the PostToolUse hook and update our conversation title.
