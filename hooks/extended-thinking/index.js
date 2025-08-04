@@ -2,6 +2,7 @@
 
 const HookBase = require('../../src/hook-base');
 const ThinkingStateManager = require('./state-manager');
+const HookCoordination = require('./coordination');
 
 class ExtendedThinkingHook extends HookBase {
   constructor() {
@@ -289,17 +290,17 @@ Use this reflection to inform your next actions and responses.`;
 // When run directly, handle both hook and command execution
 if (require.main === module) {
   const args = process.argv.slice(2);
-  
+
   // Check for command-line flags
   if (args.includes('--toggle')) {
     const type = args[args.indexOf('--toggle') + 1];
     const projectDir = process.cwd();
-    
+
     if (type === 'thinking') {
       const newState = ExtendedThinkingHook.toggleThinking(projectDir);
       console.log(`🧠 Extended Thinking is now: ${newState ? '✅ ENABLED' : '❌ DISABLED'}`);
       const status = ExtendedThinkingHook.getStatus(projectDir);
-      console.log(`\n📊 Current Status:`);
+      console.log('\n📊 Current Status:');
       console.log(`   Extended Thinking: ${status.thinking ? '✅ ON' : '❌ OFF'}`);
       console.log(`   Deep Thinking: ${status.deepThinking ? '✅ ON' : '❌ OFF'}`);
       console.log(`   Active Mode: ${status.activeMode}`);
@@ -307,7 +308,7 @@ if (require.main === module) {
       const newState = ExtendedThinkingHook.toggleDeepThinking(projectDir);
       console.log(`🧠 Deep Thinking is now: ${newState ? '✅ ENABLED' : '❌ DISABLED'}`);
       const status = ExtendedThinkingHook.getStatus(projectDir);
-      console.log(`\n📊 Current Status:`);
+      console.log('\n📊 Current Status:');
       console.log(`   Extended Thinking: ${status.thinking ? '✅ ON' : '❌ OFF'}`);
       console.log(`   Deep Thinking: ${status.deepThinking ? '✅ ON' : '❌ OFF'}`);
       console.log(`   Active Mode: ${status.activeMode}`);
