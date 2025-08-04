@@ -413,6 +413,47 @@ class VersionCheckerHook {
   }
 
   /**
+   * Toggle auto-update setting
+   * @param {string} projectDir - Project directory
+   * @param {boolean} enabled - Enable or disable auto-update
+   */
+  static toggleAutoUpdate(projectDir = process.cwd(), enabled = null) {
+    const versionFile = path.join(projectDir, '.claude', 'hook-versions.json');
+    const hook = new VersionCheckerHook();
+    
+    let versionData = hook.loadVersionData(versionFile);
+    
+    if (enabled === null) {
+      // Toggle current setting
+      versionData.settings.autoUpdate = !versionData.settings.autoUpdate;
+    } else {
+      // Set specific value
+      versionData.settings.autoUpdate = enabled;
+    }
+    
+    hook.saveVersionData(versionFile, versionData);
+    
+    return versionData.settings.autoUpdate;
+  }
+
+  /**
+   * Get auto-update status
+   * @param {string} projectDir - Project directory
+   */
+  static getAutoUpdateStatus(projectDir = process.cwd()) {
+    const versionFile = path.join(projectDir, '.claude', 'hook-versions.json');
+    const hook = new VersionCheckerHook();
+    const versionData = hook.loadVersionData(versionFile);
+    
+    return {
+      autoUpdate: versionData.settings.autoUpdate,
+      notifyUpdates: versionData.settings.notifyUpdates,
+      lastChecked: versionData.lastChecked,
+      checkInterval: versionData.checkInterval
+    };
+  }
+
+  /**
    * Return success result
    */
   success() {
