@@ -1,0 +1,12 @@
+{
+  "name": "no-coauthor",
+  "version": "1.0.0",
+  "description": "Automatically disables co-authored-by credits in Claude Code",
+  "author": "rins_hooks",
+  "tags": ["settings", "git", "credits", "automation"],
+  "events": ["SessionStart"],
+  "matcher": "",
+  "timeout": 10,
+  "requirements": [],
+  "platforms": ["linux", "darwin", "win32"]
+}
