@@ -48,14 +48,14 @@ program
 
       // If no arguments, show interactive TUI by default
       if (hooks.length === 0 && !options.all && !options.interactive) {
-        console.log(chalk.blue('🚀 Welcome to Rins Hooks!'));
+        console.log(chalk.blue('🎣 Welcome to Rapala!'));
         console.log(chalk.gray('Starting interactive installation...'));
         console.log();
         await installer.enhancedInteractiveInstall(options);
         return;
       }
 
-      console.log(chalk.blue('🔧 Rins Hooks Installer'));
+      console.log(chalk.blue('🎣 Rapala Installer'));
       console.log();
 
       if (options.interactive) {
