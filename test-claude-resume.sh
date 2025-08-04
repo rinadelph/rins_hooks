@@ -118,10 +118,21 @@ test_claude_resume() {
     
     # Test 2: claude -r --debug
     echo -e "${BLUE}Test 2: claude -r --debug${NC}"
-    timeout 60s script -q -c "echo '$TEST_PROMPT' | claude -r --debug 2>&1" "$SCREEN_LOG.script2" || {
-        echo "Debug script command timed out or failed"
-        cat "$SCREEN_LOG.script2" 2>/dev/null || echo "No debug script output captured"
-    } >> "$DEBUG_LOG" 2>&1
+    {
+        echo "=== TEST 2: claude -r --debug ==="
+        echo "Timestamp: $(date)"
+        echo "Command: echo '$TEST_PROMPT' | claude -r --debug"
+        echo
+        
+        timeout 60s script -q -c "echo '$TEST_PROMPT' | claude -r --debug 2>&1" "$SCREEN_LOG.script2" || {
+            echo "Debug script command timed out or failed (exit code: $?)"
+            echo "Attempting to capture any partial debug output..."
+            cat "$SCREEN_LOG.script2" 2>/dev/null || echo "No debug script output captured"
+        }
+        
+        echo "=== END TEST 2 ==="
+        echo
+    } | tee -a "$SESSION_LOG" "$DEBUG_LOG"
     
     # Method 2: Direct capture with tee for live monitoring
     echo -e "${YELLOW}🔍 Method 2: Direct capture with tee${NC}"
