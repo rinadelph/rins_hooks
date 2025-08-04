@@ -1,10 +1,10 @@
 {
-  "name": "rins_hooks",
+  "name": "rapala",
   "version": "1.0.3",
-  "description": "Universal Claude Code hooks collection with cross-platform installer",
+  "description": "Universal Claude Code enhancement collection: Hooks, Tools, Resources, Prompts & MCPs",
   "main": "src/cli.js",
   "bin": {
-    "rins_hooks": "./bin/rins_hooks"
+    "rapala": "./bin/rins_hooks"
   },
   "scripts": {
     "start": "node src/cli.js",
