@@ -17,7 +17,7 @@ class AutoCommitHook extends HookBase {
       matcher: 'Edit|Write|MultiEdit',
       timeout: 30,
       description: 'Automatically commit file changes with contextual messages',
-      commitMessageTemplate: 'Auto-commit: {{toolName}} modified {{fileName}}\n\n- File: {{filePath}}\n- Tool: {{toolName}}\n- Session: {{sessionId}}\n\n🤖 Generated with Claude Code via rins_hooks\nCo-Authored-By: Claude <noreply@anthropic.com>',
+      commitMessageTemplate: 'Auto-commit: {{toolName}} modified {{fileName}}\n\n- File: {{filePath}}\n- Tool: {{toolName}}\n- Session: {{sessionId}}\n\nCo-Authored-By: Claude <noreply@anthropic.com>',
       excludePatterns: [
         '*.log', '*.tmp', '*.temp', '.env*', '*.key', '*.pem', '*.p12', '*.pfx',
         'node_modules/**', '.git/**', '*.pyc', '__pycache__/**'
