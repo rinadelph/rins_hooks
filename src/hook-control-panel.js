@@ -834,17 +834,17 @@ class HookControlPanel {
       message: chalk.cyan('Select installation scope:'),
       choices: [
         { 
-          name: `${chalk.blue('👤 User Level')} - ${chalk.gray('Available in all Claude Code projects')}`, 
+          name: `${chalk.blue('👤 User')} - ${chalk.gray('All projects')}`, 
           value: 'user',
           short: 'User'
         },
         { 
-          name: `${chalk.green('📁 Project Level')} - ${chalk.gray('This project only (committed to git)')}`, 
+          name: `${chalk.green('📁 Project')} - ${chalk.gray('This project (committed)')}`, 
           value: 'project',
           short: 'Project'
         },
         { 
-          name: `${chalk.yellow('🔒 Local Level')} - ${chalk.gray('This project only (not committed)')}`, 
+          name: `${chalk.yellow('🔒 Local')} - ${chalk.gray('This project (not committed)')}`, 
           value: 'local',
           short: 'Local'
         }
