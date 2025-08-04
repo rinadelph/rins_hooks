@@ -607,7 +607,6 @@ class Installer {
           console.log(chalk.cyan(`Would install: ${hook.name}`));
           console.log(chalk.gray(`  Description: ${hook.description}`));
           console.log(chalk.gray(`  Matcher: ${hook.matcher}`));
-          console.log(chalk.gray(`  Timeout: ${hook.timeout}s`));
           console.log();
         }
         return;
