@@ -412,14 +412,14 @@ class VersionCheckerHook {
           // Try npx for local installation
           execSync('which npx', { stdio: 'pipe' });
           return 'npx rins_hooks';
+        } catch (npxError) {
+          // Check if we're running from the rins_hooks project directory
+          const localCmd = path.join(process.cwd(), 'src', 'cli.js');
+          if (fs.existsSync(localCmd)) {
+            return `node ${localCmd}`;
+          }
+          return null;
         }
-      } catch (npxError) {
-        // Check if we're running from the rins_hooks project directory
-        const localCmd = path.join(process.cwd(), 'src', 'cli.js');
-        if (fs.existsSync(localCmd)) {
-          return `node ${localCmd}`;
-        }
-        return null;
       }
     }
   }
