@@ -11,7 +11,7 @@ class HookGenerator {
   }
 
   /**
-   * Generate hook from natural language description
+   * Generate dynamic hook from natural language description
    * @param {string} description - Natural language description of the hook
    * @param {string} projectPath - Optional project path for context
    */
@@ -22,9 +22,9 @@ class HookGenerator {
       console.log();
     }
 
-    const hookConfig = this.parseDescription(description);
+    const hookSpec = this.parseDescription(description);
     
-    if (!hookConfig) {
+    if (!hookSpec) {
       console.error(chalk.red('❌ Could not parse hook description'));
       console.log(chalk.yellow('💡 Try descriptions like:'));
       console.log(chalk.gray('  - "Format Python files after editing"'));
@@ -33,18 +33,28 @@ class HookGenerator {
       return;
     }
 
+    // Generate dynamic hook
+    const dynamicHook = await this.createDynamicHook(hookSpec, description);
+    
     if (!silent) {
-      console.log(chalk.green('✅ Hook configuration generated:'));
-      console.log(chalk.cyan(JSON.stringify(hookConfig, null, 2)));
+      console.log(chalk.green('✅ Dynamic hook generated:'));
+      console.log(chalk.cyan(`Name: ${dynamicHook.name}`));
+      console.log(chalk.cyan(`Event: ${dynamicHook.event}`));
+      console.log(chalk.cyan(`Matcher: ${dynamicHook.matcher || '(all tools)'}`));
+      console.log(chalk.cyan(`File: ${dynamicHook.hookFile}`));
       console.log();
 
-      // Ask if user wants to install via Rapala
-      console.log(chalk.blue('📦 Ready to install with Rapala'));
-      console.log(chalk.gray('Run the following command to install:'));
-      console.log(chalk.white(`rapala install-custom "${JSON.stringify(hookConfig).replace(/"/g, '\\"')}"`));
+      console.log(chalk.blue('📦 Claude Code Configuration:'));
+      console.log(chalk.white(JSON.stringify(dynamicHook.claudeConfig, null, 2)));
+      console.log();
+
+      console.log(chalk.green('🚀 To install this hook:'));
+      console.log(chalk.gray(`1. Hook file created: ${dynamicHook.hookFile}`));
+      console.log(chalk.gray(`2. Add the JSON above to your Claude Code settings.json`));
+      console.log(chalk.gray(`3. Or use: rapala install ${dynamicHook.name}`));
     }
     
-    return hookConfig;
+    return dynamicHook;
   }
 
   /**
