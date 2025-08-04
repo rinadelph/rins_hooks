@@ -504,10 +504,19 @@ function parseInput() {
 
 // Main execution function
 async function main() {
+  const coordinator = new GitHookCoordinator();
+  
   try {
     // Parse input from Claude Code
     const input = await parseInput();
     const { tool_name, tool_input } = input;
+
+    // Check if this hook should run (coordination check)
+    const shouldRun = await coordinator.shouldRunHook();
+    if (!shouldRun) {
+      console.log('Git hook coordination: Deferring to higher priority or already running hook');
+      process.exit(0);
+    }
 
     // Only handle file modification tools
     if (!['Edit', 'Write', 'MultiEdit'].includes(tool_name)) {
