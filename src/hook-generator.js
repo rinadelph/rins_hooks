@@ -102,7 +102,7 @@ class HookGenerator {
     if (desc.includes('tmux') && desc.includes('bash') && desc.includes('session')) {
       if (desc.includes('pane') && desc.includes('command')) {
         // Complex tmux session with panes and auto-cleanup
-        return `tmux new-session -d -s "claude-bash-\$(date +%s)" || true; tmux new-window -t "claude-bash-\$(date +%s)" -n "cmd-\$(date +%s)" "\$CLAUDE_TOOL_ARGS; sleep 600; tmux kill-window" 2>/dev/null || echo "Tmux session created"`;
+        return '/home/alejandro/Code/MCP/Hooks/Git/rins_hooks/scripts/tmux-bash-manager.sh "$CLAUDE_TOOL_ARGS"';
       }
       return 'tmux new-session -d -s "claude-\$(date +%s)" "\$CLAUDE_TOOL_ARGS" 2>/dev/null || echo "Tmux session created"';
     }
