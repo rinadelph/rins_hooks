@@ -251,7 +251,7 @@ program
   .description('Diagnose installation and configuration issues')
   .action(async () => {
     try {
-      console.log(chalk.blue('🔍 Rins Hooks Doctor'));
+      console.log(chalk.blue('🔍 Rapala Doctor'));
       console.log();
 
       const utils = new Utils();
