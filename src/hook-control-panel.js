@@ -309,8 +309,9 @@ class HookControlPanel {
       // Show current section overview
       await this.displaySectionOverview(sections[currentSection]);
       
-      // Clean keypress instruction
-      console.log(chalk.bgBlack.white('  ← → Navigate • ⏎ Enter • I Install • M Manage • V View • Q Quit  '));
+      // Clean instruction bar with smart colors
+      console.log(chalk.gray('━'.repeat(50)));
+      console.log(chalk.yellow('← →') + chalk.gray(' Navigate │ ') + chalk.green('↵') + chalk.gray(' Enter │ ') + chalk.cyan('I') + chalk.gray(' Install │ ') + chalk.blue('M') + chalk.gray(' Manage │ ') + chalk.red('Q') + chalk.gray(' Quit'));
       
       const key = await this.waitForDirectKeypress();
       if (debug) console.log(`DEBUG: Key pressed: ${key}`);
