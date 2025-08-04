@@ -308,20 +308,37 @@ analyze_output() {
         done
         
         echo "=== SEARCH FOR KEY PATTERNS ==="
-        echo "Searching for hook executions..."
-        grep -i "hook" "$LOG_DIR"/*"$TIMESTAMP"* 2>/dev/null || echo "No hook references found"
-        echo
+        echo "Searching in master log for important patterns..."
         
-        echo "Searching for debug output..."
-        grep -i "debug\|verbose" "$LOG_DIR"/*"$TIMESTAMP"* 2>/dev/null || echo "No debug output found"
-        echo
-        
-        echo "Searching for errors..."
-        grep -i "error\|fail\|exception" "$LOG_DIR"/*"$TIMESTAMP"* 2>/dev/null || echo "No errors found"
-        echo
-        
-        echo "Searching for model information..."
-        grep -i "model\|sonnet\|haiku\|opus" "$LOG_DIR"/*"$TIMESTAMP"* 2>/dev/null || echo "No model references found"
+        MASTER_LOG="$LOG_DIR/claude-resume-master-$TIMESTAMP.log"
+        if [ -f "$MASTER_LOG" ]; then
+            echo "--- Hook executions ---"
+            grep -i "hook\|pretooltuse\|posttooltuse\|sessionstart" "$MASTER_LOG" 2>/dev/null || echo "No hook references found"
+            echo
+            
+            echo "--- Debug output ---"
+            grep -i "debug\|verbose\|\[debug\]" "$MASTER_LOG" 2>/dev/null || echo "No debug output found"
+            echo
+            
+            echo "--- Session selection ---"
+            grep -i "select.*session\|choose.*session\|resume\|previous.*session" "$MASTER_LOG" 2>/dev/null || echo "No session selection found"
+            echo
+            
+            echo "--- Model information ---"
+            grep -i "model\|sonnet\|haiku\|opus\|claude-3" "$MASTER_LOG" 2>/dev/null || echo "No model references found"
+            echo
+            
+            echo "--- Errors and warnings ---"
+            grep -i "error\|fail\|exception\|warning\|timeout" "$MASTER_LOG" 2>/dev/null || echo "No errors found"
+            echo
+            
+            echo "--- Screen control sequences ---"
+            grep -E "\[[0-9;]*[mHJK]|\[2J|\[H" "$MASTER_LOG" 2>/dev/null | head -5 || echo "No screen control sequences found"
+            echo
+        else
+            echo "Master log not found, searching in all log files..."
+            grep -i "hook\|debug\|error\|model" "$LOG_DIR"/*"$TIMESTAMP"* 2>/dev/null || echo "No patterns found"
+        fi
         echo
         
         echo "=== UNIQUE PATTERNS ==="
