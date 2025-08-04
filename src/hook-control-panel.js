@@ -340,6 +340,10 @@ class HookControlPanel {
         case 'q':
           console.log(chalk.green('👋 Thank you for using Rapala!'));
           return;
+        case 'stay':
+        default:
+          // Do nothing, just refresh
+          break;
       }
     }
   }
