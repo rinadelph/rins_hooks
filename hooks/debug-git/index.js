@@ -104,6 +104,27 @@ class DebugGitHook {
   }
 
   /**
+   * Generate concise git status summary
+   * @param {Array} allIssues - All detected git issues
+   * @returns {string} Brief status summary
+   */
+  getGitStatusSummary(allIssues) {
+    let modifiedFiles = 0, untrackedFiles = 0, commitsAhead = 0;
+    
+    allIssues.forEach(issue => {
+      const modMatch = issue.match(/⚠️  Many uncommitted changes: (\d+) modified files/);
+      const untrMatch = issue.match(/⚠️  Many untracked files: (\d+) files/);
+      const aheadMatch = issue.match(/ℹ️  Branch is (\d+) commits ahead/);
+      
+      if (modMatch) modifiedFiles = parseInt(modMatch[1]);
+      if (untrMatch) untrackedFiles = parseInt(untrMatch[1]);
+      if (aheadMatch) commitsAhead = parseInt(aheadMatch[1]);
+    });
+    
+    return `📊 Git: ${modifiedFiles} modified, ${untrackedFiles} untracked, ${commitsAhead} ahead`;
+  }
+
+  /**
    * Sleep for specified milliseconds
    */
   sleep(ms) {
