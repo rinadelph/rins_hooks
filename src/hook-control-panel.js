@@ -320,7 +320,7 @@ class HookControlPanel {
       
       // Clean horizontal header
       console.log(chalk.bold.magenta('🎣 Rapala Enhancement Center'));
-      console.log(chalk.gray('━'.repeat(60)));
+      console.log(chalk.gray('━'.repeat(50)));
       
       // Horizontal navigation with smart colors
       const navBar = sections.map((section, index) => {
@@ -335,47 +335,57 @@ class HookControlPanel {
       console.log(`${navBar}`);
       console.log();
 
-      // Show current section overview with pagination
+      // Show current section overview
       await this.displaySectionOverview(sections[currentSection]);
       
-      // Clean instruction bar with better actions
-      console.log(chalk.gray('━'.repeat(60)));
-      console.log(
-        chalk.yellow('← →') + chalk.gray(' Switch │ ') + 
-        chalk.green('↵') + chalk.gray(' Manage │ ') + 
-        chalk.cyan('L') + chalk.gray(' List All │ ') + 
-        chalk.blue('I') + chalk.gray(' Install │ ') + 
-        chalk.red('Q') + chalk.gray(' Quit')
-      );
+      // Clean instruction bar with smart colors
+      console.log(chalk.gray('━'.repeat(50)));
+      console.log(chalk.yellow('← →') + chalk.gray(' Navigate │ ') + chalk.green('↵') + chalk.gray(' Enter │ ') + chalk.cyan('I') + chalk.gray(' Install │ ') + chalk.blue('M') + chalk.gray(' Manage │ ') + chalk.red('Q') + chalk.gray(' Quit'));
       
       const key = await this.waitForDirectKeypress();
       if (debug) console.log(`DEBUG: Key pressed: ${key}`);
 
-      // Handle direct keypress with cleaner logic
+      // Handle direct keypress
       switch (key) {
         case 'left':
-          currentSection = Math.max(0, currentSection - 1);
+          if (currentSection > 0) {
+            currentSection--;
+          }
           break;
         case 'right':
-          currentSection = Math.min(sections.length - 1, currentSection + 1);
+          if (currentSection < sections.length - 1) {
+            currentSection++;
+          }
           break;
         case 'enter':
-          if (debug) console.log(`DEBUG: Managing section: ${sections[currentSection]}`);
-          const shouldQuit = await this.manageSectionUI(sections[currentSection], debug);
+          if (debug) console.log(`DEBUG: Entering section: ${sections[currentSection]}`);
+          const shouldQuit = await this.enterSection(sections[currentSection], debug);
+          if (debug) console.log(`DEBUG: enterSection returned: ${shouldQuit}, type: ${typeof shouldQuit}`);
           if (shouldQuit === true) {
+            if (debug) console.log('DEBUG: Quitting from enterSection');
             console.log(chalk.green('👋 Thank you for using Rapala!'));
             process.exit(0);
           }
-          break;
-        case 'l':
-          await this.listAllSectionItems(sections[currentSection]);
+          if (shouldQuit === false) {
+            if (debug) console.log('DEBUG: Back to sections - continuing navigation loop');
+          } else {
+            if (debug) console.log(`DEBUG: Unexpected return value from enterSection: ${shouldQuit}`);
+          }
+          if (debug) console.log('DEBUG: About to continue navigation loop');
           break;
         case 'i':
           await this.installSectionItems(sections[currentSection]);
           break;
+        case 'm':
+          await this.manageSectionItems(sections[currentSection]);
+          break;
+        case 'v':
+          await this.viewSectionItems(sections[currentSection]);
+          break;
         case 'q':
           console.log(chalk.green('👋 Thank you for using Rapala!'));
           return;
+        case 'stay':
         default:
           // Do nothing, just refresh
           break;
