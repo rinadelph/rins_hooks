@@ -751,58 +751,6 @@ class HookControlPanel {
     return action;
   }
 
-  async installAllHooks(availableHooks) {
-    if (availableHooks.length === 0) {
-      console.log(chalk.yellow('ℹ️  All available hooks are already installed!'));
-      const action = await this.waitForEnter();
-      return action;
-    }
-
-    const confirm = await inquirer.prompt([{
-      type: 'confirm',
-      name: 'confirm',
-      message: `Install all ${availableHooks.length} available hooks?`,
-      default: false
-    }]);
-
-    if (!confirm.confirm) {
-      console.log(chalk.yellow('ℹ️  Installation cancelled'));
-      return;
-    }
-
-    const scope = await inquirer.prompt([{
-      type: 'list',
-      name: 'scope',
-      message: 'Select installation scope for all hooks:',
-      choices: [
-        { name: '👤 User Level - All Claude Code projects', value: 'user' },
-        { name: '📁 Project Level - This project only (committed)', value: 'project' },
-        { name: '🔒 Local Level - This project only (not committed)', value: 'local' }
-      ]
-    }]);
-
-    console.log(chalk.cyan(`Installing all ${availableHooks.length} hooks...`));
-
-    let successCount = 0;
-    let failCount = 0;
-
-    for (const hook of availableHooks) {
-      try {
-        await this.installer.installHook(hook.name, scope.scope);
-        console.log(chalk.green(`  ✅ ${hook.name} installed successfully`));
-        successCount++;
-      } catch (error) {
-        console.log(chalk.red(`  ❌ ${hook.name} failed: ${error.message}`));
-        failCount++;
-      }
-    }
-
-    console.log();
-    console.log(chalk.green(`✅ Installation complete: ${successCount} successful, ${failCount} failed`));
-
-    const action = await this.waitForEnter();
-    return action;
-  }
 
   /**
    * View all hooks with status in a paginated way
