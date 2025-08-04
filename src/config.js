@@ -377,10 +377,6 @@ class ConfigManager {
           errors.push('Missing command');
         }
 
-        if (hookCommand.timeout && (typeof hookCommand.timeout !== 'number' || hookCommand.timeout < 0)) {
-          errors.push('Invalid timeout value');
-        }
-
         // Check if command file exists
         if (hookCommand.command) {
           const commandMatch = hookCommand.command.match(/node\s+"([^"]+)"/);
@@ -404,14 +400,14 @@ class ConfigManager {
     // This would enable a disabled hook
     // For now, we'll just show a message
     console.log(chalk.yellow('ℹ️  Hook enable/disable functionality not yet implemented.'));
-    console.log('Use `rins_hooks install` to add hooks or `rins_hooks uninstall` to remove them.');
+    console.log('Use `rapala install` to add hooks or `rapala uninstall` to remove them.');
   }
 
   disableHook(_hookName, _options) {
     // This would disable an enabled hook
     // For now, we'll just show a message
     console.log(chalk.yellow('ℹ️  Hook enable/disable functionality not yet implemented.'));
-    console.log('Use `rins_hooks install` to add hooks or `rins_hooks uninstall` to remove them.');
+    console.log('Use `rapala install` to add hooks or `rapala uninstall` to remove them.');
   }
 
   async addPermissionDeny(toolName, scope) {
