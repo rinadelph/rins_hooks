@@ -203,7 +203,7 @@ test_claude_resume() {
         if command -v expect >/dev/null 2>&1; then
             echo "Using expect for interactive session capture..."
             expect -c "
-                set timeout 30
+                set timeout 10
                 log_file $DEBUG_LOG.interactive
                 spawn claude -r --debug
                 expect {
@@ -217,14 +217,14 @@ test_claude_resume() {
             echo "Using timeout with interrupt simulation..."
             # Run in background to capture all output
             (
-                timeout 15s claude -r --debug 2>&1 || true
+                timeout 8s claude -r --debug 2>&1 || true
                 echo "=== SESSION ENDED OR INTERRUPTED ==="
             ) | tee -a "$DEBUG_LOG.interactive" &
             
             INTERACTIVE_PID=$!
             
             # Wait a few seconds then send interrupt
-            sleep 8
+            sleep 5
             kill -INT $INTERACTIVE_PID 2>/dev/null || true
             wait $INTERACTIVE_PID 2>/dev/null || true
         fi
