@@ -7,7 +7,7 @@ const chalk = require('chalk');
 
 class HookGenerator {
   constructor() {
-    this.hooksDir = path.join(__dirname, '..', 'generated-hooks');
+    this.hooksDir = path.join(__dirname, '..', 'hooks');
   }
 
   /**
