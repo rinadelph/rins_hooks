@@ -464,7 +464,7 @@ program
 
 // Generate command - Create hooks from natural language descriptions
 program
-  .command('generate <description>')
+  .command('generate [description]')
   .description('Generate Claude Code hook from natural language description')
   .option('-d, --document <path>', 'Generate hooks from document instead of description')
   .option('-u, --user', 'Install generated hook at user level')
