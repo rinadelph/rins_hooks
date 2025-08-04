@@ -264,7 +264,7 @@ program
       console.log();
       const hasErrors = diagnostics.some(d => d.status === 'error');
       if (hasErrors) {
-        console.log(chalk.red('❌ Some issues found. Please address them before using rins_hooks.'));
+        console.log(chalk.red('❌ Some issues found. Please address them before using rapala.'));
       } else {
         console.log(chalk.green('✅ Everything looks good!'));
       }
@@ -375,7 +375,7 @@ program
       
       if (!require('fs').existsSync(versionCheckerPath)) {
         console.log(chalk.yellow('⚠️  Version checker hook not found.'));
-        console.log(chalk.cyan('Install it with: rins_hooks install version-checker'));
+        console.log(chalk.cyan('Install it with: rapala install version-checker'));
         return;
       }
 
@@ -451,7 +451,7 @@ program
         });
       } else {
         console.log(chalk.gray('💡 Use the control panel for comprehensive hook management:'));
-        console.log(chalk.cyan('   rins_hooks status'));
+        console.log(chalk.cyan('   rapala status'));
       }
 
     } catch (error) {
