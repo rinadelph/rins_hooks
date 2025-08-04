@@ -453,18 +453,28 @@ class HookControlPanel {
         ]
       }]);
 
+      if (debug) console.log(`DEBUG: User selected action: ${action.choice}`);
+      
       switch (action.choice) {
         case 'install':
+          if (debug) console.log('DEBUG: Calling installSectionItems');
           await this.installSectionItems(sectionType);
+          if (debug) console.log('DEBUG: Finished installSectionItems, continuing enterSection loop');
           break;
         case 'manage':
+          if (debug) console.log('DEBUG: Calling manageSectionItems');
           await this.manageSectionItems(sectionType);
+          if (debug) console.log('DEBUG: Finished manageSectionItems, continuing enterSection loop');
           break;
         case 'view':
+          if (debug) console.log('DEBUG: Calling viewSectionItems');
           await this.viewSectionItems(sectionType);
+          if (debug) console.log('DEBUG: Finished viewSectionItems, continuing enterSection loop');
           break;
         case 'update':
+          if (debug) console.log('DEBUG: Calling updateSectionItems');
           await this.updateSectionItems(sectionType);
+          if (debug) console.log('DEBUG: Finished updateSectionItems, continuing enterSection loop');
           break;
         case 'back':
           if (debug) console.log('DEBUG: User selected back, returning false');
@@ -472,6 +482,9 @@ class HookControlPanel {
         case 'quit':
           if (debug) console.log('DEBUG: User selected quit, returning true');
           return true;
+        default:
+          if (debug) console.log(`DEBUG: Unknown action: ${action.choice}`);
+          break;
       }
     }
   }
