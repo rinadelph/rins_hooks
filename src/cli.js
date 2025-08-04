@@ -11,11 +11,24 @@ const VersionCheck = require('./version-check');
 
 const program = new Command();
 
+/**
+ * Run version check before any command
+ */
+async function runVersionCheck() {
+  try {
+    const versionCheck = new VersionCheck();
+    await versionCheck.quickCheck();
+  } catch (error) {
+    // Fail silently - don't interrupt main commands
+  }
+}
+
 // Global configuration
 program
   .name('rins_hooks')
   .description('Universal Claude Code hooks collection with cross-platform installer')
-  .version(version);
+  .version(version)
+  .hook('preAction', runVersionCheck);
 
 // Install command
 program
