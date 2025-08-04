@@ -150,31 +150,47 @@ class HookControlPanelMethods {
     console.log(chalk.blue(`🔄 Update ${hook.name}`));
     console.log();
 
-    console.log(chalk.cyan('🔍 Checking for updates...'));
-    // Simulate update check
-    const hasUpdate = Math.random() > 0.7; // 30% chance of having update
-
-    if (hasUpdate) {
-      console.log(chalk.yellow(`📦 Update available for ${hook.name}!`));
-      console.log(`   Current: v${hook.version || '1.0.0'}`);
-      console.log(`   Latest: v${hook.version || '1.0.0'}.1`);
-      console.log();
-
-      const confirm = await inquirer.prompt([{
-        type: 'confirm',
-        name: 'update',
-        message: 'Install this update?',
-        default: true
-      }]);
-
-      if (confirm.update) {
-        console.log(chalk.cyan('🔄 Installing update...'));
-        // Simulate update process
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        console.log(chalk.green(`✅ ${hook.name} updated successfully!`));
+    try {
+      console.log(chalk.cyan('🔍 Checking for updates...'));
+      
+      const availableHooks = await this.installer.getAvailableHooks();
+      const availableHook = availableHooks.find(h => h.name === hook.name);
+      
+      if (!availableHook) {
+        console.log(chalk.red(`❌ Hook ${hook.name} not found in available hooks`));
+        await this.waitForEnter();
+        return;
       }
-    } else {
-      console.log(chalk.green(`✅ ${hook.name} is up to date`));
+      
+      const currentVersion = hook.version || '1.0.0';
+      const latestVersion = availableHook.version || '1.0.0';
+      
+      if (currentVersion === latestVersion) {
+        console.log(chalk.green(`✅ ${hook.name} is already up to date (v${currentVersion})`));
+      } else {
+        console.log(chalk.yellow(`📦 Update available for ${hook.name}!`));
+        console.log(`   Current: v${currentVersion}`);
+        console.log(`   Latest: v${latestVersion}`);
+        console.log();
+
+        const confirm = await inquirer.prompt([{
+          type: 'confirm',
+          name: 'update',
+          message: 'Install this update?',
+          default: true
+        }]);
+
+        if (confirm.update) {
+          console.log(chalk.cyan('🔄 Installing update...'));
+          
+          const scope = this.getHookScope(hook);
+          await this.installer.installHook(hook.name, scope, true); // force update
+          
+          console.log(chalk.green(`✅ ${hook.name} updated successfully to v${latestVersion}!`));
+        }
+      }
+    } catch (error) {
+      console.log(chalk.red(`❌ Update failed: ${error.message}`));
     }
 
     await this.waitForEnter();
@@ -290,31 +306,65 @@ class HookControlPanelMethods {
     console.log(chalk.blue('🔍 Checking for Hook Updates'));
     console.log();
 
-    console.log(chalk.cyan('🔄 Scanning all installed hooks...'));
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    const availableUpdates = Math.floor(Math.random() * 3); // 0-2 updates
-    
-    if (availableUpdates > 0) {
-      console.log(chalk.yellow(`📦 Found ${availableUpdates} available update(s):`));
-      for (let i = 0; i < availableUpdates; i++) {
-        console.log(`   ✨ extended-thinking v1.0.${i} → v1.0.${i + 1}`);
+    try {
+      console.log(chalk.cyan('🔄 Scanning all installed hooks...'));
+      
+      const status = await this.configManager.getInstallationStatus();
+      const allHooks = [...status.user, ...status.project, ...status.local];
+      
+      if (allHooks.length === 0) {
+        console.log(chalk.yellow('ℹ️  No hooks installed to check for updates'));
+        await this.waitForEnter();
+        return;
       }
       
-      const install = await inquirer.prompt([{
-        type: 'confirm',
-        name: 'install',
-        message: 'Install all available updates?',
-        default: true
-      }]);
-
-      if (install.install) {
-        console.log(chalk.cyan('\n🔄 Installing updates...'));
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        console.log(chalk.green('✅ All updates installed successfully!'));
+      const availableHooks = await this.installer.getAvailableHooks();
+      const updatesAvailable = [];
+      
+      for (const installedHook of allHooks) {
+        const availableHook = availableHooks.find(h => h.name === installedHook.name);
+        if (availableHook && availableHook.version !== installedHook.version) {
+          updatesAvailable.push({
+            name: installedHook.name,
+            currentVersion: installedHook.version || '1.0.0',
+            newVersion: availableHook.version || '1.0.1'
+          });
+        }
       }
-    } else {
-      console.log(chalk.green('✅ All hooks are up to date!'));
+      
+      if (updatesAvailable.length > 0) {
+        console.log(chalk.yellow(`📦 Found ${updatesAvailable.length} available update(s):`));
+        updatesAvailable.forEach(update => {
+          console.log(`   ✨ ${update.name} v${update.currentVersion} → v${update.newVersion}`);
+        });
+        
+        const install = await inquirer.prompt([{
+          type: 'confirm',
+          name: 'install',
+          message: 'Install all available updates?',
+          default: true
+        }]);
+
+        if (install.install) {
+          console.log(chalk.cyan('\n🔄 Installing updates...'));
+          
+          for (const update of updatesAvailable) {
+            try {
+              const scope = this.getHookScope({ name: update.name });
+              await this.installer.installHook(update.name, scope, true); // force update
+              console.log(chalk.green(`  ✅ ${update.name} updated successfully`));
+            } catch (error) {
+              console.log(chalk.red(`  ❌ ${update.name} update failed: ${error.message}`));
+            }
+          }
+          
+          console.log(chalk.green('\n✅ Update process completed!'));
+        }
+      } else {
+        console.log(chalk.green('✅ All hooks are up to date!'));
+      }
+    } catch (error) {
+      console.log(chalk.red(`❌ Update check failed: ${error.message}`));
     }
 
     await this.waitForEnter();
@@ -327,12 +377,38 @@ class HookControlPanelMethods {
     console.log(chalk.blue('🔄 Update All Hooks'));
     console.log();
 
-    const allHooks = [...this.hookStates.user, ...this.hookStates.project, ...this.hookStates.local];
-    
-    console.log(chalk.cyan(`🔄 Checking ${allHooks.length} hooks for updates...`));
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    console.log(chalk.green('✅ All hooks are up to date!'));
+    try {
+      const status = await this.configManager.getInstallationStatus();
+      const allHooks = [...status.user, ...status.project, ...status.local];
+      
+      if (allHooks.length === 0) {
+        console.log(chalk.yellow('ℹ️  No hooks installed to update'));
+        await this.waitForEnter();
+        return;
+      }
+      
+      console.log(chalk.cyan(`🔄 Updating ${allHooks.length} hooks...`));
+      
+      let successCount = 0;
+      let failCount = 0;
+      
+      for (const hook of allHooks) {
+        try {
+          const scope = this.getHookScope(hook);
+          await this.installer.installHook(hook.name, scope, true); // force update
+          console.log(chalk.green(`  ✅ ${hook.name} updated`));
+          successCount++;
+        } catch (error) {
+          console.log(chalk.red(`  ❌ ${hook.name} failed: ${error.message}`));
+          failCount++;
+        }
+      }
+      
+      console.log();
+      console.log(chalk.green(`✅ Update complete: ${successCount} successful, ${failCount} failed`));
+    } catch (error) {
+      console.log(chalk.red(`❌ Update failed: ${error.message}`));
+    }
 
     await this.waitForEnter();
   }
@@ -359,13 +435,46 @@ class HookControlPanelMethods {
   async performBulkOperation(operation, hooks) {
     console.log(chalk.cyan(`\n🔧 Performing ${operation.replace('_', ' ')} on ${hooks.length} hooks...`));
     
+    let successCount = 0;
+    let failCount = 0;
+    
     for (const hook of hooks) {
       console.log(chalk.blue(`  Processing ${hook.name}...`));
-      await new Promise(resolve => setTimeout(resolve, 500));
-      console.log(chalk.green(`  ✅ ${hook.name}: ${operation.replace('_', ' ')} completed`));
+      
+      try {
+        const HookManager = require('./hook-manager');
+        const hookManager = new HookManager(this.configManager);
+        const scope = this.getHookScope(hook);
+        
+        switch (operation) {
+          case 'update_all':
+            await this.installer.installHook(hook.name, scope, true);
+            break;
+          case 'disable_multiple':
+            await hookManager.disableHook(hook.name, scope);
+            break;
+          case 'enable_multiple':
+            await hookManager.enableHook(hook.name, scope);
+            break;
+          case 'uninstall_multiple':
+            await hookManager.uninstallHook(hook.name, scope);
+            break;
+          case 'move_multiple':
+            // This would require additional scope selection logic
+            console.log(chalk.yellow(`  ⚠️  ${hook.name}: Move operation requires individual handling`));
+            continue;
+        }
+        
+        console.log(chalk.green(`  ✅ ${hook.name}: ${operation.replace('_', ' ')} completed`));
+        successCount++;
+      } catch (error) {
+        console.log(chalk.red(`  ❌ ${hook.name}: ${error.message}`));
+        failCount++;
+      }
     }
 
     console.log(chalk.green(`\n✅ Bulk ${operation.replace('_', ' ')} completed!`));
+    console.log(chalk.cyan(`Results: ${successCount} successful, ${failCount} failed`));
     await this.waitForEnter();
   }
 
@@ -373,40 +482,137 @@ class HookControlPanelMethods {
    * Remove duplicate hooks
    */
   async removeDuplicateHooks() {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    console.log(chalk.green('   ✅ Removed 3 duplicate hook entries'));
+    try {
+      const HookManager = require('./hook-manager');
+      const hookManager = new HookManager(this.configManager);
+      
+      const cleaned = await hookManager.removeDuplicates('user');
+      console.log(chalk.green(`   ✅ Removed ${cleaned} duplicate hook entries`));
+    } catch (error) {
+      console.log(chalk.red(`   ❌ Failed to remove duplicates: ${error.message}`));
+    }
   }
 
   /**
    * Optimize configuration files
    */
   async optimizeConfigFiles() {
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    console.log(chalk.green('   ✅ Optimized configuration files'));
+    try {
+      const HookManager = require('./hook-manager');
+      const hookManager = new HookManager(this.configManager);
+      
+      await hookManager.cleanAndOptimize('user');
+      await hookManager.cleanAndOptimize('project');
+      
+      console.log(chalk.green('   ✅ Optimized configuration files'));
+    } catch (error) {
+      console.log(chalk.red(`   ❌ Failed to optimize configs: ${error.message}`));
+    }
   }
 
   /**
    * Clean lock files  
    */
   async cleanLockFiles() {
-    await new Promise(resolve => setTimeout(resolve, 800));
-    console.log(chalk.green('   ✅ Cleaned 12 stale lock files'));
+    try {
+      const lockDir = path.join(process.cwd(), '.claude', 'hook-locks');
+      let cleanedCount = 0;
+      
+      if (fs.existsSync(lockDir)) {
+        const lockFiles = fs.readdirSync(lockDir);
+        const now = Date.now();
+        
+        for (const lockFile of lockFiles) {
+          const lockPath = path.join(lockDir, lockFile);
+          const stats = fs.statSync(lockPath);
+          
+          // Remove locks older than 10 minutes
+          if (now - stats.mtime.getTime() > 600000) {
+            fs.unlinkSync(lockPath);
+            cleanedCount++;
+          }
+        }
+      }
+      
+      console.log(chalk.green(`   ✅ Cleaned ${cleanedCount} stale lock files`));
+    } catch (error) {
+      console.log(chalk.red(`   ❌ Failed to clean lock files: ${error.message}`));
+    }
   }
 
   /**
    * Validate configurations
    */
   async validateConfigurations() {
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    console.log(chalk.green('   ✅ All configurations valid'));
+    try {
+      const status = await this.configManager.getInstallationStatus();
+      const allHooks = [...status.user, ...status.project, ...status.local];
+      
+      let validCount = 0;
+      let invalidCount = 0;
+      
+      for (const hook of allHooks) {
+        try {
+          const hookPath = path.join(__dirname, '..', 'hooks', hook.name, 'index.js');
+          if (fs.existsSync(hookPath)) {
+            // Basic validation - check if file is valid JS
+            require(hookPath);
+            validCount++;
+          } else {
+            console.log(chalk.yellow(`   ⚠️  ${hook.name}: Hook file not found`));
+            invalidCount++;
+          }
+        } catch (error) {
+          console.log(chalk.red(`   ❌ ${hook.name}: ${error.message}`));
+          invalidCount++;
+        }
+      }
+      
+      if (invalidCount === 0) {
+        console.log(chalk.green(`   ✅ All ${validCount} configurations valid`));
+      } else {
+        console.log(chalk.yellow(`   ⚠️  ${validCount} valid, ${invalidCount} invalid configurations`));
+      }
+    } catch (error) {
+      console.log(chalk.red(`   ❌ Failed to validate configurations: ${error.message}`));
+    }
   }
 
   /**
    * Clean temporary files
    */
   async cleanTempFiles() {
-    await new Promise(resolve => setTimeout(resolve, 1200));
-    console.log(chalk.green('   ✅ Cleaned 45MB of temporary files'));
+    try {
+      let totalSize = 0;
+      let fileCount = 0;
+      
+      const tempDirs = [
+        path.join(process.cwd(), '.claude', 'temp'),
+        path.join(process.cwd(), '.claude', 'cache'),
+        path.join(require('os').tmpdir(), 'rins_hooks')
+      ];
+      
+      for (const tempDir of tempDirs) {
+        if (fs.existsSync(tempDir)) {
+          const files = fs.readdirSync(tempDir, { withFileTypes: true });
+          
+          for (const file of files) {
+            const filePath = path.join(tempDir, file.name);
+            if (file.isFile()) {
+              const stats = fs.statSync(filePath);
+              totalSize += stats.size;
+              fs.unlinkSync(filePath);
+              fileCount++;
+            }
+          }
+        }
+      }
+      
+      const sizeMB = (totalSize / 1024 / 1024).toFixed(1);
+      console.log(chalk.green(`   ✅ Cleaned ${sizeMB}MB of temporary files (${fileCount} files)`));
+    } catch (error) {
+      console.log(chalk.red(`   ❌ Failed to clean temp files: ${error.message}`));
+    }
   }
 
   /**
