@@ -652,17 +652,29 @@ class HookControlPanel {
   }
 
   async installSingleHook(availableHooks) {
-    if (availableHooks.length === 0) {
+    // Get all hooks with installation status for single selection
+    const allHooks = await this.installer.getAvailableHooks();
+    const installedNames = [...this.hookStates.user, ...this.hookStates.project, ...this.hookStates.local].map(h => h.name);
+    
+    const uninstalledHooks = allHooks.filter(h => !installedNames.includes(h.name));
+    
+    if (uninstalledHooks.length === 0) {
       console.log(chalk.yellow('ℹ️  All available hooks are already installed!'));
       const action = await this.waitForEnter();
       return action;
     }
 
-    const hookChoices = availableHooks.map(hook => ({
-      name: `${hook.name} - ${hook.description}`,
-      value: hook,
-      short: hook.name
-    }));
+    console.log(chalk.cyan(`📋 All Available Hooks (showing installable ones only):`));
+    console.log();
+
+    const hookChoices = uninstalledHooks.map(hook => {
+      const tagsText = hook.tags.length > 0 ? chalk.gray(`[${hook.tags.join(', ')}]`) : '';
+      return {
+        name: `📦 ${hook.name} ${tagsText}\n    ${chalk.gray(hook.description)}`,
+        value: hook,
+        short: hook.name
+      };
+    });
 
     hookChoices.push(
       new inquirer.Separator(),
@@ -674,7 +686,7 @@ class HookControlPanel {
       name: 'hook',
       message: 'Select a hook to install:',
       choices: hookChoices,
-      pageSize: 10
+      pageSize: 12
     }]);
 
     if (selectedHook.hook === 'back') return;
