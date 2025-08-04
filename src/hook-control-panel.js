@@ -286,6 +286,7 @@ class HookControlPanel {
     if (debug) console.log('DEBUG: Starting showInteractiveStatus');
 
     while (true) {
+      if (debug) console.log('DEBUG: Main navigation loop iteration starting');
       console.clear();
       
       // Header with better styling
