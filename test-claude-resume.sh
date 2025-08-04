@@ -365,9 +365,10 @@ create_summary() {
         echo
         echo "## Test Objectives"
         echo "- Understand how \`claude -r\` (resume) functionality works"
-        echo "- Capture all terminal output including screen clears"
+        echo "- Capture all terminal output including screen clears and interruptions"
         echo "- Monitor hook execution during resume"
         echo "- Analyze debug output patterns"
+        echo "- Consolidate all output into comprehensive logs"
         echo
         echo "## Files Generated"
         echo "| File | Purpose | Size |"
