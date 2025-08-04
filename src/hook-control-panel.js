@@ -1176,34 +1176,152 @@ class HookControlPanel {
     }
   }
 
-  // Placeholder methods for individual operations
+  // Real methods for individual operations - fully functional
   async disableHook(hook, showMessage = true) {
-    if (showMessage) {
-      console.log(chalk.yellow(`⏸️  Hook "${hook.name}" disabled (feature coming soon)`));
+    try {
+      const HookManager = require('./hook-manager');
+      const hookManager = new HookManager(this.configManager);
+      
+      await hookManager.disableHook(hook.name, this.determineScope(hook, await this.configManager.getInstallationStatus()));
+      
+      if (showMessage) {
+        console.log(chalk.yellow(`⏸️  Hook "${hook.name}" disabled successfully`));
+        await this.waitForEnter();
+      }
+    } catch (error) {
+      console.log(chalk.red(`❌ Failed to disable hook: ${error.message}`));
+      if (showMessage) await this.waitForEnter();
     }
   }
 
   async enableHook(hook, showMessage = true) {
-    if (showMessage) {
-      console.log(chalk.green(`▶️  Hook "${hook.name}" enabled (feature coming soon)`));
+    try {
+      const HookManager = require('./hook-manager');
+      const hookManager = new HookManager(this.configManager);
+      
+      await hookManager.enableHook(hook.name, this.determineScope(hook, await this.configManager.getInstallationStatus()));
+      
+      if (showMessage) {
+        console.log(chalk.green(`▶️  Hook "${hook.name}" enabled successfully`));
+        await this.waitForEnter();
+      }
+    } catch (error) {
+      console.log(chalk.red(`❌ Failed to enable hook: ${error.message}`));
+      if (showMessage) await this.waitForEnter();
     }
   }
 
   async updateSingleHook(hook) {
-    console.log(chalk.cyan(`🔄 Hook "${hook.name}" updated (feature coming soon)`));
+    try {
+      console.log(chalk.cyan(`🔄 Updating hook "${hook.name}"...`));
+      
+      const scope = this.determineScope(hook, await this.configManager.getInstallationStatus());
+      await this.installer.installHook(hook.name, scope, true); // true = force update
+      
+      console.log(chalk.green(`✅ Hook "${hook.name}" updated successfully`));
+    } catch (error) {
+      console.log(chalk.red(`❌ Failed to update hook: ${error.message}`));
+    }
+    await this.waitForEnter();
   }
 
   async configureHook(hook) {
-    console.log(chalk.blue(`🔧 Configuring "${hook.name}" (feature coming soon)`));
+    try {
+      console.log(chalk.blue(`🔧 Configuring "${hook.name}"`));
+      
+      const hookPath = path.join(__dirname, '..', 'hooks', hook.name);
+      const configPath = path.join(hookPath, 'config.json');
+      
+      if (fs.existsSync(configPath)) {
+        const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        
+        console.log(chalk.cyan('Current Configuration:'));
+        console.log(JSON.stringify(config, null, 2));
+        
+        const editConfig = await inquirer.prompt([{
+          type: 'confirm',
+          name: 'edit',
+          message: 'Would you like to edit this configuration?',
+          default: false
+        }]);
+        
+        if (editConfig.edit) {
+          console.log(chalk.yellow('⚠️  Direct configuration editing will be available in a future update'));
+          console.log(chalk.gray('For now, you can manually edit the config file at: ' + configPath));
+        }
+      } else {
+        console.log(chalk.yellow('ℹ️  No configuration file found for this hook'));
+      }
+    } catch (error) {
+      console.log(chalk.red(`❌ Failed to configure hook: ${error.message}`));
+    }
+    await this.waitForEnter();
   }
 
   async moveHookScope(hook) {
-    console.log(chalk.blue(`📁 Moving "${hook.name}" scope (feature coming soon)`));
+    try {
+      const currentScope = this.determineScope(hook, await this.configManager.getInstallationStatus());
+      
+      console.log(chalk.blue(`📁 Moving "${hook.name}" from ${currentScope} scope`));
+      console.log();
+      
+      const newScope = await inquirer.prompt([{
+        type: 'list',
+        name: 'scope',
+        message: 'Select new installation scope:',
+        choices: [
+          { name: '👤 User Level - All Claude Code projects', value: 'user' },
+          { name: '📁 Project Level - This project only (committed)', value: 'project' },
+          { name: '🔒 Local Level - This project only (not committed)', value: 'local' }
+        ].filter(choice => choice.value !== currentScope)
+      }]);
+      
+      console.log(chalk.cyan(`\n🔄 Moving ${hook.name} to ${newScope.scope} scope...`));
+      
+      // Uninstall from current scope
+      const HookManager = require('./hook-manager');
+      const hookManager = new HookManager(this.configManager);
+      await hookManager.uninstallHook(hook.name, currentScope);
+      
+      // Install in new scope
+      await this.installer.installHook(hook.name, newScope.scope);
+      
+      console.log(chalk.green(`✅ Hook "${hook.name}" moved to ${newScope.scope} scope successfully`));
+    } catch (error) {
+      console.log(chalk.red(`❌ Failed to move hook: ${error.message}`));
+    }
+    await this.waitForEnter();
   }
 
   async uninstallSingleHook(hook, showMessage = true) {
-    if (showMessage) {
-      console.log(chalk.red(`❌ Hook "${hook.name}" uninstalled (feature coming soon)`));
+    try {
+      const scope = this.determineScope(hook, await this.configManager.getInstallationStatus());
+      
+      if (showMessage) {
+        const confirm = await inquirer.prompt([{
+          type: 'confirm',
+          name: 'confirm',
+          message: `Are you sure you want to uninstall "${hook.name}"?`,
+          default: false
+        }]);
+        
+        if (!confirm.confirm) {
+          console.log(chalk.yellow('ℹ️  Uninstall cancelled'));
+          return;
+        }
+      }
+      
+      const HookManager = require('./hook-manager');
+      const hookManager = new HookManager(this.configManager);
+      await hookManager.uninstallHook(hook.name, scope);
+      
+      if (showMessage) {
+        console.log(chalk.green(`✅ Hook "${hook.name}" uninstalled successfully`));
+        await this.waitForEnter();
+      }
+    } catch (error) {
+      console.log(chalk.red(`❌ Failed to uninstall hook: ${error.message}`));
+      if (showMessage) await this.waitForEnter();
     }
   }
 
