@@ -28,8 +28,8 @@ describe('CLI', () => {
 
   it('should have package.json with correct structure', () => {
     const pkg = require('../package.json');
-    expect(pkg.name).toBe('rins_hooks');
-    expect(pkg.bin).toHaveProperty('rins_hooks');
+    expect(pkg.name).toBe('rapala');
+    expect(pkg.bin).toHaveProperty('rapala');
     expect(pkg.engines).toHaveProperty('node');
   });
 
