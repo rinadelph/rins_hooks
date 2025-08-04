@@ -594,6 +594,7 @@ class HookControlPanel {
         name: 'action',
         message: 'What would you like to do?',
         choices: [
+          { name: '📋 View All Hooks with Status', value: 'view_all' },
           { name: '📦 Install Single Hook', value: 'single' },
           { name: '📦 Install Multiple Hooks', value: 'multiple' },
           { name: '🔄 Install All Available Hooks', value: 'all' },
