@@ -666,7 +666,8 @@ class HookControlPanel {
       const recentInstalled = allInstalled.slice(0, 3);
       recentInstalled.forEach(item => {
         const scope = this.getScopeIcon(item, sectionData);
-        const description = (item.description || 'No description').substring(0, 40) + '...';
+        const fullDescription = item.description || 'No description';
+        const description = fullDescription.length > 40 ? fullDescription.substring(0, 40) + '...' : fullDescription;
         console.log(`    ${chalk.green('•')} ${chalk.bold(item.name)} ${scope} ${chalk.gray('- ' + description)}`);
       });
       
