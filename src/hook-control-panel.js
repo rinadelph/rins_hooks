@@ -685,10 +685,12 @@ class HookControlPanel {
     
     for (const itemName of selection.items) {
       try {
+        console.log(chalk.blue(`Installing ${itemName}...`));
         await this.installer.installHooks([itemName], { [scope]: true });
-        console.log(chalk.green(`✓ ${itemName} installed`));
+        console.log(chalk.green(`✓ ${itemName} installed successfully`));
       } catch (error) {
         console.log(chalk.red(`✗ ${itemName} failed: ${error.message}`));
+        console.error('Full error:', error);
       }
     }
 
