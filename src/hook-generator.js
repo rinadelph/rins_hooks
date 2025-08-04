@@ -54,9 +54,9 @@ class HookGenerator {
     const desc = description.toLowerCase();
     
     // Determine event type
-    let eventType = 'PostToolUse'; // default
-    if (desc.includes('before') || desc.includes('prevent') || desc.includes('check') || desc.includes('validate')) {
-      eventType = 'PreToolUse';
+    let eventType = 'PreToolUse'; // default for command interception
+    if (desc.includes('after') || desc.includes('following') || desc.includes('once done') || desc.includes('when finished')) {
+      eventType = 'PostToolUse';
     } else if (desc.includes('finish') || desc.includes('complete') || desc.includes('done') || desc.includes('end')) {
       eventType = 'Stop';
     } else if (desc.includes('notify') || desc.includes('alert')) {
@@ -69,7 +69,7 @@ class HookGenerator {
       matcher = 'Edit|MultiEdit|Write';
     } else if (desc.includes('write') || desc.includes('creat') || desc.includes('save')) {
       matcher = 'Write|Edit|MultiEdit';
-    } else if (desc.includes('bash') || desc.includes('command') || desc.includes('shell')) {
+    } else if (desc.includes('bash') || desc.includes('command') || desc.includes('shell') || desc.includes('tmux')) {
       matcher = 'Bash';
     } else if (desc.includes('read') || desc.includes('view')) {
       matcher = 'Read';
