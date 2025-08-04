@@ -673,9 +673,9 @@ class HookControlPanel {
 
     if (available.length === 0) {
       console.log(`  ${chalk.green('✅')} ${chalk.bold('All items already installed!')}`);
-      console.log(`  ${chalk.gray(`All ${this.getSectionTitle(sectionType).toLowerCase()} in this section are already available.`)}`);
+      console.log(`  ${chalk.gray(`All ${this.getSectionTitle(sectionType).toLowerCase()} are available.`)}`);
       console.log();
-      console.log(chalk.cyan('──────────────────────────────────────────────────────────────'));
+      console.log(chalk.cyan('──────────────────────────────────────────────────'));
       await this.waitForEnter(false);
       return;
     }
