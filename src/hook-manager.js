@@ -130,8 +130,7 @@ class HookManager {
         hooks: [
           {
             type: 'command',
-            command: `node "${hookPath}"`,
-            timeout: options.timeout || 30
+            command: `node "${hookPath}"`
           }
         ]
       };
