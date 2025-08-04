@@ -275,13 +275,15 @@ class HookControlPanel {
   /**
    * Main interactive status and control interface - Clean Sectioned Design
    */
-  async showInteractiveStatus() {
+  async showInteractiveStatus(debug = false) {
     // Initialize and scan environment
     await this.initialize();
 
     let currentSection = 0;
     const sections = ['hooks', 'tools', 'resources', 'prompts', 'mcps'];
     const sectionNames = ['Hooks', 'Tools', 'Resources', 'Prompts', 'MCPs'];
+    
+    if (debug) console.log('DEBUG: Starting showInteractiveStatus');
 
     while (true) {
       console.clear();
