@@ -41,6 +41,7 @@ program
   .option('-u, --user', 'Install at user level (~/.claude/settings.json)')
   .option('-p, --project', 'Install at project level (.claude/settings.json)')
   .option('-l, --local', 'Install at local level (.claude/settings.local.json)')
+  .option('-f, --force', 'Force installation even if duplicates are detected')
   .option('--dry-run', 'Show what would be installed without making changes')
   .action(async (hooks, options) => {
     try {
