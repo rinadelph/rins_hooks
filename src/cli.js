@@ -2,6 +2,7 @@
 
 const { Command } = require('commander');
 const chalk = require('chalk');
+const path = require('path');
 const { version } = require('../package.json');
 
 const Installer = require('./installer');
