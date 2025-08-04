@@ -28,7 +28,7 @@ async function runVersionCheck() {
 // Global configuration
 program
   .name('rapala')
-  .description('Universal Claude Code hooks collection with cross-platform installer')
+  .description('🎣 Rapala - Universal Claude Code Enhancement Center: Hooks, Tools, Resources, Prompts & MCPs')
   .version(version)
   .hook('preAction', runVersionCheck);
 
