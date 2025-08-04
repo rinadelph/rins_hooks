@@ -62,22 +62,30 @@ class DebugGitHook {
         git_issues: allIssues
       });
       
-      if (allIssues.length > 0) {
-        // Use exit code 2 to show the issues to the model
+      // Always show brief status, only show details if there are critical errors
+      const statusSummary = this.getGitStatusSummary(allIssues);
+      console.log(statusSummary);
+      
+      // Only show detailed error info for critical git failures that need attention
+      const criticalErrors = allIssues.filter(issue => 
+        issue.includes('fatal:') || 
+        issue.includes('error:') || 
+        issue.includes('failed:') ||
+        issue.includes('conflict')
+      );
+      
+      if (criticalErrors.length > 0) {
         const errorMessage = [
-          '🔍 Git Debug Hook - Issues After Tool Execution:',
+          '🔍 Git Debug - Critical Issues Detected:',
           '',
-          ...allIssues,
+          ...criticalErrors,
           '',
-          'These git issues occurred after the tool executed. This might help debug git hook failures.',
-          `Tool that just executed: ${tool_name}`,
-          `File: ${tool_input?.file_path || tool_input?.filePath || 'unknown'}`,
-          '',
-          'Debug info logged to: .agent/session-activity/debug-hook.jsonl'
+          `Tool: ${tool_name}`,
+          `File: ${tool_input?.file_path || tool_input?.filePath || 'unknown'}`
         ].join('\n');
 
         console.error(errorMessage);
-        process.exit(2); // Show to model and block further execution
+        process.exit(2); // Show critical errors to model
       }
 
       return this.success();
