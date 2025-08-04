@@ -1237,4 +1237,8 @@ class HookControlPanel {
   }
 }
 
+// Mix in additional methods
+const HookControlPanelMethods = require('./hook-control-panel-methods');
+Object.assign(HookControlPanel.prototype, HookControlPanelMethods.prototype);
+
 module.exports = HookControlPanel;
