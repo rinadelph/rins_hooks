@@ -393,14 +393,25 @@ class VersionCheckerHook {
    */
   findRinsHooksCommand() {
     try {
-      // Try global installation first
-      execSync('which rins_hooks', { stdio: 'pipe' });
-      return 'rins_hooks';
+      // Try rapala command first (new name)
+      execSync('which rapala', { stdio: 'pipe' });
+      return 'rapala';
     } catch (error) {
       try {
-        // Try npx for local installation
-        execSync('which npx', { stdio: 'pipe' });
-        return 'npx rins_hooks';
+        // Try local rapala binary
+        const localRapala = path.join(process.cwd(), 'bin', 'rapala');
+        if (fs.existsSync(localRapala)) {
+          return `node ${localRapala}`;
+        }
+        
+        // Fallback to legacy rins_hooks for compatibility
+        execSync('which rins_hooks', { stdio: 'pipe' });
+        return 'rins_hooks';
+      } catch (legacyError) {
+        try {
+          // Try npx for local installation
+          execSync('which npx', { stdio: 'pipe' });
+          return 'npx rins_hooks';
       } catch (npxError) {
         // Check if we're running from the rins_hooks project directory
         const localCmd = path.join(process.cwd(), 'src', 'cli.js');
