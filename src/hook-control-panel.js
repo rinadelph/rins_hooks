@@ -410,8 +410,8 @@ class HookControlPanel {
         console.log(`      • ${item.name} ${chalk.dim(`(${scopeText})`)}`);
       });
       
-      if (allInstalled.length > 3) {
-        console.log(chalk.dim(`      ... and ${allInstalled.length - 3} more`));
+      if (allInstalled.length > 2) {
+        console.log(chalk.dim(`      ... and ${allInstalled.length - 2} more`));
       }
     }
     
