@@ -41,19 +41,28 @@ class ExtendedThinkingHook extends HookBase {
       coordination.cleanupOldLocks();
 
       // Handle different event types
+      let result;
       switch (input.hook_event_name) {
         case 'UserPromptSubmit':
-          return this.handleUserPromptSubmit(input, stateManager, toggles);
+          result = this.handleUserPromptSubmit(input, stateManager, toggles, coordination, operationId);
+          break;
 
         case 'PreToolUse':
-          return this.handlePreToolUse(input, stateManager, toggles);
+          result = this.handlePreToolUse(input, stateManager, toggles, coordination, operationId);
+          break;
 
         case 'PostToolUse':
-          return this.handlePostToolUse(input, stateManager, toggles);
+          result = this.handlePostToolUse(input, stateManager, toggles, coordination, operationId);
+          break;
 
         default:
-          return this.success();
+          result = this.success();
+          break;
       }
+
+      // Mark operation as complete
+      coordination.markComplete('extended-thinking', input.hook_event_name, operationId);
+      return result;
 
     } catch (error) {
       this.logActivity(input, `Error in extended thinking hook: ${error.message}`);
