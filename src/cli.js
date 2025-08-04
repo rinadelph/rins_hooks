@@ -461,10 +461,7 @@ program
     }
   });
 
-// Parse command line arguments
-program.parse(process.argv);
-
-// Show interactive control panel if no command provided
+// Check if we should show interactive control panel before parsing
 if (!process.argv.slice(2).length) {
   (async () => {
     try {
@@ -480,4 +477,7 @@ if (!process.argv.slice(2).length) {
       program.outputHelp();
     }
   })();
+} else {
+  // Parse command line arguments only if there are arguments
+  program.parse(process.argv);
 }

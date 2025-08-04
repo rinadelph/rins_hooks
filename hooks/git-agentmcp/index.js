@@ -242,7 +242,7 @@ function ensureAgentDirectory() {
         const minimalConfig = {
           project_name: path.basename(process.cwd()),
           created_at: new Date().toISOString(),
-          created_by: 'rins_hooks_auto_commit',
+          created_by: 'rapala_git_hook',
           hook_version: '1.0.0'
         };
         fs.writeFileSync(configPath, JSON.stringify(minimalConfig, null, 2));
