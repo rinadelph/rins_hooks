@@ -37,21 +37,23 @@ class HookGenerator {
     const dynamicHook = await this.createDynamicHook(hookSpec, description);
     
     if (!silent) {
-      console.log(chalk.green('✅ Dynamic hook generated:'));
+      console.log(chalk.green('✅ Dynamic hook generated and ready!'));
       console.log(chalk.cyan(`Name: ${dynamicHook.name}`));
       console.log(chalk.cyan(`Event: ${dynamicHook.event}`));
       console.log(chalk.cyan(`Matcher: ${dynamicHook.matcher || '(all tools)'}`));
       console.log(chalk.cyan(`File: ${dynamicHook.hookFile}`));
       console.log();
 
-      console.log(chalk.blue('📦 Claude Code Configuration:'));
-      console.log(chalk.white(JSON.stringify(dynamicHook.claudeConfig, null, 2)));
+      console.log(chalk.blue('🎣 Rapala Router Architecture:'));
+      console.log(chalk.gray('✅ Hook created and discoverable by Rapala Router'));
+      console.log(chalk.gray('✅ No settings.json changes needed'));
+      console.log(chalk.gray('✅ Will execute automatically when Rapala Router is installed'));
       console.log();
 
-      console.log(chalk.green('🚀 To install this hook:'));
-      console.log(chalk.gray(`1. Hook file created: ${dynamicHook.hookFile}`));
-      console.log(chalk.gray(`2. Add the JSON above to your Claude Code settings.json`));
-      console.log(chalk.gray(`3. Or use: rapala install ${dynamicHook.name}`));
+      console.log(chalk.green('🚀 Next Steps:'));
+      console.log(chalk.white(`1. Install Rapala Router (one-time): rapala install rapala-router`));
+      console.log(chalk.white(`2. Your hook is ready! It will execute on ${dynamicHook.event} events`));
+      console.log(chalk.white(`3. Manage with: rapala status`));
     }
     
     return dynamicHook;
