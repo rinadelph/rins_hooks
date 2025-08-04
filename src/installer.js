@@ -240,16 +240,9 @@ class Installer {
       message: 'How would you like to install hooks?',
       choices: [
         { name: '🎯 By Category (recommended)', value: 'category' },
-        { name: '📋 Individual Selection', value: 'individual' },
-        { name: '📦 Install All Available', value: 'all' }
+        { name: '📋 Individual Selection', value: 'individual' }
       ]
     }]);
-
-    if (installType.type === 'all') {
-      const scope = await this.selectScope(options);
-      await this.installHooks(categories.uninstalled.map(h => h.name), { ...options, [scope]: true });
-      return;
-    }
 
     if (installType.type === 'category') {
       await this.categoryInstallation(categories, options);
