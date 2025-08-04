@@ -289,25 +289,21 @@ class HookControlPanel {
       if (debug) console.log('DEBUG: Main navigation loop iteration starting');
       console.clear();
       
-      // Header with better styling
-      console.log(chalk.cyan('╭──────────────────────────────────────────────────╮'));
-      console.log(chalk.cyan('│') + chalk.bold.blue('      🎣 Rapala - Enhancement Center       ') + chalk.cyan('│'));
-      console.log(chalk.cyan('╰──────────────────────────────────────────────────╯'));
-      console.log();
+      // Clean horizontal header
+      console.log(chalk.bold.magenta('🎣 Rapala Enhancement Center'));
+      console.log(chalk.gray('━'.repeat(50)));
       
-      // Enhanced section navigation bar with better highlighting
+      // Horizontal navigation with smart colors
       const navBar = sections.map((section, index) => {
         const name = sectionNames[index];
         if (index === currentSection) {
-          return chalk.bgCyan.black(` ${name} `);
+          return chalk.bold.white.bgMagenta(` ${name} `);
         } else {
-          return chalk.dim(` ${name} `);
+          return chalk.magenta(name);
         }
       }).join(chalk.gray(' │ '));
       
-      console.log(`  ${navBar}`);
-      console.log();
-      console.log(chalk.dim('  ← → Navigate sections • ↵ Enter section • I Install • M Manage • V View • Q Quit'));
+      console.log(`${navBar}`);
       console.log();
 
       // Show current section overview
