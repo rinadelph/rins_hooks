@@ -31,8 +31,8 @@ class HookControlPanel {
     // Detect project context
     await this.detectProjectContext();
     
-    // Load current hook states
-    await this.loadCurrentHookStates();
+    // Load current enhancement states (hooks, tools, resources, etc.)
+    await this.loadCurrentEnhancementStates();
   }
 
   /**
