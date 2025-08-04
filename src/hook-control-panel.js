@@ -1,18 +1,38 @@
 const chalk = require('chalk');
 const inquirer = require('inquirer');
+const fs = require('fs');
+const path = require('path');
+const { execSync } = require('child_process');
 const Installer = require('./installer');
 const ConfigManager = require('./config');
 const VersionCheck = require('./version-check');
 
 /**
- * Hook Control Panel - Interactive management interface
- * Complete control over installed hooks: enable/disable/uninstall/update
+ * Hook Control Panel - 100% Self-Contained Management Interface
+ * Complete control with current folder scanning and zero CLI dependency
  */
 class HookControlPanel {
   constructor() {
     this.installer = new Installer();
     this.configManager = new ConfigManager();
     this.versionCheck = new VersionCheck();
+    this.currentDir = process.cwd();
+    this.claudeDir = null;
+    this.projectContext = null;
+  }
+
+  /**
+   * Initialize and scan current environment
+   */
+  async initialize() {
+    // Scan current directory for Claude configuration
+    await this.scanCurrentDirectory();
+    
+    // Detect project context
+    await this.detectProjectContext();
+    
+    // Load current hook states
+    await this.loadCurrentHookStates();
   }
 
   /**
