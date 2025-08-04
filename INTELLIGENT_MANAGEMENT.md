@@ -4,26 +4,29 @@ The rins_hooks system now includes sophisticated coordination to prevent duplica
 
 ## 🚀 **Key Features**
 
-### 1. **Hook Coordination System**
-Prevents the same hook from running multiple times for the same operation:
+### 1. **Smart Hook Coordination System**
+Intelligently manages hook execution based on hook type and event:
 
 ```javascript
-// Automatically coordinates hook execution
+// Automatically coordinates hook execution with smart logic
 const coordination = new HookCoordination(projectDir);
 const operationId = coordination.generateOperationId(input);
 
-// Only run if not already being processed
+// Smart coordination: thinking hooks can run multiple times, others are strictly controlled
 if (coordination.shouldRun('extended-thinking', eventType, operationId)) {
   // Execute hook logic
   coordination.markComplete('extended-thinking', eventType, operationId);
 }
 ```
 
-**Features:**
-- **Operation ID Generation**: Creates unique IDs based on session, tool, and content
+**Smart Coordination Features:**
+- **Thinking Hook Flexibility**: Hooks with "thinking" in name can run after every tool call
+- **UserPromptSubmit Protection**: Prevents duplicate processing of same user prompt
+- **Tool Event Freedom**: PreToolUse/PostToolUse allowed for thinking hooks with spam prevention
+- **Strict Control**: Non-thinking hooks (like git-agentmcp) use strict duplicate prevention
+- **Operation ID Generation**: Creates appropriate IDs based on event type and content
 - **Lock Files**: Uses `.claude/hook-locks/` directory for coordination
-- **Timeout Protection**: Automatically cleans up stale locks (5-second timeout)
-- **Conflict Prevention**: Same hook won't run twice for identical operations
+- **Timeout Protection**: Automatically cleans up stale locks (5-second timeout for most, 1-second for thinking)
 
 ### 2. **Intelligent Configuration Cleaning**
 New `rins_hooks clean` command removes duplicates and optimizes configuration:
