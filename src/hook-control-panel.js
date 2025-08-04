@@ -631,7 +631,8 @@ class HookControlPanel {
         
         claudeCodeHooks.slice(0, 3).forEach(item => {
           const scope = this.getScopeIcon(item, sectionData);
-          const description = (item.description || 'No description').substring(0, 35) + '...';
+          const fullDescription = item.description || 'No description';
+          const description = fullDescription.length > 35 ? fullDescription.substring(0, 35) + '...' : fullDescription;
           console.log(`    ${chalk.blue('•')} ${chalk.bold(item.name)} ${scope} ${chalk.gray('- ' + description)}`);
         });
         
