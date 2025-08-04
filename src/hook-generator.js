@@ -98,6 +98,20 @@ class HookGenerator {
   generateCommand(description) {
     const desc = description.toLowerCase();
     
+    // Tmux session management for bash commands
+    if (desc.includes('tmux') && desc.includes('bash') && desc.includes('session')) {
+      if (desc.includes('pane') && desc.includes('command')) {
+        // Complex tmux session with panes and auto-cleanup
+        return `tmux new-session -d -s "claude-bash-\$(date +%s)" || true; tmux new-window -t "claude-bash-\$(date +%s)" -n "cmd-\$(date +%s)" "\$CLAUDE_TOOL_ARGS; sleep 600; tmux kill-window" 2>/dev/null || echo "Tmux session created"`;
+      }
+      return 'tmux new-session -d -s "claude-\$(date +%s)" "\$CLAUDE_TOOL_ARGS" 2>/dev/null || echo "Tmux session created"';
+    }
+    
+    // Bash command wrapping
+    if (desc.includes('bash') && (desc.includes('wrap') || desc.includes('run'))) {
+      return 'echo "Running: \$CLAUDE_TOOL_ARGS"; \$CLAUDE_TOOL_ARGS';
+    }
+    
     // Python formatting
     if (desc.includes('format') && desc.includes('python')) {
       return 'black . --quiet 2>/dev/null || true';
