@@ -463,6 +463,38 @@ class VersionCheckerHook {
 
 // When run directly, parse input and execute
 if (require.main === module) {
+  const args = process.argv.slice(2);
+  
+  // Handle command-line arguments for auto-update control
+  if (args.includes('--toggle-auto-update')) {
+    const currentStatus = VersionCheckerHook.toggleAutoUpdate();
+    console.log(`🔄 Auto-update is now: ${currentStatus ? '✅ ENABLED' : '❌ DISABLED'}`);
+    process.exit(0);
+  }
+  
+  if (args.includes('--enable-auto-update')) {
+    VersionCheckerHook.toggleAutoUpdate(process.cwd(), true);
+    console.log('🔄 Auto-update: ✅ ENABLED');
+    process.exit(0);
+  }
+  
+  if (args.includes('--disable-auto-update')) {
+    VersionCheckerHook.toggleAutoUpdate(process.cwd(), false);
+    console.log('🔄 Auto-update: ❌ DISABLED');
+    process.exit(0);
+  }
+  
+  if (args.includes('--status')) {
+    const status = VersionCheckerHook.getAutoUpdateStatus();
+    console.log('📊 Version Checker Status:');
+    console.log(`   Auto-update: ${status.autoUpdate ? '✅ ENABLED' : '❌ DISABLED'}`);
+    console.log(`   Notifications: ${status.notifyUpdates ? '✅ ENABLED' : '❌ DISABLED'}`);
+    console.log(`   Last checked: ${status.lastChecked || 'Never'}`);
+    console.log(`   Check interval: ${Math.round(status.checkInterval / 3600000)} hours`);
+    process.exit(0);
+  }
+  
+  // Default hook execution
   const hook = new VersionCheckerHook();
   
   // Read input from stdin
