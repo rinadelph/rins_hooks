@@ -16,3 +16,13 @@ console.log("3. git-agentmcp (PostToolUse on Edit|Write|MultiEdit)");
 console.log();
 
 console.log("Let's see what actually runs...");
+
+// ULTIMATE COORDINATION TEST
+// This edit should trigger ALL THREE PostToolUse hooks:
+// 1. extended-thinking (analysis/reflection)
+// 2. git-agentmcp (agent tracking commit)  
+// 3. auto-commit (simple auto commit)
+
+console.log("🧪 TESTING: 3 hooks on same PostToolUse event!");
+console.log("Expected: All should run without conflicts");
+console.log("Reality: Let's find out...");
