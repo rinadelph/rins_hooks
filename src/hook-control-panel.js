@@ -313,27 +313,31 @@ class HookControlPanel {
       const navigation = await this.waitForKeypress();
 
       // Handle navigation and direct actions
-      switch (navigation.action) {
-        case 'prev':
-          currentSection = Math.max(0, currentSection - 1);
+      switch (navigation) {
+        case 'left':
+          if (currentSection > 0) {
+            currentSection--;
+          }
           break;
-        case 'next':
-          currentSection = Math.min(sections.length - 1, currentSection + 1);
+        case 'right':
+          if (currentSection < sections.length - 1) {
+            currentSection++;
+          }
           break;
         case 'enter':
           const exitRequested = await this.enterSection(sections[currentSection]);
           if (exitRequested) return;
           break;
-        case 'install':
+        case 'i':
           await this.installSectionItems(sections[currentSection]);
           break;
-        case 'manage':
+        case 'm':
           await this.manageSectionItems(sections[currentSection]);
           break;
-        case 'view':
+        case 'v':
           await this.viewSectionItems(sections[currentSection]);
           break;
-        case 'quit':
+        case 'q':
           console.log(chalk.green('👋 Thank you for using Rapala!'));
           return;
       }
