@@ -575,11 +575,11 @@ class HookControlPanel {
 
   getSectionDescription(sectionType) {
     const descriptions = {
-      hooks: 'Core Claude Code functionality extensions (git automation, notifications, etc.)',
-      tools: 'Permission controls and blockers (task blocking, file locking, etc.)',
+      hooks: 'Core functionality extensions (git, notifications, etc.)',
+      tools: 'Permission controls and blockers',
       resources: 'Documentation, guides, and templates',
       prompts: 'Context injection and instruction templates',
-      mcps: 'Multi-agent collaboration protocol components'
+      mcps: 'Multi-agent collaboration components'
     };
     return descriptions[sectionType] || '';
   }
