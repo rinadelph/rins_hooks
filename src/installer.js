@@ -36,8 +36,7 @@ class Installer {
                 tags: config.tags || [],
                 requirements: config.requirements || [],
                 platforms: config.platforms || ['linux', 'darwin', 'win32'],
-                matcher: config.matcher || '',
-                timeout: config.timeout || 60
+                matcher: config.matcher || ''
               });
             } catch (error) {
               console.warn(chalk.yellow(`⚠️  Could not load config for hook: ${hookDir}`));
