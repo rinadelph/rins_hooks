@@ -99,7 +99,7 @@ function shouldExcludeFile(filePath) {
   const fileName = path.basename(filePath);
   const relativePath = path.relative(process.cwd(), filePath);
   const normalizedPath = relativePath.replace(/\\/g, '/');
-  
+
   // Exclude files outside the git repository
   if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
     return true;
@@ -140,36 +140,122 @@ function generateCommitMessage(toolName, filePath, input) {
   return message;
 }
 
-function runGitCommand(args) {
+function runGitCommand(args, retries = 3, delay = 1000) {
   return new Promise((resolve, reject) => {
-    const git = spawn('git', args, {
-      stdio: ['pipe', 'pipe', 'pipe'],
-      cwd: process.cwd()
-    });
+    const attemptCommand = (attempt) => {
+      const git = spawn('git', args, {
+        stdio: ['pipe', 'pipe', 'pipe'],
+        cwd: process.cwd()
+      });
 
-    let stdout = '';
-    let stderr = '';
+      let stdout = '';
+      let stderr = '';
 
-    git.stdout.on('data', (data) => {
-      stdout += data.toString();
-    });
+      git.stdout.on('data', (data) => {
+        stdout += data.toString();
+      });
 
-    git.stderr.on('data', (data) => {
-      stderr += data.toString();
-    });
+      git.stderr.on('data', (data) => {
+        stderr += data.toString();
+      });
 
-    git.on('close', (code) => {
-      if (code === 0) {
-        resolve(stdout);
-      } else {
-        reject(new Error(`Git command failed: ${stderr}`));
+      git.on('close', (code) => {
+        if (code === 0) {
+          resolve(stdout);
+        } else {
+          const errorMessage = stderr.trim();
+          
+          // Check for git lock conflicts
+          if (isGitLockError(errorMessage) && attempt < retries) {
+            console.warn(`Git lock detected (attempt ${attempt}/${retries}), retrying in ${delay}ms...`);
+            
+            // Try to clean up stale locks
+            cleanupGitLocks();
+            
+            // Retry after delay
+            setTimeout(() => attemptCommand(attempt + 1), delay);
+          } else {
+            reject(new Error(`Git command failed: ${errorMessage}`));
+          }
+        }
+      });
+
+      git.on('error', (error) => {
+        if (attempt < retries && isLockRelatedError(error)) {
+          console.warn(`Git command error (attempt ${attempt}/${retries}), retrying in ${delay}ms...`);
+          setTimeout(() => attemptCommand(attempt + 1), delay);
+        } else {
+          reject(error);
+        }
+      });
+    };
+
+    attemptCommand(1);
+  });
+}
+
+/**
+ * Check if the error is related to git locks
+ */
+function isGitLockError(errorMessage) {
+  const lockPatterns = [
+    'index.lock',
+    'config.lock', 
+    'HEAD.lock',
+    'refs/heads/',
+    'Another git process seems to be running',
+    'Unable to create',
+    'File exists'
+  ];
+  
+  return lockPatterns.some(pattern => 
+    errorMessage.toLowerCase().includes(pattern.toLowerCase())
+  );
+}
+
+/**
+ * Check if error is lock-related
+ */
+function isLockRelatedError(error) {
+  return error.message && isGitLockError(error.message);
+}
+
+/**
+ * Clean up stale git lock files
+ */
+function cleanupGitLocks() {
+  try {
+    const gitDir = path.join(process.cwd(), '.git');
+    if (!fs.existsSync(gitDir)) return;
+
+    // Common lock files that can be safely removed if stale
+    const lockFiles = [
+      path.join(gitDir, 'index.lock'),
+      path.join(gitDir, 'config.lock'),
+      path.join(gitDir, 'HEAD.lock')
+    ];
+
+    lockFiles.forEach(lockFile => {
+      if (fs.existsSync(lockFile)) {
+        try {
+          // Check if lock file is old (more than 60 seconds)
+          const stats = fs.statSync(lockFile);
+          const ageMs = Date.now() - stats.mtime.getTime();
+          
+          if (ageMs > 60000) { // 60 seconds
+            fs.unlinkSync(lockFile);
+            console.log(`Removed stale git lock: ${path.basename(lockFile)}`);
+          }
+        } catch (cleanupError) {
+          // Ignore cleanup errors
+          console.warn(`Could not clean up ${lockFile}: ${cleanupError.message}`);
+        }
       }
     });
-
-    git.on('error', (error) => {
-      reject(error);
-    });
-  });
+  } catch (error) {
+    // Ignore cleanup errors  
+    console.warn(`Git lock cleanup failed: ${error.message}`);
+  }
 }
 
 async function isGitRepository() {
