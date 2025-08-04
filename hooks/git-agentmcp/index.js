@@ -587,10 +587,16 @@ async function main() {
     logCommitActivity(extractAgentId(input), filePath, commitHash.trim(), tool_name);
 
     console.log(`Successfully committed ${path.basename(filePath)} with PID tracking`);
+    
+    // Release git hook lock
+    coordinator.releaseGitHookLock();
     process.exit(0);
 
   } catch (error) {
     console.error(`Auto-commit failed: ${error.message}`);
+    
+    // Always release lock on error
+    coordinator.releaseGitHookLock();
     process.exit(1);
   }
 }
