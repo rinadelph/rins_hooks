@@ -406,19 +406,18 @@ class HookControlPanel {
       if (debug) console.log(`DEBUG: enterSection loop iteration for ${sectionType}`);
       console.clear();
       
-      // Header with same styling as main interface
-      console.log(chalk.cyan('╭──────────────────────────────────────────────────╮'));
-      console.log(chalk.cyan('│') + chalk.bold.blue(`    🎣 ${this.getSectionTitle(sectionType)} Management     `) + chalk.cyan('│'));
-      console.log(chalk.cyan('╰──────────────────────────────────────────────────╯'));
+      // Clean horizontal header
+      const icon = this.getCategoryIcon(sectionType);
+      console.log(chalk.bold.magenta(`${icon} ${this.getSectionTitle(sectionType)} Management`));
+      console.log(chalk.gray('━'.repeat(50)));
       console.log();
 
-      // Show detailed section content with consistent styling
+      // Show detailed section content
       await this.displayDetailedSection(sectionType);
 
-      // Action buttons with consistent styling
-      console.log();
-      console.log(chalk.cyan('──────────────────────────────────────────────────'));
-      console.log(chalk.bold('Actions: ') + chalk.dim('📦 Install • ⚙️ Manage • 📊 View • 🔄 Update • ← Back • Q Quit'));
+      // Action bar with smart colors
+      console.log(chalk.gray('━'.repeat(50)));
+      console.log(chalk.cyan('📦') + chalk.gray(' Install │ ') + chalk.green('⚙️') + chalk.gray(' Manage │ ') + chalk.blue('📊') + chalk.gray(' View │ ') + chalk.yellow('🔄') + chalk.gray(' Update │ ') + chalk.magenta('←') + chalk.gray(' Back │ ') + chalk.red('Q') + chalk.gray(' Quit'));
 
       const action = await inquirer.prompt([{
         type: 'list',
