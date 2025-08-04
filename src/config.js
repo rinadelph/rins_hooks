@@ -144,6 +144,7 @@ class ConfigManager {
 
       for (const scope of ['user', 'project', 'local']) {
         const settings = await this.loadSettings(scope);
+        const seenHooks = new Set(); // Track hooks we've already seen in this scope
 
         if (settings.hooks) {
           for (const [eventType, hooks] of Object.entries(settings.hooks)) {
@@ -155,12 +156,24 @@ class ConfigManager {
                     const match = hookCommand.command.match(/\/([^/]+)\/index\.js/);
                     if (match) {
                       const hookName = match[1];
-                      status[scope].push({
-                        name: hookName,
-                        eventType: eventType,
-                        matcher: hook.matcher,
-                        status: 'installed'
-                      });
+                      
+                      // Only add if we haven't seen this hook in this scope yet
+                      if (!seenHooks.has(hookName)) {
+                        seenHooks.add(hookName);
+                        status[scope].push({
+                          name: hookName,
+                          eventType: eventType, // This will be the first event we encounter
+                          matcher: hook.matcher,
+                          status: 'installed',
+                          events: [] // We'll collect all events this hook is used in
+                        });
+                      }
+                      
+                      // Add the event to the hook's events list
+                      const existingHook = status[scope].find(h => h.name === hookName);
+                      if (existingHook && !existingHook.events.includes(eventType)) {
+                        existingHook.events.push(eventType);
+                      }
                     }
                   }
                 }
