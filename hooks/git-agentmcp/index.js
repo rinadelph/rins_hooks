@@ -27,8 +27,7 @@ Timestamp: {{timestamp}}
 File: {{filePath}}
 Tool: {{toolName}}
 
-# Revert: git log --grep="PID: {{pid}}"
-Co-Authored-By: Claude <noreply@anthropic.com>`,
+# Revert: git log --grep="PID: {{pid}}"`,
   excludePatterns: [
     /\.log$/,
     /\.tmp$/,
