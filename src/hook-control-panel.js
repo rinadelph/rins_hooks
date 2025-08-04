@@ -671,7 +671,7 @@ class HookControlPanel {
     }]);
 
     if (selection.items.length === 0) {
-      console.log(`  ${chalk.yellow('ℹ️')} ${chalk.gray('No items selected - installation cancelled.')}`);
+      console.log(`${chalk.yellow('ℹ️')} ${chalk.gray('No items selected - installation cancelled.')}`);
       await this.waitForEnter(false);
       return;
     }
@@ -679,8 +679,8 @@ class HookControlPanel {
     const scope = await this.selectInstallScope();
     
     console.log();
-    console.log(chalk.cyan('──────────────────────────────────────────────────────────────'));
-    console.log(`  ${chalk.blue('🚀')} ${chalk.bold(`Installing ${selection.items.length} ${this.getSectionTitle(sectionType).toLowerCase()}...`)}`);
+    console.log(chalk.gray('━'.repeat(50)));
+    console.log(`${chalk.blue('🚀')} ${chalk.bold(`Installing ${selection.items.length} ${this.getSectionTitle(sectionType).toLowerCase()}...`)}`);
     console.log();
     
     for (const itemName of selection.items) {
