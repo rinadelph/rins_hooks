@@ -462,6 +462,80 @@ program
     }
   });
 
+// Generate command - Create hooks from natural language descriptions
+program
+  .command('generate <description>')
+  .description('Generate Claude Code hook from natural language description')
+  .option('-d, --document <path>', 'Generate hooks from document instead of description')
+  .option('-u, --user', 'Install generated hook at user level')
+  .option('-p, --project', 'Install generated hook at project level')
+  .option('-l, --local', 'Install generated hook at local level')
+  .option('--dry-run', 'Show generated hook configuration without installing')
+  .action(async (description, options) => {
+    try {
+      console.log(chalk.blue('🎣 Rapala Hook Generator'));
+      console.log();
+
+      const HookGenerator = require('./hook-generator');
+      const generator = new HookGenerator();
+      
+      let hookConfigs = [];
+      
+      if (options.document) {
+        // Generate from document
+        console.log(chalk.cyan(`📄 Processing document: ${options.document}`));
+        hookConfigs = await generator.generateFromDocument(options.document);
+      } else {
+        // Generate from description
+        console.log(chalk.cyan(`💬 Processing: "${description}"`));
+        const config = await generator.generateHook(description);
+        if (config) {
+          hookConfigs = [config];
+        }
+      }
+      
+      if (hookConfigs.length === 0) {
+        console.log(chalk.yellow('⚠️ No hooks could be generated from the input'));
+        console.log(chalk.gray('💡 Try descriptions like:'));
+        console.log(chalk.gray('  - "Format Python files after editing"'));
+        console.log(chalk.gray('  - "Run tests before committing"'));
+        console.log(chalk.gray('  - "Check for secrets before saving files"'));
+        return;
+      }
+      
+      // Show generated configurations
+      console.log(chalk.green(`✅ Generated ${hookConfigs.length} hook configuration(s):`));
+      console.log();
+      
+      hookConfigs.forEach((config, index) => {
+        console.log(chalk.cyan(`Hook ${index + 1}:`));
+        console.log(chalk.gray(`  Description: ${config.description}`));
+        console.log(chalk.gray(`  Event: ${config.event}`));
+        console.log(chalk.gray(`  Matcher: ${config.matcher || '(all tools)'}`));
+        console.log(chalk.gray(`  Command: ${config.command}`));
+        console.log();
+      });
+      
+      if (options.dryRun) {
+        console.log(chalk.yellow('🔍 DRY RUN - Hook configurations shown above'));
+        return;
+      }
+      
+      // TODO: Integrate with Rapala installation system
+      // For now, show manual installation instructions
+      console.log(chalk.blue('📦 To install these hooks:'));
+      console.log(chalk.gray('1. Copy the configuration above'));
+      console.log(chalk.gray('2. Add to your Claude Code settings.json file'));
+      console.log(chalk.gray('3. Or use: rapala status → Install → Manual configuration'));
+      console.log();
+      console.log(chalk.cyan('💡 Full installation integration coming soon!'));
+      
+    } catch (error) {
+      console.error(chalk.red('❌ Hook generation failed:'), error.message);
+      process.exit(1);
+    }
+  });
+
 // Check if we should show interactive control panel before parsing
 if (!process.argv.slice(2).length) {
   (async () => {
