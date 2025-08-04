@@ -266,6 +266,54 @@ program
     }
   });
 
+// Clean command
+program
+  .command('clean')
+  .description('Clean and optimize hook configuration')
+  .option('-u, --user', 'Clean user level hooks')
+  .option('-p, --project', 'Clean project level hooks') 
+  .option('-l, --local', 'Clean local level hooks')
+  .option('-a, --all', 'Clean all levels')
+  .option('--validate', 'Validate configuration after cleaning')
+  .option('--stats', 'Show hook statistics')
+  .action(async (options) => {
+    try {
+      const configManager = new ConfigManager();
+      const hookManager = new HookManager(configManager);
+      
+      const scopes = [];
+      if (options.all) {
+        scopes.push('user', 'project', 'local');
+      } else {
+        if (options.user) scopes.push('user');
+        if (options.project) scopes.push('project');
+        if (options.local) scopes.push('local');
+        if (scopes.length === 0) scopes.push('user'); // default
+      }
+
+      for (const scope of scopes) {
+        console.log(chalk.blue(`\n🧹 Cleaning ${scope} level hooks...`));
+        await hookManager.cleanAndOptimize(scope);
+        
+        if (options.stats) {
+          const stats = await hookManager.getHookStats(scope);
+          console.log(chalk.cyan(`\n📊 ${scope.toUpperCase()} Stats:`));
+          console.log(`  Events: ${stats.totalEvents}, Matchers: ${stats.totalMatchers}, Hooks: ${stats.totalHooks}`);
+        }
+        
+        if (options.validate) {
+          await hookManager.validateConfiguration(scope);
+        }
+      }
+      
+      console.log(chalk.green('\n✅ Cleaning complete!'));
+      
+    } catch (error) {
+      console.error(chalk.red('❌ Clean failed:'), error.message);
+      process.exit(1);
+    }
+  });
+
 // Update command
 program
   .command('update')
