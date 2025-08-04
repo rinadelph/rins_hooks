@@ -476,6 +476,15 @@ program
       console.log(chalk.blue('🎣 Rapala Hook Generator'));
       console.log();
 
+      // Validate input
+      if (!description && !options.document) {
+        console.error(chalk.red('❌ Please provide either a description or use --document option'));
+        console.log(chalk.yellow('Examples:'));
+        console.log(chalk.gray('  rapala generate "Format Python files after editing"'));
+        console.log(chalk.gray('  rapala generate --document ./rules.md'));
+        return;
+      }
+
       const HookGenerator = require('./hook-generator');
       const generator = new HookGenerator();
       
