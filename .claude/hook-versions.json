@@ -1,0 +1,56 @@
+{
+  "hooks": {
+    "agent-registry": {
+      "version": "1.0.0",
+      "lastChecked": "2025-08-04T17:26:56.154Z",
+      "path": "/home/alejandro/Code/MCP/Hooks/Git/rins_hooks/hooks/agent-registry"
+    },
+    "auto-commit": {
+      "version": "1.0.0",
+      "lastChecked": "2025-08-04T17:26:56.154Z",
+      "path": "/home/alejandro/Code/MCP/Hooks/Git/rins_hooks/hooks/auto-commit"
+    },
+    "code-formatter": {
+      "version": "1.0.0",
+      "lastChecked": "2025-08-04T17:26:56.154Z",
+      "path": "/home/alejandro/Code/MCP/Hooks/Git/rins_hooks/hooks/code-formatter"
+    },
+    "extended-thinking": {
+      "version": "2.0.0",
+      "lastChecked": "2025-08-04T17:26:56.154Z",
+      "path": "/home/alejandro/Code/MCP/Hooks/Git/rins_hooks/hooks/extended-thinking"
+    },
+    "file-locking": {
+      "version": "1.0.0",
+      "lastChecked": "2025-08-04T17:26:56.154Z",
+      "path": "/home/alejandro/Code/MCP/Hooks/Git/rins_hooks/hooks/file-locking"
+    },
+    "git-agentmcp": {
+      "version": "1.0.0",
+      "lastChecked": "2025-08-04T17:26:56.154Z",
+      "path": "/home/alejandro/Code/MCP/Hooks/Git/rins_hooks/hooks/git-agentmcp"
+    },
+    "notification": {
+      "version": "1.0.0",
+      "lastChecked": "2025-08-04T17:26:56.154Z",
+      "path": "/home/alejandro/Code/MCP/Hooks/Git/rins_hooks/hooks/notification"
+    },
+    "task-blocker": {
+      "version": "1.1.0",
+      "lastChecked": "2025-08-04T17:26:56.154Z",
+      "path": "/home/alejandro/Code/MCP/Hooks/Git/rins_hooks/hooks/task-blocker"
+    },
+    "version-checker": {
+      "version": "1.0.0",
+      "lastChecked": "2025-08-04T17:26:56.154Z",
+      "path": "/home/alejandro/Code/MCP/Hooks/Git/rins_hooks/hooks/version-checker"
+    }
+  },
+  "lastChecked": "2025-08-04T17:26:56.154Z",
+  "checkInterval": 86400000,
+  "settings": {
+    "autoUpdate": false,
+    "notifyUpdates": true
+  },
+  "lastUpdateCheck": "2025-08-04T11:00:00.000Z"
+}
