@@ -597,7 +597,6 @@ class HookControlPanel {
           { name: '📋 View All Hooks with Status', value: 'view_all' },
           { name: '📦 Install Single Hook', value: 'single' },
           { name: '📦 Install Multiple Hooks', value: 'multiple' },
-          { name: '🔄 Install All Available Hooks', value: 'all' },
           { name: '🎛️  Advanced Installation Options', value: 'advanced' },
           new inquirer.Separator(),
           { name: '🔙 Return to Main Menu', value: 'back' },
