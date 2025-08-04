@@ -58,6 +58,145 @@ class HookGenerator {
   }
 
   /**
+   * Create dynamic hook JavaScript file from specification
+   */
+  async createDynamicHook(hookSpec, originalDescription) {
+    const hookName = this.generateHookName(originalDescription);
+    const hookDir = path.join(this.hooksDir, hookName);
+    
+    // Ensure hook directory exists
+    await fs.ensureDir(hookDir);
+    
+    // Generate hook logic based on the specification
+    const hookLogic = this.generateHookLogic(hookSpec, originalDescription);
+    
+    // Read template and replace placeholders
+    const templatePath = path.join(__dirname, '..', 'templates', 'dynamic-hook-template.js');
+    let template = await fs.readFile(templatePath, 'utf8');
+    
+    template = template
+      .replace(/{{DESCRIPTION}}/g, originalDescription)
+      .replace(/{{HOOK_NAME}}/g, hookName)
+      .replace(/{{MATCHER}}/g, hookSpec.matcher || '')
+      .replace(/{{HOOK_BASE_PATH}}/g, '../../../src/hook-base')
+      .replace(/{{HOOK_LOGIC}}/g, hookLogic);
+    
+    // Write the dynamic hook file
+    const hookFile = path.join(hookDir, 'index.js');
+    await fs.writeFile(hookFile, template);
+    
+    // Create config.json for the hook
+    const config = {
+      name: hookName,
+      description: originalDescription,
+      version: '1.0.0',
+      author: 'Rapala Hook Generator',
+      tags: ['generated', 'dynamic', hookSpec.matcher?.toLowerCase() || 'general'],
+      platforms: ['linux', 'darwin', 'win32'],
+      events: [hookSpec.event],
+      installationType: 'generated'
+    };
+    
+    await fs.writeFile(path.join(hookDir, 'config.json'), JSON.stringify(config, null, 2));
+    
+    // Generate Claude Code configuration
+    const claudeConfig = {
+      [hookSpec.event]: [{
+        matcher: hookSpec.matcher,
+        hooks: [{
+          type: 'command',
+          command: `node "${hookFile}"`
+        }]
+      }]
+    };
+    
+    // Remove undefined matcher
+    if (!hookSpec.matcher) {
+      delete claudeConfig[hookSpec.event][0].matcher;
+    }
+    
+    return {
+      name: hookName,
+      event: hookSpec.event,
+      matcher: hookSpec.matcher,
+      hookFile,
+      claudeConfig,
+      config
+    };
+  }
+
+  /**
+   * Generate hook name from description
+   */
+  generateHookName(description) {
+    return description
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '')
+      .replace(/\s+/g, '-')
+      .substring(0, 30)
+      .replace(/-+$/, '') + '-' + Date.now().toString().slice(-6);
+  }
+
+  /**
+   * Generate hook logic JavaScript code
+   */
+  generateHookLogic(hookSpec, description) {
+    const desc = description.toLowerCase();
+    
+    // Tmux bash session management
+    if (desc.includes('tmux') && desc.includes('bash') && desc.includes('session')) {
+      return `
+      // Tmux session management for bash commands
+      const { execSync } = require('child_process');
+      
+      if (input.tool_name === 'Bash') {
+        const command = input.tool_input?.command || '';
+        const sessionName = 'claude-bash-' + Date.now();
+        
+        console.log('🎣 Creating dedicated tmux session for bash command');
+        console.log('Session:', sessionName);
+        console.log('Command:', command);
+        
+        try {
+          // Create tmux session and execute command in new pane
+          execSync(\`tmux new-session -d -s "\${sessionName}" bash -c "
+            echo 'Claude Code Bash Command Session'
+            echo 'Session: \${sessionName}'
+            echo 'Command: \${command}'
+            echo '======================================'
+            \${command}
+            echo '======================================'
+            echo 'Command completed. This session will close in 10 minutes...'
+            sleep 600
+            tmux kill-session -t \${sessionName}
+          "\`, { stdio: 'inherit' });
+          
+          console.log('✅ Command executed in tmux session:', sessionName);
+          console.log('💡 Use "tmux attach -t', sessionName, '" to view the session');
+          console.log('⏰ Session will auto-close in 10 minutes');
+          
+        } catch (error) {
+          console.error('❌ Failed to create tmux session:', error.message);
+        }
+      }`;
+    }
+    
+    // Simple command execution
+    return `
+      // Generated hook logic for: ${description}
+      const { execSync } = require('child_process');
+      
+      console.log('🎣 Executing generated hook:', '${description}');
+      
+      try {
+        const command = '${hookSpec.command || 'echo "Hook executed successfully"'}';
+        execSync(command, { stdio: 'inherit' });
+      } catch (error) {
+        console.error('Hook execution failed:', error.message);
+      }`;
+  }
+
+  /**
    * Parse natural language description into hook configuration
    */
   parseDescription(description) {
