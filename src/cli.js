@@ -102,6 +102,7 @@ program
   .command('status')
   .description('Interactive hook management control panel')
   .option('-s, --simple', 'Show simple status without interactive menu')
+  .option('--debug', 'Enable debug logging for navigation issues')
   .action(async (options) => {
     try {
       if (options.simple) {
@@ -144,7 +145,7 @@ program
         // Interactive control panel
         const HookControlPanel = require('./hook-control-panel');
         const controlPanel = new HookControlPanel();
-        await controlPanel.showInteractiveStatus();
+        await controlPanel.showInteractiveStatus(options.debug);
       }
     } catch (error) {
       console.error(chalk.red('❌ Failed to get status:'), error.message);
