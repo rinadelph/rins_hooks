@@ -624,11 +624,8 @@ async function main() {
       process.exit(1);
     }
 
-    // Check if there are changes to commit
-    if (CONFIG.skipEmptyCommits && !await hasChangesToCommit()) {
-      console.log('No changes to commit');
-      process.exit(0);
-    }
+    // Skip the global changes check - we only care about the specific file we staged
+    // The staging verification above already confirmed we have changes to commit
 
     // Generate commit message
     const commitMessage = generateCommitMessage(tool_name, filePath, input);
