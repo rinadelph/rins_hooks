@@ -614,9 +614,6 @@ class HookControlPanel {
         case 'multiple':
           await this.installMultipleHooks(uninstalledHooks);
           break;
-        case 'all':
-          await this.installAllHooks(uninstalledHooks);
-          break;
         case 'advanced':
           await this.installer.enhancedInteractiveInstall();
           break;
