@@ -660,9 +660,9 @@ class HookControlPanel {
     console.clear();
     
     // Header with consistent styling
-    console.log(chalk.cyan('╭───────────────────────────────────────────────────────────────╮'));
-    console.log(chalk.cyan('│') + chalk.bold.blue(`         📦 Install ${this.getSectionTitle(sectionType)}         `) + chalk.cyan('│'));
-    console.log(chalk.cyan('╰───────────────────────────────────────────────────────────────╯'));
+    console.log(chalk.cyan('╭──────────────────────────────────────────────────╮'));
+    console.log(chalk.cyan('│') + chalk.bold.blue(`     📦 Install ${this.getSectionTitle(sectionType)}      `) + chalk.cyan('│'));
+    console.log(chalk.cyan('╰──────────────────────────────────────────────────╯'));
     console.log();
 
     const sectionData = this.enhancementStates[sectionType];
