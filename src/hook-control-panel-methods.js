@@ -35,7 +35,8 @@ class HookControlPanelMethods {
       if (!fs.existsSync(versionCheckerPath)) {
         console.log(chalk.yellow('⚠️  Version checker hook not installed'));
         console.log(chalk.gray('Install version-checker hook to use auto-update features'));
-        await this.waitForEnter();
+        const action = await this.waitForEnter();
+    return action;
         return;
       }
       
@@ -102,7 +103,8 @@ class HookControlPanelMethods {
       console.log(chalk.red(`❌ Auto-update settings error: ${error.message}`));
     }
 
-    await this.waitForEnter();
+    const action = await this.waitForEnter();
+    return action;
   }
 
   /**
@@ -144,7 +146,8 @@ class HookControlPanelMethods {
     console.log(`   ${chalk.green('Coordination:')} Smart coordination enabled`);
     console.log();
 
-    await this.waitForEnter();
+    const action = await this.waitForEnter();
+    return action;
   }
 
   /**
@@ -187,7 +190,8 @@ class HookControlPanelMethods {
         return;
     }
 
-    await this.waitForEnter();
+    const action = await this.waitForEnter();
+    return action;
   }
 
   /**
@@ -205,7 +209,8 @@ class HookControlPanelMethods {
       
       if (!availableHook) {
         console.log(chalk.red(`❌ Hook ${hook.name} not found in available hooks`));
-        await this.waitForEnter();
+        const action = await this.waitForEnter();
+    return action;
         return;
       }
       
@@ -240,7 +245,8 @@ class HookControlPanelMethods {
       console.log(chalk.red(`❌ Update failed: ${error.message}`));
     }
 
-    await this.waitForEnter();
+    const action = await this.waitForEnter();
+    return action;
   }
 
   /**
@@ -270,7 +276,8 @@ class HookControlPanelMethods {
     await new Promise(resolve => setTimeout(resolve, 1500));
     console.log(chalk.green(`✅ ${hook.name} moved successfully!`));
 
-    await this.waitForEnter();
+    const action = await this.waitForEnter();
+    return action;
   }
 
   /**
@@ -294,7 +301,8 @@ class HookControlPanelMethods {
       console.log(chalk.yellow(`⏸️  ${hook.name} disabled successfully`));
     }
 
-    await this.waitForEnter();
+    const action = await this.waitForEnter();
+    return action;
   }
 
   /**
@@ -309,7 +317,8 @@ class HookControlPanelMethods {
     await new Promise(resolve => setTimeout(resolve, 1000));
     console.log(chalk.green(`✅ ${hook.name} enabled successfully`));
 
-    await this.waitForEnter();
+    const action = await this.waitForEnter();
+    return action;
   }
 
   /**
@@ -343,7 +352,8 @@ class HookControlPanelMethods {
       console.log(chalk.red(`❌ ${hook.name} uninstalled successfully`));
     }
 
-    await this.waitForEnter();
+    const action = await this.waitForEnter();
+    return action;
   }
 
   /**
@@ -361,7 +371,8 @@ class HookControlPanelMethods {
       
       if (allHooks.length === 0) {
         console.log(chalk.yellow('ℹ️  No hooks installed to check for updates'));
-        await this.waitForEnter();
+        const action = await this.waitForEnter();
+    return action;
         return;
       }
       
@@ -414,7 +425,8 @@ class HookControlPanelMethods {
       console.log(chalk.red(`❌ Update check failed: ${error.message}`));
     }
 
-    await this.waitForEnter();
+    const action = await this.waitForEnter();
+    return action;
   }
 
   /**
@@ -430,7 +442,8 @@ class HookControlPanelMethods {
       
       if (allHooks.length === 0) {
         console.log(chalk.yellow('ℹ️  No hooks installed to update'));
-        await this.waitForEnter();
+        const action = await this.waitForEnter();
+    return action;
         return;
       }
       
@@ -457,7 +470,8 @@ class HookControlPanelMethods {
       console.log(chalk.red(`❌ Update failed: ${error.message}`));
     }
 
-    await this.waitForEnter();
+    const action = await this.waitForEnter();
+    return action;
   }
 
   /**
@@ -497,7 +511,8 @@ class HookControlPanelMethods {
     }
     
     console.log();
-    await this.waitForEnter();
+    const action = await this.waitForEnter();
+    return action;
   }
 
   /**
@@ -546,7 +561,8 @@ class HookControlPanelMethods {
 
     console.log(chalk.green(`\n✅ Bulk ${operation.replace('_', ' ')} completed!`));
     console.log(chalk.cyan(`Results: ${successCount} successful, ${failCount} failed`));
-    await this.waitForEnter();
+    const action = await this.waitForEnter();
+    return action;
   }
 
   /**
@@ -660,7 +676,7 @@ class HookControlPanelMethods {
       const tempDirs = [
         path.join(process.cwd(), '.claude', 'temp'),
         path.join(process.cwd(), '.claude', 'cache'),
-        path.join(require('os').tmpdir(), 'rins_hooks')
+        path.join(require('os').tmpdir(), 'rapala')
       ];
       
       for (const tempDir of tempDirs) {
@@ -760,7 +776,8 @@ class HookControlPanelMethods {
       console.log(chalk.red(`❌ Failed to configure execution settings: ${error.message}`));
     }
 
-    await this.waitForEnter();
+    const action = await this.waitForEnter();
+    return action;
   }
 
   /**
@@ -851,7 +868,8 @@ class HookControlPanelMethods {
       console.log(chalk.red(`❌ Failed to configure preferences: ${error.message}`));
     }
 
-    await this.waitForEnter();
+    const action = await this.waitForEnter();
+    return action;
   }
 
   /**
@@ -879,7 +897,7 @@ class HookControlPanelMethods {
     switch (advancedOptions.action) {
       case 'performance':
         console.log(chalk.cyan('Performance Settings:'));
-        console.log(chalk.gray('• Hook execution timeout: Configurable per hook'));
+        console.log(chalk.gray('• Hook execution: Direct command execution'));
         console.log(chalk.gray('• Memory usage limit: 512MB per hook process'));
         console.log(chalk.gray('• Parallel execution: Enabled by default'));
         console.log(chalk.gray('• Hook coordination: Smart locking system'));
@@ -939,7 +957,8 @@ class HookControlPanelMethods {
     }
     
     console.log();
-    await this.waitForEnter();
+    const action = await this.waitForEnter();
+    return action;
   }
 
   /**
@@ -962,7 +981,8 @@ class HookControlPanelMethods {
     console.log(`   ${chalk.green('Configuration:')} Active`);
     console.log();
 
-    await this.waitForEnter();
+    const action = await this.waitForEnter();
+    return action;
   }
 
   /**
