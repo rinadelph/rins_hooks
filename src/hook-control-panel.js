@@ -607,24 +607,21 @@ class HookControlPanel {
     
     // Content with consistent styling
     if (allInstalled.length > 0) {
-      console.log(`  ${chalk.bold.green('✅ Installed')} ${chalk.gray(`(${allInstalled.length} items)`)}`);
-      console.log(chalk.cyan('  ───────────────────────────────────'));
-      console.log();
+      console.log(`  ${chalk.bold.green('✅ Installed')} ${chalk.gray(`(${allInstalled.length})`)}`);
+      console.log(chalk.cyan('  ─────────────────────────────'));
       
-      // Show recently installed first, limit to 3
+      // Show recently installed first, limit to 3, more compact
       const recentInstalled = allInstalled.slice(0, 3);
       recentInstalled.forEach(item => {
         const scope = this.getScopeIcon(item, sectionData);
-        const description = item.description || 'No description';
-        console.log(`    ${chalk.green('•')} ${chalk.bold(item.name)} ${scope}`);
-        console.log(`      ${chalk.gray(description)}`);
-        console.log();
+        const description = (item.description || 'No description').substring(0, 40) + '...';
+        console.log(`    ${chalk.green('•')} ${chalk.bold(item.name)} ${scope} ${chalk.gray('- ' + description)}`);
       });
       
       if (allInstalled.length > 3) {
         console.log(`    ${chalk.gray(`... and ${allInstalled.length - 3} more`)}`);
-        console.log();
       }
+      console.log();
     }
 
     if (available.length > 0) {
