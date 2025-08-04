@@ -683,7 +683,8 @@ class HookControlPanel {
       
       // Show hook types for available items if in hooks section
       available.slice(0, 3).forEach(item => {
-        const description = (item.description || 'No description').substring(0, 40) + '...';
+        const fullDescription = item.description || 'No description';
+        const description = fullDescription.length > 40 ? fullDescription.substring(0, 40) + '...' : fullDescription;
         if (sectionType === 'hooks') {
           const typeIcon = item.hookType === 'rapala-generated' ? '🎣' : '•';
           const typeColor = item.hookType === 'rapala-generated' ? chalk.magenta : chalk.yellow;
