@@ -4,7 +4,7 @@
   "description": "Universal Claude Code enhancement collection: Hooks, Tools, Resources, Prompts & MCPs",
   "main": "src/cli.js",
   "bin": {
-    "rapala": "./bin/rins_hooks"
+    "rapala": "./bin/rapala"
   },
   "scripts": {
     "start": "node src/cli.js",

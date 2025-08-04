@@ -98,6 +98,13 @@ class HookControlPanel {
   }
 
   /**
+   * Load current hook states (backward compatibility)
+   */
+  async loadCurrentHookStates() {
+    await this.loadCurrentEnhancementStates();
+  }
+
+  /**
    * Load current enhancement states (hooks, tools, resources, prompts, mcps)
    */
   async loadCurrentEnhancementStates() {
@@ -373,8 +380,8 @@ class HookControlPanel {
    * Display comprehensive environment overview
    */
   async displayEnvironmentOverview() {
-    // Refresh hook states
-    await this.loadCurrentHookStates();
+    // Refresh enhancement states
+    await this.loadCurrentEnhancementStates();
 
     console.log(chalk.cyan('🌍 Current Environment'));
     console.log();
@@ -400,13 +407,30 @@ class HookControlPanel {
     console.log(`   ${chalk.green('Local Level:')} ${hasLocalConfig ? '✅ Active' : '❌ Not found'}`);
     console.log();
 
-    // Hook summary
-    const totalInstalled = this.hookStates.user.length + this.hookStates.project.length + this.hookStates.local.length;
-    const totalAvailable = this.hookStates.available.length;
+    // Rapala enhancement summary with categorization
+    const getInstalledCount = (category) => {
+      return this.enhancementStates[category].user.length + 
+             this.enhancementStates[category].project.length + 
+             this.enhancementStates[category].local.length;
+    };
+
+    const totalInstalled = getInstalledCount('hooks') + getInstalledCount('tools') + 
+                          getInstalledCount('resources') + getInstalledCount('prompts') + 
+                          getInstalledCount('mcps');
+    const totalAvailable = this.enhancementStates.hooks.available.length + 
+                          this.enhancementStates.tools.available.length + 
+                          this.enhancementStates.resources.available.length + 
+                          this.enhancementStates.prompts.available.length + 
+                          this.enhancementStates.mcps.available.length;
     
-    console.log(chalk.blue('🎣 Hook Summary:'));
-    console.log(`   ${chalk.green('Installed:')} ${totalInstalled}/${totalAvailable} hooks`);
-    console.log(`   ${chalk.green('Auto-Update:')} ${this.hookStates.autoUpdate ? '✅ Enabled' : '❌ Disabled'}`);
+    console.log(chalk.blue('🎣 Rapala Enhancement Summary:'));
+    console.log(`   ${chalk.green('🔗 Hooks:')} ${getInstalledCount('hooks')} installed`);
+    console.log(`   ${chalk.green('🔧 Tools:')} ${getInstalledCount('tools')} installed`);
+    console.log(`   ${chalk.green('📚 Resources:')} ${getInstalledCount('resources')} installed`);
+    console.log(`   ${chalk.green('💬 Prompts:')} ${getInstalledCount('prompts')} installed`);
+    console.log(`   ${chalk.green('🤖 MCPs:')} ${getInstalledCount('mcps')} installed`);
+    console.log(`   ${chalk.green('Total:')} ${totalInstalled}/${totalAvailable} enhancements`);
+    console.log(`   ${chalk.green('Auto-Update:')} ${this.enhancementStates.autoUpdate ? '✅ Enabled' : '❌ Disabled'}`);
     console.log(`   ${chalk.green('Git Integration:')} ${this.projectContext.hasGit ? '✅ Available' : '❌ No Git'}`);
     console.log();
   }

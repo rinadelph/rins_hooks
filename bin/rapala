@@ -1,0 +1,26 @@
+#!/usr/bin/env node
+
+const path = require('path');
+const { spawn } = require('child_process');
+
+// Get the directory of this script
+const binDir = __dirname;
+const packageDir = path.dirname(binDir);
+const cliPath = path.join(packageDir, 'src', 'cli.js');
+
+// Spawn the CLI with all arguments
+const child = spawn('node', [cliPath, ...process.argv.slice(2)], {
+  stdio: 'inherit',
+  cwd: process.cwd()
+});
+
+// Handle process exit
+child.on('exit', (code) => {
+  process.exit(code);
+});
+
+// Handle errors
+child.on('error', (error) => {
+  console.error('Error starting rins_hooks:', error.message);
+  process.exit(1);
+});
