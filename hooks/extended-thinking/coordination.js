@@ -142,8 +142,14 @@ class HookCoordination {
       components.push(input.session_id.slice(-8)); // Last 8 chars
     }
     
+    // For tool events, include the tool name and make it unique per tool call
     if (input.tool_name) {
       components.push(input.tool_name);
+      
+      // For PreToolUse and PostToolUse, add timestamp to make each tool call unique
+      if (input.hook_event_name === 'PreToolUse' || input.hook_event_name === 'PostToolUse') {
+        components.push(Date.now().toString().slice(-8)); // More precision for tool events
+      }
     }
     
     if (input.prompt) {
@@ -152,13 +158,23 @@ class HookCoordination {
     }
     
     if (input.tool_input) {
-      // Hash relevant tool input
-      const inputStr = JSON.stringify(input.tool_input).slice(0, 100);
-      components.push(this.simpleHash(inputStr));
+      // Hash relevant tool input - but use less for tool events to allow duplicates
+      const inputStr = JSON.stringify(input.tool_input);
+      if (input.hook_event_name === 'PreToolUse' || input.hook_event_name === 'PostToolUse') {
+        // For tool events, use a shorter hash to allow similar operations
+        components.push(this.simpleHash(inputStr.slice(0, 50)));
+      } else {
+        components.push(this.simpleHash(inputStr.slice(0, 100)));
+      }
     }
 
-    // Add timestamp to ensure uniqueness for rapid operations
-    components.push(Date.now().toString().slice(-6));
+    // Add timestamp for uniqueness, but less precision for UserPromptSubmit
+    if (input.hook_event_name === 'UserPromptSubmit') {
+      components.push(Date.now().toString().slice(-6));
+    } else {
+      // More precision for tool events
+      components.push(Date.now().toString().slice(-8));
+    }
     
     return components.join('-');
   }
