@@ -363,6 +363,7 @@ class HookControlPanel {
           // Do nothing, just refresh
           break;
       }
+      if (debug) console.log('DEBUG: End of switch statement, about to loop again');
     }
   }
 
