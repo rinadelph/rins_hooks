@@ -548,6 +548,20 @@ class HookControlPanel {
   }
 
   /**
+   * Get category icon for section type
+   */
+  getCategoryIcon(category) {
+    const icons = {
+      hooks: '🔗',
+      tools: '🔧',
+      resources: '📚',
+      prompts: '💬',
+      mcps: '🤖'
+    };
+    return icons[category] || '🔗';
+  }
+
+  /**
    * Helper methods for sectioned interface
    */
   getSectionTitle(sectionType) {
