@@ -37,34 +37,33 @@ program
   .command('install [hooks...]')
   .description('Install Claude Code hooks')
   .option('-a, --all', 'Install all available hooks')
-  .option('-i, --interactive', 'Interactive installation')
+  .option('-i, --interactive', 'Interactive installation with rich TUI')
   .option('-u, --user', 'Install at user level (~/.claude/settings.json)')
   .option('-p, --project', 'Install at project level (.claude/settings.json)')
   .option('-l, --local', 'Install at local level (.claude/settings.local.json)')
   .option('--dry-run', 'Show what would be installed without making changes')
   .action(async (hooks, options) => {
     try {
+      const installer = new Installer();
+
+      // If no arguments, show interactive TUI by default
+      if (hooks.length === 0 && !options.all && !options.interactive) {
+        console.log(chalk.blue('🚀 Welcome to Rins Hooks!'));
+        console.log(chalk.gray('Starting interactive installation...'));
+        console.log();
+        await installer.enhancedInteractiveInstall(options);
+        return;
+      }
+
       console.log(chalk.blue('🔧 Rins Hooks Installer'));
       console.log();
 
-      const installer = new Installer();
-
       if (options.interactive) {
-        await installer.interactiveInstall(options);
+        await installer.enhancedInteractiveInstall(options);
       } else if (options.all) {
         await installer.installAll(options);
       } else if (hooks.length > 0) {
         await installer.installHooks(hooks, options);
-      } else {
-        console.log(chalk.yellow('ℹ️  No hooks specified. Use --interactive or --all, or specify hook names.'));
-        console.log();
-        console.log('Available hooks:');
-        const availableHooks = await installer.getAvailableHooks();
-        availableHooks.forEach(hook => {
-          console.log(chalk.green(`  • ${hook.name}`), chalk.gray(`- ${hook.description}`));
-        });
-        console.log();
-        console.log(chalk.cyan('Example: rins_hooks install auto-commit notification'));
       }
     } catch (error) {
       console.error(chalk.red('❌ Installation failed:'), error.message);
