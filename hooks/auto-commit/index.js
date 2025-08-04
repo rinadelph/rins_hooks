@@ -99,7 +99,18 @@ class AutoCommitHook extends HookBase {
       });
 
     } catch (error) {
-      return this.error(`Auto-commit failed: ${error.message}`);
+      // Enhanced error reporting with context
+      const errorDetails = {
+        message: error.message,
+        filePath: input.tool_input?.file_path || input.tool_input?.filePath,
+        toolName: input.tool_name,
+        cwd: process.cwd()
+      };
+      
+      // Log detailed error for debugging
+      console.error('Auto-commit detailed error:', JSON.stringify(errorDetails, null, 2));
+      
+      return this.error(`Auto-commit failed: ${error.message || 'Unknown error'}`);
     }
   }
 
