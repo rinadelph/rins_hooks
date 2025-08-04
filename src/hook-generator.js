@@ -55,7 +55,11 @@ class HookGenerator {
     
     // Determine event type
     let eventType = 'PreToolUse'; // default for command interception
-    if (desc.includes('after') || desc.includes('following') || desc.includes('once done') || desc.includes('when finished')) {
+    
+    // Special handling for bash command interception
+    if (desc.includes('bash') && (desc.includes('run') || desc.includes('command') || desc.includes('execute'))) {
+      eventType = 'PreToolUse'; // Intercept before execution
+    } else if (desc.includes('after') || desc.includes('following') || desc.includes('once done') || desc.includes('when finished')) {
       eventType = 'PostToolUse';
     } else if (desc.includes('finish') || desc.includes('complete') || desc.includes('done') || desc.includes('end')) {
       eventType = 'Stop';
