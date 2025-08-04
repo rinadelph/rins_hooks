@@ -284,7 +284,8 @@ class VersionCheckerHook {
 
     context += `### 📋 Available Commands:\n`;
     context += `- Use \`/hooks\` to review hook configurations\n`;
-    context += `- Run \`node hooks/version-checker/update.js\` to update hooks\n`;
+    context += `- Run \`rins_hooks update\` to update hooks\n`;
+    context += `- Run \`rins_hooks agentmcp\` for Agent-MCP management\n`;
     context += `- Check \`.claude/hook-versions.json\` for version history\n\n`;
     
     context += `*Version check completed at ${new Date().toLocaleString()}*`;
