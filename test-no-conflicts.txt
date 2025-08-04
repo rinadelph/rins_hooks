@@ -1,3 +1,6 @@
 Testing that only git-agentmcp hook runs now
 Should see only one commit, not duplicate hook errors
 Timestamp: 2025-08-04T20:13:45.000Z
+FINAL FIX TEST: Removed global changes check
+=== RAPALA ROUTER TEST ===
+Testing PostToolUse with Edit tool
