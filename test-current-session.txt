@@ -1,0 +1,2 @@
+Testing conversation-titler hook on current session.
+This Write operation should trigger the PostToolUse hook and update this session's title from generic to specific.
