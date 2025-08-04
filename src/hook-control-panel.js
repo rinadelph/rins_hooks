@@ -797,8 +797,8 @@ class HookControlPanel {
   }
 
   async selectInstallScope() {
-    console.log(`  ${chalk.bold.cyan('📍 Installation Scope')}`);
-    console.log(chalk.cyan('  ─────────────────────────────'));
+    console.log(`${chalk.bold.cyan('📍 Installation Scope')}`);
+    console.log(chalk.gray('━'.repeat(50)));
 
     const scope = await inquirer.prompt([{
       type: 'list',
