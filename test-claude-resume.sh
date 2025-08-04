@@ -145,7 +145,7 @@ test_claude_resume() {
         echo "Command: echo '$TEST_PROMPT' | claude -r --debug"
         echo
         
-        timeout 60s sh -c "echo '$TEST_PROMPT' | claude -r --debug 2>&1" | tee -a "$DEBUG_LOG.tee" || {
+        timeout 15s sh -c "echo '$TEST_PROMPT' | claude -r --debug 2>&1" | tee -a "$DEBUG_LOG.tee" || {
             echo "Direct tee command failed or timed out (exit code: $?)"
             echo "Checking if any output was captured in tee file..."
             [ -f "$DEBUG_LOG.tee" ] && echo "Tee file size: $(wc -l < "$DEBUG_LOG.tee") lines" || echo "No tee file created"
