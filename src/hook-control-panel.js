@@ -644,17 +644,17 @@ class HookControlPanel {
     );
 
     if (available.length === 0) {
-      console.log(`  ${chalk.green('✅')} ${chalk.bold('All items already installed!')}`);
-      console.log(`  ${chalk.gray(`All ${this.getSectionTitle(sectionType).toLowerCase()} are available.`)}`);
+      console.log(`${chalk.green('✅')} ${chalk.bold('All items already installed!')}`);
+      console.log(`${chalk.gray(`All ${this.getSectionTitle(sectionType).toLowerCase()} are available.`)}`);
       console.log();
-      console.log(chalk.cyan('──────────────────────────────────────────────────'));
+      console.log(chalk.gray('━'.repeat(50)));
       await this.waitForEnter(false);
       return;
     }
 
-    // Show available items with enhanced styling
-    console.log(`  ${chalk.bold.yellow('📦 Available:')} ${chalk.gray(`(${available.length} items)`)}`);
-    console.log(chalk.cyan('  ─────────────────────────────'));
+    // Show available items with horizontal styling
+    console.log(`${chalk.bold.yellow('📦 Available:')} ${chalk.gray(`${available.length} items`)}`);
+    console.log(chalk.gray('━'.repeat(50)));
 
     const choices = available.map(item => ({
       name: `${chalk.bold(item.name)} - ${chalk.gray((item.description || 'No description').substring(0, 50) + '...')}`,
