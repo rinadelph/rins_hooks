@@ -429,6 +429,194 @@ class HookControlPanel {
   }
 
   /**
+   * Helper methods for sectioned interface
+   */
+  getSectionTitle(sectionType) {
+    const titles = {
+      hooks: 'Hooks',
+      tools: 'Tools', 
+      resources: 'Resources',
+      prompts: 'Prompts',
+      mcps: 'MCPs'
+    };
+    return titles[sectionType] || sectionType;
+  }
+
+  getSectionDescription(sectionType) {
+    const descriptions = {
+      hooks: 'Core Claude Code functionality extensions (git automation, notifications, etc.)',
+      tools: 'Permission controls and blockers (task blocking, file locking, etc.)',
+      resources: 'Documentation, guides, and templates',
+      prompts: 'Context injection and instruction templates',
+      mcps: 'Multi-agent collaboration protocol components'
+    };
+    return descriptions[sectionType] || '';
+  }
+
+  getScopeIcon(item, sectionData) {
+    if (sectionData.user.includes(item)) return '👤';
+    if (sectionData.project.includes(item)) return '📁';
+    if (sectionData.local.includes(item)) return '🔒';
+    return '';
+  }
+
+  /**
+   * Display detailed section content
+   */
+  async displayDetailedSection(sectionType) {
+    const sectionData = this.enhancementStates[sectionType];
+    const allInstalled = [...sectionData.user, ...sectionData.project, ...sectionData.local];
+    const available = sectionData.available.filter(item => 
+      !allInstalled.find(installed => installed.name === item.name)
+    );
+
+    console.log(chalk.cyan(`${this.getSectionTitle(sectionType)} Details:`));
+    console.log();
+
+    if (allInstalled.length > 0) {
+      console.log(chalk.green(`Installed (${allInstalled.length}):`));
+      allInstalled.forEach(item => {
+        const scope = this.getScopeIcon(item, sectionData);
+        console.log(`  • ${item.name} ${scope} - ${item.description || 'No description'}`);
+      });
+      console.log();
+    }
+
+    if (available.length > 0) {
+      console.log(chalk.yellow(`Available to install (${available.length}):`));
+      available.slice(0, 5).forEach(item => {
+        console.log(`  • ${item.name} - ${item.description || 'No description'}`);
+      });
+      if (available.length > 5) {
+        console.log(chalk.gray(`  ... and ${available.length - 5} more`));
+      }
+      console.log();
+    }
+
+    if (allInstalled.length === 0 && available.length === 0) {
+      console.log(chalk.gray('No items available in this section'));
+      console.log();
+    }
+  }
+
+  /**
+   * Section-specific action methods
+   */
+  async installSectionItems(sectionType) {
+    const sectionData = this.enhancementStates[sectionType];
+    const allInstalled = [...sectionData.user, ...sectionData.project, ...sectionData.local];
+    const available = sectionData.available.filter(item => 
+      !allInstalled.find(installed => installed.name === item.name)
+    );
+
+    if (available.length === 0) {
+      console.log(chalk.yellow(`All ${this.getSectionTitle(sectionType).toLowerCase()} are already installed!`));
+      await this.waitForEnter(false);
+      return;
+    }
+
+    const choices = available.map(item => ({
+      name: `${item.name} - ${item.description}`,
+      value: item.name,
+      short: item.name
+    }));
+
+    const selection = await inquirer.prompt([{
+      type: 'checkbox',
+      name: 'items',
+      message: `Select ${this.getSectionTitle(sectionType).toLowerCase()} to install:`,
+      choices,
+      pageSize: 10
+    }]);
+
+    if (selection.items.length === 0) {
+      console.log(chalk.yellow('No items selected.'));
+      await this.waitForEnter(false);
+      return;
+    }
+
+    const scope = await this.selectInstallScope();
+    
+    console.log(chalk.cyan(`Installing ${selection.items.length} ${this.getSectionTitle(sectionType).toLowerCase()}...`));
+    
+    for (const itemName of selection.items) {
+      try {
+        await this.installer.installHooks([itemName], { [scope]: true });
+        console.log(chalk.green(`✓ ${itemName} installed`));
+      } catch (error) {
+        console.log(chalk.red(`✗ ${itemName} failed: ${error.message}`));
+      }
+    }
+
+    console.log(chalk.green('Installation complete!'));
+    await this.loadCurrentEnhancementStates(); // Refresh
+    await this.waitForEnter(false);
+  }
+
+  async manageSectionItems(sectionType) {
+    const sectionData = this.enhancementStates[sectionType];
+    const allInstalled = [...sectionData.user, ...sectionData.project, ...sectionData.local];
+
+    if (allInstalled.length === 0) {
+      console.log(chalk.yellow(`No ${this.getSectionTitle(sectionType).toLowerCase()} installed to manage.`));
+      await this.waitForEnter(false);
+      return;
+    }
+
+    const choices = allInstalled.map(item => {
+      const scope = this.getScopeIcon(item, sectionData);
+      return {
+        name: `${item.name} ${scope} - ${item.description || 'No description'}`,
+        value: item,
+        short: item.name
+      };
+    });
+
+    const selection = await inquirer.prompt([{
+      type: 'list',
+      name: 'item',
+      message: `Select ${this.getSectionTitle(sectionType).toLowerCase().slice(0, -1)} to manage:`,
+      choices,
+      pageSize: 10
+    }]);
+
+    // Individual item management (reuse existing logic)
+    await this.manageIndividualItem(selection.item);
+  }
+
+  async viewSectionItems(sectionType) {
+    await this.displayDetailedSection(sectionType);
+    await this.waitForEnter(false);
+  }
+
+  async updateSectionItems(sectionType) {
+    console.log(chalk.cyan(`Checking for ${this.getSectionTitle(sectionType).toLowerCase()} updates...`));
+    console.log(chalk.yellow('Update functionality coming soon!'));
+    await this.waitForEnter(false);
+  }
+
+  async selectInstallScope() {
+    const scope = await inquirer.prompt([{
+      type: 'list',
+      name: 'scope',
+      message: 'Installation scope:',
+      choices: [
+        { name: '👤 User Level - All projects', value: 'user' },
+        { name: '📁 Project Level - This project only (committed)', value: 'project' },
+        { name: '🔒 Local Level - This project only (not committed)', value: 'local' }
+      ]
+    }]);
+    return scope.scope;
+  }
+
+  async manageIndividualItem(item) {
+    // Placeholder for individual item management
+    console.log(chalk.blue(`Managing: ${item.name}`));
+    console.log(chalk.gray('Individual item management coming soon!'));
+    await this.waitForEnter(false);
+  }
+
+  /**
    * Display comprehensive environment overview
    */
   async displayEnvironmentOverview() {
