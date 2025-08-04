@@ -163,6 +163,15 @@ function runGitCommand(args, retries = 3, delay = 1000) {
           resolve(stdout);
         } else {
           const errorMessage = stderr.trim();
+          const stdoutMessage = stdout.trim();
+          
+          // Enhanced error details
+          const fullError = [
+            `Git command failed (exit code ${code})`,
+            errorMessage ? `stderr: ${errorMessage}` : '',
+            stdoutMessage ? `stdout: ${stdoutMessage}` : '',
+            `command: git ${args.join(' ')}`
+          ].filter(Boolean).join('\n');
           
           // Check for git lock conflicts
           if (isGitLockError(errorMessage) && attempt < retries) {
@@ -174,7 +183,7 @@ function runGitCommand(args, retries = 3, delay = 1000) {
             // Retry after delay
             setTimeout(() => attemptCommand(attempt + 1), delay);
           } else {
-            reject(new Error(`Git command failed: ${errorMessage}`));
+            reject(new Error(fullError));
           }
         }
       });
