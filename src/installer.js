@@ -129,6 +129,329 @@ class Installer {
     }
   }
 
+  /**
+   * Enhanced interactive installation with rich TUI like AgentMCP
+   */
+  async enhancedInteractiveInstall(options = {}) {
+    console.log(chalk.blue('🚀 Rins Hooks Interactive Manager'));
+    console.log(chalk.gray('Comprehensive hook management with intelligent installation'));
+    console.log();
+
+    // Check current status
+    const status = await this.configManager.getInstallationStatus();
+    const allInstalledHooks = [...status.user, ...status.project, ...status.local];
+    const availableHooks = await this.getAvailableHooks();
+    
+    // Categorize hooks
+    const categories = this.categorizeHooks(availableHooks, allInstalledHooks);
+
+    // Main menu
+    const mainChoice = await inquirer.prompt([{
+      type: 'list',
+      name: 'action',
+      message: 'What would you like to do?',
+      choices: [
+        { name: '📦 Install Hooks', value: 'install' },
+        { name: '🤖 Agent-MCP Suite', value: 'agentmcp' },
+        { name: '📊 Show Installation Status', value: 'status' },
+        { name: '🔧 Manage Existing Hooks', value: 'manage' },
+        { name: '❌ Uninstall Hooks', value: 'uninstall' },
+        { name: '🚪 Exit', value: 'exit' }
+      ]
+    }]);
+
+    switch (mainChoice.action) {
+      case 'install':
+        await this.richInstallationFlow(categories, options);
+        break;
+      case 'agentmcp':
+        const AgentMCPManager = require('./agent-mcp-manager');
+        const agentManager = new AgentMCPManager();
+        await agentManager.interactiveSetup(options);
+        break;
+      case 'status':
+        await this.showEnhancedStatus(categories);
+        break;
+      case 'manage':
+        await this.manageExistingHooks(allInstalledHooks);
+        break;
+      case 'uninstall':
+        await this.interactiveUninstall(allInstalledHooks);
+        break;
+      case 'exit':
+        console.log(chalk.green('👋 Hook management complete!'));
+        break;
+    }
+  }
+
+  /**
+   * Categorize hooks by type and installation status
+   */
+  categorizeHooks(availableHooks, installedHooks) {
+    const categories = {
+      agentMCP: [],
+      thinking: [],
+      automation: [],
+      utility: [],
+      installed: [],
+      uninstalled: []
+    };
+
+    availableHooks.forEach(hook => {
+      const isInstalled = installedHooks.find(installed => installed.name === hook.name);
+      
+      if (isInstalled) {
+        categories.installed.push(hook);
+      } else {
+        categories.uninstalled.push(hook);
+      }
+
+      // Categorize by type
+      if (hook.tags.includes('agent-tracking') || hook.tags.includes('collaboration')) {
+        categories.agentMCP.push(hook);
+      } else if (hook.name.includes('thinking') || hook.tags.includes('analysis')) {
+        categories.thinking.push(hook);
+      } else if (hook.tags.includes('automation') || hook.tags.includes('git')) {
+        categories.automation.push(hook);
+      } else {
+        categories.utility.push(hook);
+      }
+    });
+
+    return categories;
+  }
+
+  /**
+   * Rich installation flow with categorized options
+   */
+  async richInstallationFlow(categories, options) {
+    console.log(chalk.blue('📦 Hook Installation'));
+    console.log();
+
+    if (categories.uninstalled.length === 0) {
+      console.log(chalk.green('✅ All available hooks are already installed!'));
+      return;
+    }
+
+    // Installation type selection
+    const installType = await inquirer.prompt([{
+      type: 'list',
+      name: 'type',
+      message: 'How would you like to install hooks?',
+      choices: [
+        { name: '🎯 By Category (recommended)', value: 'category' },
+        { name: '📋 Individual Selection', value: 'individual' },
+        { name: '📦 Install All Available', value: 'all' }
+      ]
+    }]);
+
+    if (installType.type === 'all') {
+      const scope = await this.selectScope(options);
+      await this.installHooks(categories.uninstalled.map(h => h.name), { ...options, [scope]: true });
+      return;
+    }
+
+    if (installType.type === 'category') {
+      await this.categoryInstallation(categories, options);
+    } else {
+      await this.individualInstallation(categories.uninstalled, options);
+    }
+  }
+
+  /**
+   * Category-based installation
+   */
+  async categoryInstallation(categories, options) {
+    const categoryChoices = [];
+    
+    if (categories.agentMCP.filter(h => !categories.installed.includes(h)).length > 0) {
+      categoryChoices.push({
+        name: `🤖 Agent-MCP Suite (${categories.agentMCP.filter(h => !categories.installed.includes(h)).length} hooks)\n    Multi-agent collaboration, git tracking, file locking`,
+        value: 'agentMCP'
+      });
+    }
+
+    if (categories.thinking.filter(h => !categories.installed.includes(h)).length > 0) {
+      categoryChoices.push({
+        name: `🧠 Thinking & Analysis (${categories.thinking.filter(h => !categories.installed.includes(h)).length} hooks)\n    Extended thinking, bias checking, reflection`,
+        value: 'thinking'
+      });
+    }
+
+    if (categories.automation.filter(h => !categories.installed.includes(h)).length > 0) {
+      categoryChoices.push({
+        name: `⚙️ Automation & Git (${categories.automation.filter(h => !categories.installed.includes(h)).length} hooks)\n    Auto-commit, formatting, version control`,
+        value: 'automation'
+      });
+    }
+
+    if (categories.utility.filter(h => !categories.installed.includes(h)).length > 0) {
+      categoryChoices.push({
+        name: `🔧 Utilities (${categories.utility.filter(h => !categories.installed.includes(h)).length} hooks)\n    Notifications, diagnostics, system tools`,
+        value: 'utility'
+      });
+    }
+
+    if (categoryChoices.length === 0) {
+      console.log(chalk.green('✅ All hooks are already installed!'));
+      return;
+    }
+
+    const categorySelection = await inquirer.prompt([{
+      type: 'checkbox',
+      name: 'categories',
+      message: 'Select categories to install:',
+      choices: categoryChoices
+    }]);
+
+    if (categorySelection.categories.length === 0) {
+      console.log(chalk.yellow('ℹ️  No categories selected.'));
+      return;
+    }
+
+    // Install selected categories
+    const scope = await this.selectScope(options);
+    
+    for (const category of categorySelection.categories) {
+      const hooksToInstall = categories[category]
+        .filter(hook => !categories.installed.includes(hook))
+        .map(hook => hook.name);
+      
+      if (hooksToInstall.length > 0) {
+        console.log(chalk.cyan(`\n📦 Installing ${category} hooks...`));
+        await this.installHooks(hooksToInstall, { ...options, [scope]: true });
+      }
+    }
+  }
+
+  /**
+   * Individual hook selection with rich display
+   */
+  async individualInstallation(uninstalledHooks, options) {
+    const choices = uninstalledHooks.map(hook => {
+      const tagsText = hook.tags.length > 0 ? chalk.gray(`[${hook.tags.join(', ')}]`) : '';
+      const name = `${hook.name} ${tagsText}\n    ${chalk.gray(hook.description)}`;
+      return {
+        name,
+        value: hook.name
+      };
+    });
+
+    const selection = await inquirer.prompt([{
+      type: 'checkbox',
+      name: 'hooks',
+      message: 'Select hooks to install:',
+      choices,
+      pageSize: 10
+    }]);
+
+    if (selection.hooks.length === 0) {
+      console.log(chalk.yellow('ℹ️  No hooks selected.'));
+      return;
+    }
+
+    const scope = await this.selectScope(options);
+    await this.installHooks(selection.hooks, { ...options, [scope]: true });
+  }
+
+  /**
+   * Enhanced scope selection
+   */
+  async selectScope(options) {
+    if (options.user) return 'user';
+    if (options.project) return 'project';
+    if (options.local) return 'local';
+
+    const scopeChoice = await inquirer.prompt([{
+      type: 'list',
+      name: 'scope',
+      message: 'Installation scope:',
+      choices: [
+        { 
+          name: '👤 User Level - All Claude Code projects\n    ~/.claude/settings.json', 
+          value: 'user',
+          short: 'User'
+        },
+        { 
+          name: '📁 Project Level - This project only (committed)\n    .claude/settings.json', 
+          value: 'project',
+          short: 'Project' 
+        },
+        { 
+          name: '🔒 Local Level - This project only (not committed)\n    .claude/settings.local.json', 
+          value: 'local',
+          short: 'Local'
+        }
+      ],
+      default: 'user'
+    }]);
+
+    return scopeChoice.scope;
+  }
+
+  /**
+   * Show enhanced status with categorization
+   */
+  async showEnhancedStatus(categories) {
+    console.log(chalk.blue('📊 Hook Installation Status'));
+    console.log();
+
+    if (categories.installed.length === 0) {
+      console.log(chalk.yellow('ℹ️  No hooks installed.'));
+      console.log(chalk.cyan('Run interactive installation to get started!'));
+      return;
+    }
+
+    // Show installed hooks by category
+    const installedByCategory = {
+      agentMCP: categories.installed.filter(h => categories.agentMCP.includes(h)),
+      thinking: categories.installed.filter(h => categories.thinking.includes(h)),
+      automation: categories.installed.filter(h => categories.automation.includes(h)),
+      utility: categories.installed.filter(h => categories.utility.includes(h))
+    };
+
+    for (const [categoryName, hooks] of Object.entries(installedByCategory)) {
+      if (hooks.length > 0) {
+        const categoryIcons = {
+          agentMCP: '🤖',
+          thinking: '🧠', 
+          automation: '⚙️',
+          utility: '🔧'
+        };
+        
+        console.log(chalk.cyan(`${categoryIcons[categoryName]} ${categoryName.toUpperCase()} (${hooks.length} hooks):`));
+        hooks.forEach(hook => {
+          console.log(chalk.green(`  ✅ ${hook.name}`), chalk.gray(`- ${hook.description}`));
+        });
+        console.log();
+      }
+    }
+
+    // Show available for installation
+    if (categories.uninstalled.length > 0) {
+      console.log(chalk.gray(`📋 Available for installation: ${categories.uninstalled.length} hooks`));
+      console.log(chalk.cyan('Run `rins_hooks install` to add more hooks.'));
+    }
+  }
+
+  /**
+   * Manage existing hooks
+   */
+  async manageExistingHooks(installedHooks) {
+    console.log(chalk.blue('🔧 Manage Existing Hooks'));
+    console.log();
+    console.log(chalk.gray('Hook management features coming soon...'));
+  }
+
+  /**
+   * Interactive uninstallation
+   */
+  async interactiveUninstall(installedHooks) {
+    console.log(chalk.blue('❌ Uninstall Hooks'));
+    console.log();
+    console.log(chalk.gray('Uninstallation features coming soon...'));
+  }
+
   async installHooks(hookNames, options = {}) {
     try {
       console.log(chalk.blue(`📦 Installing hooks: ${hookNames.join(', ')}`));
@@ -291,7 +614,7 @@ class Installer {
 
         // Add to Claude Code settings
         await this.configManager.addHook(eventType, claudeConfig, scope);
-        
+
         console.log(chalk.green(`  ✅ ${hook.name} installed successfully`));
         console.log(chalk.gray(`    Event: ${eventType}`));
         console.log(chalk.gray(`    Matcher: ${hook.matcher || '(all)'}`));
