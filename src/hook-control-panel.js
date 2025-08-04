@@ -311,10 +311,10 @@ class HookControlPanel {
       const navigation = await inquirer.prompt([{
         type: 'expand',
         name: 'action',
-        message: `${sectionNames[currentSection]} Section:`,
+        message: `${sectionNames[currentSection]} Section - Press a key:`,
         choices: [
-          { key: 'h', name: '← Previous section', value: 'left' },
-          { key: 'l', name: '→ Next section', value: 'right' },
+          { key: 'a', name: '← Previous section', value: 'left' },
+          { key: 'd', name: '→ Next section', value: 'right' },
           { key: 'i', name: 'Install items', value: 'i' },
           { key: 'm', name: 'Manage items', value: 'm' },
           { key: 'v', name: 'View items', value: 'v' },
