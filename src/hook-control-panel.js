@@ -386,8 +386,7 @@ class HookControlPanel {
     
     const icon = sectionIcons[sectionType] || '📋';
     console.log(chalk.bold.cyan(`  ${icon} ${this.getSectionTitle(sectionType)} Overview`));
-    console.log(chalk.gray('  ───────────────────────────────────'));
-    console.log();
+    console.log(chalk.gray('  ─────────────────────────────'));
     
     // Enhanced stats display
     if (totalInstalled === 0) {
