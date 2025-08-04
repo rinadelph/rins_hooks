@@ -100,10 +100,21 @@ test_claude_resume() {
     
     # Test 1: Basic claude -r
     echo -e "${BLUE}Test 1: Basic claude -r${NC}"
-    timeout 30s script -q -c "echo '$TEST_PROMPT' | claude -r 2>&1" "$SCREEN_LOG.script1" || {
-        echo "Script command timed out or failed"
-        cat "$SCREEN_LOG.script1" 2>/dev/null || echo "No script output captured"
-    } >> "$SESSION_LOG" 2>&1
+    {
+        echo "=== TEST 1: Basic claude -r ==="
+        echo "Timestamp: $(date)"
+        echo "Command: echo '$TEST_PROMPT' | claude -r"
+        echo
+        
+        timeout 30s script -q -c "echo '$TEST_PROMPT' | claude -r 2>&1" "$SCREEN_LOG.script1" || {
+            echo "Script command timed out or failed (exit code: $?)"
+            echo "Attempting to capture any partial output..."
+            cat "$SCREEN_LOG.script1" 2>/dev/null || echo "No script output captured"
+        }
+        
+        echo "=== END TEST 1 ==="
+        echo
+    } | tee -a "$SESSION_LOG" "$DEBUG_LOG"
     
     # Test 2: claude -r --debug
     echo -e "${BLUE}Test 2: claude -r --debug${NC}"
