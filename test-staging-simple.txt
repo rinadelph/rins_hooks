@@ -1,3 +1,4 @@
 Testing simple staging fix
 This should commit successfully now with simplified logic.
 Timestamp: 2025-08-04T19:40:55.000Z
+Edit to trigger hooks and reproduce the error...
