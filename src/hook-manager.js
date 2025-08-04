@@ -65,7 +65,7 @@ class HookManager {
       // Filter out duplicate commands within this matcher
       const uniqueHooks = [];
       for (const hook of hooks) {
-        const commandKey = `${hook.command}:${hook.timeout || 60}`;
+        const commandKey = hook.command;
         if (!seenCommands.has(commandKey)) {
           seenCommands.add(commandKey);
           uniqueHooks.push(hook);
