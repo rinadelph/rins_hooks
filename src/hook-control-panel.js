@@ -681,9 +681,8 @@ class HookControlPanel {
     }
 
     // Show available items with enhanced styling
-    console.log(`  ${chalk.bold.yellow('Available for installation:')} ${chalk.gray(`(${available.length} items)`)}`);
-    console.log(chalk.cyan('  ───────────────────────────────────'));
-    console.log();
+    console.log(`  ${chalk.bold.yellow('📦 Available:')} ${chalk.gray(`(${available.length} items)`)}`);
+    console.log(chalk.cyan('  ─────────────────────────────'));
 
     const choices = available.map(item => ({
       name: `${chalk.bold(item.name)}\n    ${chalk.gray(item.description || 'No description')}`,
