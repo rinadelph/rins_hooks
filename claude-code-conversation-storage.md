@@ -138,6 +138,42 @@ When running `claude -r`, Claude Code presents:
 }
 ```
 
+## Context Compaction System (`/compact`)
+
+### How `/compact` Works
+**Discovery**: The `/compact` command performs **context compression**, not data deletion.
+
+**Process**:
+1. **Preserves full conversation history** in `~/.claude.json` storage
+2. **Creates summarized context** for current API session to avoid context limits
+3. **Maintains resumability** - all conversations remain available via `claude -r`
+4. **Separates context layer from storage layer**
+
+**Evidence**:
+- File size minimal change: 13.9MB → 13.8MB (only ~29 lines removed)
+- Message count unchanged: 100 messages preserved
+- Full conversation history still searchable and resumable
+- Other project conversations unaffected
+
+### Context vs Storage Architecture
+```
+┌─────────────────┐    ┌──────────────────┐
+│   API Context   │    │  Local Storage   │
+│   (Compressed)  │    │  (Full History)  │
+├─────────────────┤    ├──────────────────┤
+│ Summary + Recent│    │ All Messages     │
+│ Messages Only   │    │ Complete Threads │
+│ Sent to Claude  │    │ Resumable        │
+└─────────────────┘    └──────────────────┘
+```
+
+**Implications for Conversation Manipulation**:
+- ✅ Local JSON injection works temporarily - fake conversations can be added
+- ❌ **JSON corruption detection** triggers automatic backup restoration  
+- ✅ Context layer (`/compact`) separate from storage layer
+- ❌ **Race condition**: Fakes exist until next corruption check/Claude restart
+- **Security**: JSON integrity validation with automatic backup recovery system
+
 ## Key Technical Findings
 
 ### Storage Strategy
@@ -145,6 +181,7 @@ When running `claude -r`, Claude Code presents:
 2. **Atomic writes**: Prevents corruption during updates
 3. **Project isolation**: Separate conversation threads per directory
 4. **Rich metadata**: Extensive tracking of usage, costs, and context
+5. **Dual-layer architecture**: Context compression separate from storage persistence
 
 ### Performance Implications
 - **File size**: 13.9MB for 61 projects
