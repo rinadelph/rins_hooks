@@ -25,26 +25,38 @@ class RapalaRouter extends HookBase {
       const eventType = input.hook_event_name;
       const toolName = input.tool_name;
       
+      console.log(`🎣 Rapala Router: Event=${eventType}, Tool=${toolName}`);
+      
       // Discover all generated hooks
       const generatedHooks = await this.discoverGeneratedHooks();
+      console.log(`🎣 Rapala Router: Found ${generatedHooks.length} generated hooks`);
       
       // Filter hooks that match this event and tool
       const matchingHooks = generatedHooks.filter(hook => {
-        return this.hookMatches(hook, eventType, toolName);
+        const matches = this.hookMatches(hook, eventType, toolName);
+        console.log(`🎣 Rapala Router: Hook ${hook.name} - Events: [${hook.events.join(',')}], Matcher: "${hook.matcher}" - Matches: ${matches}`);
+        return matches;
       });
       
+      console.log(`🎣 Rapala Router: ${matchingHooks.length} hooks match ${eventType}/${toolName}`);
+      
+      const results = [];
       // Execute matching hooks
       for (const hook of matchingHooks) {
         try {
           console.log(`🎣 Rapala Router: Executing ${hook.name} for ${eventType}/${toolName}`);
-          await this.executeGeneratedHook(hook, input);
+          const result = await this.executeGeneratedHook(hook, input);
+          results.push({ hook: hook.name, result });
         } catch (error) {
           console.error(`❌ Hook ${hook.name} failed:`, error.message);
+          results.push({ hook: hook.name, error: error.message });
         }
       }
       
-      return this.success({});
+      console.log(`🎣 Rapala Router: Completed with ${results.length} executed hooks`);
+      return this.success({ executedHooks: results });
     } catch (error) {
+      console.error(`❌ Rapala Router failed: ${error.message}`);
       return this.error(`Rapala Router failed: ${error.message}`);
     }
   }
@@ -148,6 +160,22 @@ class RapalaRouter extends HookBase {
   }
 }
 
-// Create and run the router
-const router = new RapalaRouter();
-router.run();
+// Main execution logic
+if (require.main === module) {
+  (async () => {
+    try {
+      const input = await HookBase.parseInput();
+      const router = new RapalaRouter();
+      const result = await router.execute(input);
+      HookBase.outputResult(result);
+    } catch (e) {
+      HookBase.outputResult({
+        success: false,
+        error: `RapalaRouter execution failed: ${e.message}`,
+        hook: 'rapala-router'
+      });
+    }
+  })();
+}
+
+module.exports = RapalaRouter;
