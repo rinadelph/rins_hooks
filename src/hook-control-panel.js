@@ -631,10 +631,10 @@ class HookControlPanel {
   async installSectionItems(sectionType) {
     console.clear();
     
-    // Header with consistent styling
-    console.log(chalk.cyan('╭──────────────────────────────────────────────────╮'));
-    console.log(chalk.cyan('│') + chalk.bold.blue(`     📦 Install ${this.getSectionTitle(sectionType)}      `) + chalk.cyan('│'));
-    console.log(chalk.cyan('╰──────────────────────────────────────────────────╯'));
+    // Clean horizontal header matching new design
+    const icon = this.getCategoryIcon(sectionType);
+    console.log(chalk.bold.magenta(`📦 Install ${this.getSectionTitle(sectionType)} ${icon}`));
+    console.log(chalk.gray('━'.repeat(50)));
     console.log();
 
     const sectionData = this.enhancementStates[sectionType];
