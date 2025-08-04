@@ -583,34 +583,11 @@ class HookControlPanel {
       const installedNames = [...this.hookStates.user, ...this.hookStates.project, ...this.hookStates.local].map(h => h.name);
       const uninstalledHooks = availableHooks.filter(h => !installedNames.includes(h.name));
 
-      console.log(chalk.cyan(`📋 Available Hooks (${availableHooks.length} total, ${uninstalledHooks.length} not installed):`));
+      // Show hook summary without scrolling
+      console.log(chalk.cyan(`📋 Hook Summary (${availableHooks.length} total):`));
+      console.log(`   ✅ Installed: ${availableHooks.length - uninstalledHooks.length} hooks`);
+      console.log(`   📦 Available: ${uninstalledHooks.length} hooks`);
       console.log();
-
-      // Show all hooks with detailed installation status
-      availableHooks.forEach(hook => {
-        const isInstalled = installedNames.includes(hook.name);
-        const icon = isInstalled ? '✅' : '📦';
-        const status = isInstalled ? chalk.green('(installed)') : chalk.cyan('(available)');
-        
-        // Show where it's installed if applicable
-        let installLocation = '';
-        if (isInstalled) {
-          const locations = [];
-          if (this.hookStates.user.find(h => h.name === hook.name)) locations.push('👤 user');
-          if (this.hookStates.project.find(h => h.name === hook.name)) locations.push('📁 project');  
-          if (this.hookStates.local.find(h => h.name === hook.name)) locations.push('🔒 local');
-          if (locations.length > 0) {
-            installLocation = chalk.gray(` [${locations.join(', ')}]`);
-          }
-        }
-        
-        console.log(`   ${icon} ${hook.name} ${status}${installLocation}`);
-        console.log(chalk.gray(`      ${hook.description}`));
-        if (hook.tags && hook.tags.length > 0) {
-          console.log(chalk.cyan(`      Tags: ${hook.tags.join(', ')}`));
-        }
-        console.log();
-      });
 
       const installAction = await inquirer.prompt([{
         type: 'list',
