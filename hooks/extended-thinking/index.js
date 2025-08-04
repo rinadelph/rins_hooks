@@ -136,7 +136,7 @@ class ExtendedThinkingHook extends HookBase {
   /**
    * Handle PostToolUse events - Thinking after tool execution
    */
-  handlePostToolUse(input, stateManager, toggles) {
+  handlePostToolUse(input, stateManager, toggles, coordination, operationId) {
     if (toggles.deepThinking) {
       const toolName = input.tool_name;
       const prompt = this.getPostToolThinkingPrompt(toolName);
