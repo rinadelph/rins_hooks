@@ -459,8 +459,10 @@ class HookControlPanel {
           await this.updateSectionItems(sectionType);
           break;
         case 'back':
+          if (debug) console.log('DEBUG: User selected back, returning false');
           return false;
         case 'quit':
+          if (debug) console.log('DEBUG: User selected quit, returning true');
           return true;
       }
     }
