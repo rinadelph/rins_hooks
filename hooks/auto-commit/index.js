@@ -78,8 +78,24 @@ class AutoCommitHook extends HookBase {
         return this.error(`File does not exist: ${filePath}`);
       }
 
-      // Add file to git
+      // Add file to git with verification
       await this.runGitCommand(['add', filePath]);
+
+      // Verify the file was actually staged
+      const stagedFiles = await this.runGitCommand(['diff', '--cached', '--name-only']);
+      const relativePath = path.relative(process.cwd(), filePath);
+      
+      if (!stagedFiles.includes(relativePath) && !stagedFiles.includes(filePath)) {
+        // File wasn't staged, try force add
+        console.warn(`File ${relativePath} not staged, attempting force add...`);
+        await this.runGitCommand(['add', '--force', filePath]);
+        
+        // Check again
+        const restagedFiles = await this.runGitCommand(['diff', '--cached', '--name-only']);
+        if (!restagedFiles.includes(relativePath) && !restagedFiles.includes(filePath)) {
+          return this.success({ message: `File ${relativePath} has no changes to commit` });
+        }
+      }
 
       // Check if there are changes to commit
       if (this.config.skipEmptyCommits && !await this.hasChangesToCommit()) {
