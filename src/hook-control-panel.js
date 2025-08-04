@@ -664,6 +664,14 @@ class HookControlPanel {
    * Section-specific action methods
    */
   async installSectionItems(sectionType) {
+    console.clear();
+    
+    // Header with consistent styling
+    console.log(chalk.cyan('╭───────────────────────────────────────────────────────────────╮'));
+    console.log(chalk.cyan('│') + chalk.bold.blue(`         📦 Install ${this.getSectionTitle(sectionType)}         `) + chalk.cyan('│'));
+    console.log(chalk.cyan('╰───────────────────────────────────────────────────────────────╯'));
+    console.log();
+
     const sectionData = this.enhancementStates[sectionType];
     const allInstalled = [...sectionData.user, ...sectionData.project, ...sectionData.local];
     const available = sectionData.available.filter(item => 
@@ -671,13 +679,21 @@ class HookControlPanel {
     );
 
     if (available.length === 0) {
-      console.log(chalk.yellow(`All ${this.getSectionTitle(sectionType).toLowerCase()} are already installed!`));
+      console.log(`  ${chalk.green('✅')} ${chalk.bold('All items already installed!')}`);
+      console.log(`  ${chalk.gray(`All ${this.getSectionTitle(sectionType).toLowerCase()} in this section are already available.`)}`);
+      console.log();
+      console.log(chalk.cyan('──────────────────────────────────────────────────────────────'));
       await this.waitForEnter(false);
       return;
     }
 
+    // Show available items with enhanced styling
+    console.log(`  ${chalk.bold.yellow('Available for installation:')} ${chalk.gray(`(${available.length} items)`)}`);
+    console.log(chalk.cyan('  ───────────────────────────────────'));
+    console.log();
+
     const choices = available.map(item => ({
-      name: `${item.name} - ${item.description}`,
+      name: `${chalk.bold(item.name)}\n    ${chalk.gray(item.description || 'No description')}`,
       value: item.name,
       short: item.name
     }));
@@ -685,20 +701,23 @@ class HookControlPanel {
     const selection = await inquirer.prompt([{
       type: 'checkbox',
       name: 'items',
-      message: `Select ${this.getSectionTitle(sectionType).toLowerCase()} to install:`,
+      message: chalk.cyan(`Select ${this.getSectionTitle(sectionType).toLowerCase()} to install:`),
       choices,
-      pageSize: 10
+      pageSize: 8
     }]);
 
     if (selection.items.length === 0) {
-      console.log(chalk.yellow('No items selected.'));
+      console.log(`  ${chalk.yellow('ℹ️')} ${chalk.gray('No items selected - installation cancelled.')}`);
       await this.waitForEnter(false);
       return;
     }
 
     const scope = await this.selectInstallScope();
     
-    console.log(chalk.cyan(`Installing ${selection.items.length} ${this.getSectionTitle(sectionType).toLowerCase()}...`));
+    console.log();
+    console.log(chalk.cyan('──────────────────────────────────────────────────────────────'));
+    console.log(`  ${chalk.blue('🚀')} ${chalk.bold(`Installing ${selection.items.length} ${this.getSectionTitle(sectionType).toLowerCase()}...`)}`);
+    console.log();
     
     for (const itemName of selection.items) {
       try {
