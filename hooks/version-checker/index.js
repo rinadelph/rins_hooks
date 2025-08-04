@@ -201,7 +201,7 @@ class VersionCheckerHook {
       lastChecked: null,
       checkInterval: 86400000, // 24 hours
       settings: {
-        autoUpdate: false,
+        autoUpdate: true,  // Enable automatic updates
         notifyUpdates: true
       }
     };
