@@ -237,6 +237,46 @@ test_claude_resume() {
         kill $MONITOR_PID 2>/dev/null || true
         wait $MONITOR_PID 2>/dev/null || true
     fi
+    
+    # Consolidate all captured output into a master log
+    echo -e "${YELLOW}📚 Consolidating all captured output...${NC}"
+    MASTER_LOG="$LOG_DIR/claude-resume-master-$TIMESTAMP.log"
+    
+    {
+        echo "=== CLAUDE RESUME TEST - MASTER LOG ==="
+        echo "Consolidated output from all test methods"
+        echo "Timestamp: $(date)"
+        echo "Test directory: $(pwd)"
+        echo
+        
+        # Include all script captures
+        for script_file in "$SCREEN_LOG".script*; do
+            if [ -f "$script_file" ]; then
+                echo "=== SCRIPT CAPTURE: $(basename "$script_file") ==="
+                cat "$script_file" 2>/dev/null || echo "Could not read $script_file"
+                echo
+            fi
+        done
+        
+        # Include tee captures
+        if [ -f "$DEBUG_LOG.tee" ]; then
+            echo "=== TEE CAPTURE ==="
+            cat "$DEBUG_LOG.tee"
+            echo
+        fi
+        
+        # Include interactive capture
+        if [ -f "$DEBUG_LOG.interactive" ]; then
+            echo "=== INTERACTIVE CAPTURE ==="
+            cat "$DEBUG_LOG.interactive"
+            echo
+        fi
+        
+        echo "=== END MASTER LOG ==="
+        
+    } > "$MASTER_LOG"
+    
+    echo -e "${GREEN}📖 Master log created: $MASTER_LOG${NC}"
 }
 
 # Function to analyze captured output
