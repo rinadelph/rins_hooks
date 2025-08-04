@@ -826,10 +826,7 @@ class HookControlPanel {
 
   async selectInstallScope() {
     console.log(`  ${chalk.bold.cyan('📍 Installation Scope')}`);
-    console.log(chalk.cyan('  ───────────────────────────'));
-    console.log();
-    console.log(`    ${chalk.gray('Choose where to install these enhancements:')}`);
-    console.log();
+    console.log(chalk.cyan('  ─────────────────────────────'));
 
     const scope = await inquirer.prompt([{
       type: 'list',
