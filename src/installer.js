@@ -564,6 +564,29 @@ class Installer {
         throw new Error('No valid hooks to install');
       }
 
+      // Check for duplicate installations
+      const duplicates = await this.checkForDuplicateHooks(hooksToInstall, options);
+      if (duplicates.length > 0) {
+        console.log(chalk.yellow('⚠️  Duplicate hooks detected:'));
+        duplicates.forEach(dup => {
+          console.log(chalk.yellow(`   • ${dup.name} is already installed at ${dup.scope} level`));
+        });
+        
+        if (!options.force) {
+          const confirm = await inquirer.prompt([{
+            type: 'confirm',
+            name: 'proceed',
+            message: 'Continue anyway? (This may cause conflicts)',
+            default: false
+          }]);
+          
+          if (!confirm.proceed) {
+            console.log(chalk.blue('Installation cancelled by user.'));
+            return;
+          }
+        }
+      }
+
       // Check platform compatibility
       const currentPlatform = os.platform();
       const incompatibleHooks = hooksToInstall.filter(hook =>
