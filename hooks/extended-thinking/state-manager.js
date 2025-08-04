@@ -130,14 +130,7 @@ class ThinkingStateManager {
      * @returns {string} Extended thinking instructions
      */
   getExtendedThinkingPrompt() {
-    return `Before responding, engage in extended thinking. Think through this step-by-step:
-
-1. **Analyze the Request**: What exactly is being asked? What are the key components?
-2. **Consider Context**: What relevant information should I consider?
-3. **Plan Approach**: What's the best way to address this request?
-4. **Think Through Implications**: What are the potential outcomes or considerations?
-
-Then provide your thoughtful response.`;
+    return `Think carefully about this request before responding.`;
   }
 
   /**
