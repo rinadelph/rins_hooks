@@ -809,6 +809,87 @@ class HookControlPanel {
   }
 
   /**
+   * View all hooks with status in a paginated way
+   */
+  async viewAllHooksWithStatus(availableHooks) {
+    const installedNames = [...this.hookStates.user, ...this.hookStates.project, ...this.hookStates.local].map(h => h.name);
+    const hooksPerPage = 5;
+    let currentPage = 0;
+    const totalPages = Math.ceil(availableHooks.length / hooksPerPage);
+
+    while (true) {
+      console.clear();
+      console.log(chalk.blue('📋 All Available Hooks - Detailed View'));
+      console.log(chalk.gray(`Page ${currentPage + 1} of ${totalPages}`));
+      console.log();
+
+      // Show hooks for current page
+      const startIndex = currentPage * hooksPerPage;
+      const endIndex = Math.min(startIndex + hooksPerPage, availableHooks.length);
+      const pageHooks = availableHooks.slice(startIndex, endIndex);
+
+      pageHooks.forEach((hook, index) => {
+        const isInstalled = installedNames.includes(hook.name);
+        const icon = isInstalled ? '✅' : '📦';
+        const status = isInstalled ? chalk.green('(installed)') : chalk.cyan('(available)');
+        
+        // Show where it's installed if applicable
+        let installLocation = '';
+        if (isInstalled) {
+          const locations = [];
+          if (this.hookStates.user.find(h => h.name === hook.name)) locations.push('👤 user');
+          if (this.hookStates.project.find(h => h.name === hook.name)) locations.push('📁 project');  
+          if (this.hookStates.local.find(h => h.name === hook.name)) locations.push('🔒 local');
+          if (locations.length > 0) {
+            installLocation = chalk.gray(` [${locations.join(', ')}]`);
+          }
+        }
+        
+        console.log(`${startIndex + index + 1}. ${icon} ${hook.name} ${status}${installLocation}`);
+        console.log(chalk.gray(`   ${hook.description}`));
+        if (hook.tags && hook.tags.length > 0) {
+          console.log(chalk.cyan(`   Tags: ${hook.tags.join(', ')}`));
+        }
+        console.log();
+      });
+
+      // Navigation options
+      const navChoices = [];
+      
+      if (currentPage > 0) {
+        navChoices.push({ name: '◀️  Previous Page', value: 'prev' });
+      }
+      
+      if (currentPage < totalPages - 1) {
+        navChoices.push({ name: '▶️  Next Page', value: 'next' });
+      }
+      
+      navChoices.push(
+        new inquirer.Separator(),
+        { name: '🔙 Back to Installation Menu', value: 'back' }
+      );
+
+      const navAction = await inquirer.prompt([{
+        type: 'list',
+        name: 'action',
+        message: `Viewing hooks ${startIndex + 1}-${endIndex} of ${availableHooks.length}`,
+        choices: navChoices
+      }]);
+
+      switch (navAction.action) {
+        case 'prev':
+          currentPage--;
+          break;
+        case 'next':
+          currentPage++;
+          break;
+        case 'back':
+          return;
+      }
+    }
+  }
+
+  /**
    * Complete update system
    */
   async updateSystemComplete() {
