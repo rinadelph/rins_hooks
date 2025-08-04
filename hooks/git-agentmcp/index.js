@@ -596,69 +596,22 @@ async function main() {
       process.exit(1);
     }
 
-    // Enhanced staging with better verification
+    // Simplified and robust staging approach
     const relativePath = path.relative(process.cwd(), filePath);
     
-    // First, check if file has changes
-    let hasChanges = false;
     try {
-      const diffOutput = await runGitCommand(['diff', '--name-only', relativePath]);
-      hasChanges = diffOutput.trim().length > 0;
+      // Just add the file - git will handle whether it needs staging
+      await runGitCommand(['add', filePath]);
+      
+      // Verify something is staged for commit
+      const stagedFiles = await runGitCommand(['diff', '--cached', '--name-only']);
+      if (!stagedFiles.trim()) {
+        console.log(`No changes to stage for ${relativePath}`);
+        process.exit(0);
+      }
+      
     } catch (error) {
-      // File might be new, check if it exists and is untracked
-      const statusOutput = await runGitCommand(['status', '--porcelain', relativePath]);
-      hasChanges = statusOutput.trim().length > 0;
-    }
-
-    if (!hasChanges) {
-      console.log(`File ${relativePath} has no changes to commit`);
-      process.exit(0);
-    }
-
-    // Try multiple staging approaches
-    let stagingSuccessful = false;
-    
-    // Approach 1: Standard git add
-    try {
-      await runGitCommand(['add', relativePath]);
-      const stagedCheck1 = await runGitCommand(['diff', '--cached', '--name-only']);
-      if (stagedCheck1.includes(relativePath)) {
-        stagingSuccessful = true;
-      }
-    } catch (error) {
-      console.warn(`Standard git add failed: ${error.message}`);
-    }
-
-    // Approach 2: Force add if standard failed
-    if (!stagingSuccessful) {
-      try {
-        await runGitCommand(['add', '--force', relativePath]);
-        const stagedCheck2 = await runGitCommand(['diff', '--cached', '--name-only']);
-        if (stagedCheck2.includes(relativePath)) {
-          stagingSuccessful = true;
-        }
-      } catch (error) {
-        console.warn(`Force git add failed: ${error.message}`);
-      }
-    }
-
-    // Approach 3: Use absolute path
-    if (!stagingSuccessful) {
-      try {
-        await runGitCommand(['add', filePath]);
-        const stagedCheck3 = await runGitCommand(['diff', '--cached', '--name-only']);
-        if (stagedCheck3.includes(relativePath) || stagedCheck3.includes(filePath)) {
-          stagingSuccessful = true;
-        }
-      } catch (error) {
-        console.warn(`Absolute path git add failed: ${error.message}`);
-      }
-    }
-
-    // Final verification
-    if (!stagingSuccessful) {
-      const finalStatus = await runGitCommand(['status', '--porcelain', relativePath]);
-      console.error(`Failed to stage ${relativePath}. Git status: ${finalStatus}`);
+      console.error(`Failed to stage ${relativePath}: ${error.message}`);
       process.exit(1);
     }
 
