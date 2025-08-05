@@ -3,8 +3,9 @@ const path = require('path');
 
 class ThinkingStateManager {
   constructor(projectDir = null) {
-    // Use project-specific state file if in a project, otherwise global
-    this.stateDir = projectDir ? path.join(projectDir, '.claude') : path.join(require('os').homedir(), '.claude');
+    // Always use the Rapala project's state file for global thinking state
+    const rapalaProjectDir = path.resolve(__dirname, '..', '..');
+    this.stateDir = path.join(rapalaProjectDir, '.claude');
     this.stateFile = path.join(this.stateDir, 'extended-thinking-state.json');
     this.defaultState = {
       thinkingToggle: false,
