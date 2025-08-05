@@ -165,17 +165,20 @@ class SessionConversationArchiver {
                   // Find corresponding Claude response
                   const claudeResponse = await this.findClaudeResponse(lines, i);
               
-              // Count total messages to get message number
-              const messageNumber = this.countUserMessages(lines);
-              
-              return { 
-                userPrompt: userText.length > 150 ? userText.substring(0, 150) + '...' : userText,
-                claudeResponse: claudeResponse.length > 200 ? claudeResponse.substring(0, 200) + '...' : claudeResponse,
-                messageNumber
-              };
+                  // Count total messages to get message number
+                  const messageNumber = this.countUserMessages(lines);
+                  
+                  return { 
+                    userPrompt: userText.length > 150 ? userText.substring(0, 150) + '...' : userText,
+                    claudeResponse: claudeResponse.length > 200 ? claudeResponse.substring(0, 200) + '...' : claudeResponse,
+                    messageNumber
+                  };
+                }
+              }
             }
           }
         } catch (parseError) {
+          jsonParseErrors++;
           continue;
         }
       }
