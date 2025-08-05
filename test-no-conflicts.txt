@@ -8,3 +8,5 @@ Testing PostToolUse with Edit tool
 Testing if descriptions show properly without unnecessary ellipsis
 === RAPALA SYNC TEST ===
 Testing if all hooks now work through Rapala Router after migration
+=== POST-CLEANUP TEST ===
+Testing if auto-commit works after cleaning up settings.json
