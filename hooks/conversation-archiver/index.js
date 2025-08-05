@@ -120,7 +120,7 @@ class SessionConversationArchiver {
       if (!transcriptPath) return { userPrompt: '', claudeResponse: '', messageNumber: 1 };
       
       const data = await fs.readFile(transcriptPath, 'utf8');
-      const lines = data.trim().split('\\n');
+      const lines = data.trim().split('\n');
       const recentLines = lines.slice(-150);  // BACK TO WHAT WORKS!
       
       this.log(`📊 Parsing ${lines.length} transcript lines, checking recent ${recentLines.length}`);
