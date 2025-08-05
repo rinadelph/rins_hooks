@@ -121,20 +121,15 @@ class SessionConversationArchiver {
       
       const data = await fs.readFile(transcriptPath, 'utf8');
       const lines = data.trim().split('\\n');
+      const recentLines = lines.slice(-150);  // BACK TO WHAT WORKS!
       
-      // Search ALL lines, not just recent 150 - user prompts might be much earlier!
-      this.log(`📊 Parsing ${lines.length} transcript lines for conversation context`);
+      this.log(`📊 Parsing ${lines.length} transcript lines, checking recent ${recentLines.length}`);
       this.log(`🔍 Transcript path: ${transcriptPath}`);
       
-      // Find the most recent real user prompt by searching backwards through ALL lines
-      let userEntriesFound = 0;
-      let userTextFound = 0;
-      let userTextFiltered = 0;
-      let jsonParseErrors = 0;
-      
-      for (let i = lines.length - 1; i >= 0; i--) {
+      // Find the most recent real user prompt (same as working intelligent git manager)
+      for (let i = recentLines.length - 1; i >= 0; i--) {
         try {
-          const entry = JSON.parse(lines[i]);
+          const entry = JSON.parse(recentLines[i]);
           if (entry.type === 'user') {
             userEntriesFound++;
             if (userEntriesFound <= 3) { // Debug first 3 entries
