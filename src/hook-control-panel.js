@@ -871,11 +871,12 @@ class HookControlPanel {
 
       choices.push(new inquirer.Separator());
       choices.push({ name: chalk.yellow('← Back to sections'), value: 'back' });
+      choices.push({ name: chalk.red('ESC - Exit'), value: 'exit' });
 
       const selection = await inquirer.prompt([{
         type: 'list',
         name: 'choice',
-        message: 'Select hook to toggle or navigate:',
+        message: 'Select hook to toggle or navigate (ESC to exit):',
         choices,
         pageSize: 15,
         loop: false
