@@ -25,27 +25,13 @@ class RapalaRouter extends HookBase {
       const eventType = input.hook_event_name;
       const toolName = input.tool_name;
       
-      // Always log to stderr so we can see what's happening
-      console.error(`🎣 Rapala Router: Event=${eventType}, Tool=${toolName}`);
-      console.error(`🎣 Rapala Router: Full input:`, JSON.stringify(input, null, 2));
-      
       // Discover all generated hooks
       const generatedHooks = await this.discoverGeneratedHooks();
-      console.error(`🎣 Rapala Router: Found ${generatedHooks.length} generated hooks`);
-      
-      // Log all hooks for debugging
-      generatedHooks.forEach(hook => {
-        console.error(`🎣 Available Hook: ${hook.name} - Events: [${hook.events.join(',')}], Matcher: "${hook.matcher}"`);
-      });
       
       // Filter hooks that match this event and tool
       const matchingHooks = generatedHooks.filter(hook => {
-        const matches = this.hookMatches(hook, eventType, toolName);
-        console.error(`🎣 Rapala Router: Hook ${hook.name} - Events: [${hook.events.join(',')}], Matcher: "${hook.matcher}" - Matches: ${matches}`);
-        return matches;
+        return this.hookMatches(hook, eventType, toolName);
       });
-      
-      console.error(`🎣 Rapala Router: ${matchingHooks.length} hooks match ${eventType}/${toolName}`);
       
       const results = [];
       // Execute matching hooks
