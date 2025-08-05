@@ -892,13 +892,15 @@ class HookControlPanel {
 
         // Handle escape key
         const escapeHandler = (ch, key) => {
-          if (key && key.name === 'escape') {
+          if (key && (key.name === 'escape' || (key.ctrl && key.name === 'c'))) {
             process.stdin.removeListener('keypress', escapeHandler);
             if (process.stdin.isTTY) {
               process.stdin.setRawMode(false);
             }
-            // Force close the prompt
-            prompt.ui.close();
+            // Force close the prompt and return to previous menu
+            if (prompt.ui && prompt.ui.close) {
+              prompt.ui.close();
+            }
             resolve({ choice: 'back' });
           }
         };
