@@ -1,0 +1,9 @@
+Testing the fixed conversation archiver hook.
+
+This should now properly parse the hook input and:
+1. Extract tool name correctly (not "Unknown")
+2. Get session ID from parsed_input
+3. Create proper git commits in the conversation worktree
+4. Store structured conversation data
+
+Let's see if the JSON parsing error is fixed!

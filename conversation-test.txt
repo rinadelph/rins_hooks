@@ -1,0 +1,11 @@
+Testing the git worktree conversation archiver.
+
+This Write tool should trigger the conversation-archiver hook which will:
+1. Capture this tool execution 
+2. Store metadata in the worktree
+3. Create a git commit with structured message
+4. Enable querying via git log
+
+Time: $(date)
+Tool: Write
+File: conversation-test.txt

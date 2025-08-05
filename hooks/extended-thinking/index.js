@@ -21,7 +21,7 @@ class ExtendedThinkingHook extends HookBase {
   execute(input) {
     try {
       if (!input || !input.hook_event_name) {
-        return this.success();
+        return this.success({});
       }
 
       const projectDir = input.cwd || null;
@@ -31,7 +31,7 @@ class ExtendedThinkingHook extends HookBase {
       // Check if this hook should run (prevent duplicates)
       if (!coordination.shouldRun('extended-thinking', input.hook_event_name, operationId)) {
         this.logActivity(input, `Skipping duplicate execution for ${input.hook_event_name}`);
-        return this.success();
+        return this.success({});
       }
 
       const stateManager = new ThinkingStateManager(projectDir);
@@ -56,7 +56,7 @@ class ExtendedThinkingHook extends HookBase {
           break;
 
         default:
-          result = this.success();
+          result = this.success({});
           break;
       }
 
@@ -66,7 +66,7 @@ class ExtendedThinkingHook extends HookBase {
 
     } catch (error) {
       this.logActivity(input, `Error in extended thinking hook: ${error.message}`);
-      return this.success(); // Fail gracefully
+      return this.success({}); // Fail gracefully
     }
   }
 
@@ -78,18 +78,15 @@ class ExtendedThinkingHook extends HookBase {
       const prompt = stateManager.getDeepThinkingPrompt();
       this.logActivity(input, 'Injecting deep thinking context for user prompt');
 
-      const result = {
+      const resultData = {
         hookSpecificOutput: {
           hookEventName: 'UserPromptSubmit',
           additionalContext: prompt
         }
       };
-
-      console.log(JSON.stringify(result));
-      process.exit(0);
+      return this.success(resultData);
     }
-
-    return this.success();
+    return this.success({});
   }
 
   /**
@@ -97,40 +94,32 @@ class ExtendedThinkingHook extends HookBase {
    */
   handlePreToolUse(input, stateManager, toggles, coordination, operationId) {
     const toolName = input.tool_name;
+    let resultData = null;
 
     // Deep thinking: comprehensive analysis before any tool
     if (toggles.deepThinking) {
       const prompt = this.getPreToolDeepThinkingPrompt(toolName);
       this.logActivity(input, `Injecting deep thinking context before ${toolName}`);
 
-      const result = {
+      resultData = {
         hookSpecificOutput: {
           hookEventName: 'PreToolUse',
           additionalContext: prompt
         }
       };
-
-      console.log(JSON.stringify(result));
-      process.exit(0);
-    }
-
-    // Extended thinking: focused analysis for specific tools
-    if (toggles.thinking && this.shouldApplyExtendedThinking(toolName)) {
+    } else if (toggles.thinking && this.shouldApplyExtendedThinking(toolName)) {
+      // Extended thinking: focused analysis for specific tools
       const prompt = this.getPreToolExtendedThinkingPrompt(toolName);
       this.logActivity(input, `Injecting extended thinking context before ${toolName}`);
 
-      const result = {
+      resultData = {
         hookSpecificOutput: {
           hookEventName: 'PreToolUse',
           additionalContext: prompt
         }
       };
-
-      console.log(JSON.stringify(result));
-      process.exit(0);
     }
-
-    return this.success();
+    return this.success(resultData || {});
   }
 
   /**
@@ -142,18 +131,15 @@ class ExtendedThinkingHook extends HookBase {
       const prompt = this.getPostToolThinkingPrompt(toolName);
       this.logActivity(input, `Injecting post-tool thinking context after ${toolName}`);
 
-      const result = {
+      const resultData = {
         hookSpecificOutput: {
           hookEventName: 'PostToolUse',
           additionalContext: prompt
         }
       };
-
-      console.log(JSON.stringify(result));
-      process.exit(0);
+      return this.success(resultData);
     }
-
-    return this.success();
+    return this.success({});
   }
 
   /**
@@ -173,26 +159,7 @@ class ExtendedThinkingHook extends HookBase {
    * Get deep thinking prompt for before tool use
    */
   getPreToolDeepThinkingPrompt(toolName) {
-    return `Before using the ${toolName} tool, engage in DEEP analytical thinking:
-
-## 🧠 PRE-TOOL DEEP ANALYSIS
-
-### 1. **Tool Context Understanding**
-   - What is this ${toolName} tool about to do?
-   - What are the potential implications of this action?
-   - Are there any risks or considerations I should be aware of?
-
-### 2. **Strategic Planning**
-   - Is this the optimal approach for the current task?
-   - What alternatives exist and why is this choice better?
-   - How does this fit into the broader workflow?
-
-### 3. **Preparation & Verification**
-   - Do I have all the information needed to use this tool effectively?
-   - Are there any prerequisites or setup steps I should consider?
-   - What could go wrong and how can I mitigate risks?
-
-Now proceed with using the ${toolName} tool with this comprehensive understanding.`;
+    return `Before using the ${toolName} tool, engage in DEEP analytical thinking:\n\n## 🧠 PRE-TOOL DEEP ANALYSIS\n\n### 1. **Tool Context Understanding**\n   - What is this ${toolName} tool about to do?\n   - What are the potential implications of this action?\n   - Are there any risks or considerations I should be aware of?\n\n### 2. **Strategic Planning**\n   - Is this the optimal approach for the current task?\n   - What alternatives exist and why is this choice better?\n   - How does this fit into the broader workflow?\n\n### 3. **Preparation & Verification**\n   - Do I have all the information needed to use this tool effectively?\n   - Are there any prerequisites or setup steps I should consider?\n   - What could go wrong and how can I mitigate risks?\n\nNow proceed with using the ${toolName} tool with this comprehensive understanding.`
   }
 
   /**
@@ -210,43 +177,14 @@ Now proceed with using the ${toolName} tool with this comprehensive understandin
 
     const specificPrompt = toolSpecificPrompts[toolName] || `Before using ${toolName}, think about the approach and expected outcomes.`;
 
-    return `## 🧠 Extended Thinking: ${toolName} Tool
-
-${specificPrompt}
-
-Consider:
-1. **Purpose**: What am I trying to accomplish?
-2. **Approach**: Is this the best way to achieve the goal?
-3. **Precision**: How can I be most accurate and efficient?
-4. **Context**: How does this fit into the larger task?
-
-Proceed thoughtfully with the ${toolName} operation.`;
+    return `## 🧠 Extended Thinking: ${toolName} Tool\n\n${specificPrompt}\n\nConsider:\n1. **Purpose**: What am I trying to accomplish?\n2. **Approach**: Is this the best way to achieve the goal?\n3. **Precision**: How can I be most accurate and efficient?\n4. **Context**: How does this fit into the larger task?\n\nProceed thoughtfully with the ${toolName} operation.`
   }
 
   /**
    * Get thinking prompt for after tool use
    */
   getPostToolThinkingPrompt(toolName) {
-    return `After using the ${toolName} tool, engage in reflective analysis:
-
-## 🧠 POST-TOOL REFLECTION
-
-### 1. **Result Assessment**
-   - Did the ${toolName} operation achieve the intended goal?
-   - Are the results what I expected, and if not, why?
-   - What insights can I gain from this outcome?
-
-### 2. **Next Steps Planning**
-   - What should I do next based on these results?
-   - Are there follow-up actions needed?
-   - How do these results inform my overall strategy?
-
-### 3. **Learning Integration**
-   - What did I learn from this ${toolName} operation?
-   - How can I apply this knowledge to future similar tasks?
-   - Are there patterns or principles I should remember?
-
-Use this reflection to inform your next actions and responses.`;
+    return `After using the ${toolName} tool, engage in reflective analysis:\n\n## 🧠 POST-TOOL REFLECTION\n\n### 1. **Result Assessment**\n   - Did the ${toolName} operation achieve the intended goal?\n   - Are the results what I expected, and if not, why?\n   - What insights can I gain from this outcome?\n\n### 2. **Next Steps Planning**\n   - What should I do next based on these results?\n   - Are there follow-up actions needed?\n   - How do these results inform my overall strategy?\n\n### 3. **Learning Integration**\n   - What did I learn from this ${toolName} operation?\n   - How can I apply this knowledge to future similar tasks?\n   - Are there patterns or principles I should remember?\n\nUse this reflection to inform your next actions and responses.`
   }
 
   /**
@@ -319,20 +257,20 @@ if (require.main === module) {
 
     if (type === 'thinking') {
       const newState = ExtendedThinkingHook.toggleThinking(projectDir);
-      console.log(`🧠 Extended Thinking is now: ${newState ? '✅ ENABLED' : '❌ DISABLED'}`);
+      console.error(`🧠 Extended Thinking is now: ${newState ? '✅ ENABLED' : '❌ DISABLED'}`);
       const status = ExtendedThinkingHook.getStatus(projectDir);
-      console.log('\n📊 Current Status:');
-      console.log(`   Extended Thinking: ${status.thinking ? '✅ ON' : '❌ OFF'}`);
-      console.log(`   Deep Thinking: ${status.deepThinking ? '✅ ON' : '❌ OFF'}`);
-      console.log(`   Active Mode: ${status.activeMode}`);
+      console.error('\n📊 Current Status:');
+      console.error(`   Extended Thinking: ${status.thinking ? '✅ ON' : '❌ OFF'}`);
+      console.error(`   Deep Thinking: ${status.deepThinking ? '✅ ON' : '❌ OFF'}`);
+      console.error(`   Active Mode: ${status.activeMode}`);
     } else if (type === 'deepThinking') {
       const newState = ExtendedThinkingHook.toggleDeepThinking(projectDir);
-      console.log(`🧠 Deep Thinking is now: ${newState ? '✅ ENABLED' : '❌ DISABLED'}`);
+      console.error(`🧠 Deep Thinking is now: ${newState ? '✅ ENABLED' : '❌ DISABLED'}`);
       const status = ExtendedThinkingHook.getStatus(projectDir);
-      console.log('\n📊 Current Status:');
-      console.log(`   Extended Thinking: ${status.thinking ? '✅ ON' : '❌ OFF'}`);
-      console.log(`   Deep Thinking: ${status.deepThinking ? '✅ ON' : '❌ OFF'}`);
-      console.log(`   Active Mode: ${status.activeMode}`);
+      console.error('\n📊 Current Status:');
+      console.error(`   Extended Thinking: ${status.thinking ? '✅ ON' : '❌ OFF'}`);
+      console.error(`   Deep Thinking: ${status.deepThinking ? '✅ ON' : '❌ OFF'}`);
+      console.error(`   Active Mode: ${status.activeMode}`);
     }
     process.exit(0);
   } else {

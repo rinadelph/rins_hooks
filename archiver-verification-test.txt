@@ -1,0 +1,3 @@
+Archiver verification test file.
+Created: 2025-08-05
+This file tests that the conversation archiver is functioning correctly.

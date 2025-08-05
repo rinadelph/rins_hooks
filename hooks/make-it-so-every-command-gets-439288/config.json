@@ -18,5 +18,5 @@
   ],
   "matcher": "Bash",
   "installationType": "generated",
-  "disabled": false
+  "disabled": true
 }

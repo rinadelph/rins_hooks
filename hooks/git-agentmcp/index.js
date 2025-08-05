@@ -46,8 +46,7 @@ class GitHookCoordinator {
     try {
       // Check for active git hook lock
       if (this.isGitHookLocked()) {
-        console.log(`Git hook coordination: Another git hook is running, deferring...`);
-        return false;
+        return { shouldRun: false, reason: 'Another git hook is running, deferring...' };
       }
 
       // Quick check for obvious conflicts in settings
@@ -58,91 +57,52 @@ class GitHookCoordinator {
         );
         
         if (higherPriorityExists) {
-          console.log(`Git hook coordination: Higher priority hook detected, deferring...`);
-          return false;
+          return { shouldRun: false, reason: 'Higher priority hook detected, deferring...' };
         }
       }
 
       // Create lock to indicate this hook is running
       this.createGitHookLock();
-      return true;
+      return { shouldRun: true };
 
     } catch (error) {
       // If coordination fails, default to running (safe fallback)
-      console.warn(`Git hook coordination warning: ${error.message}`);
-      return true;
+      return { shouldRun: true, reason: `Git hook coordination warning: ${error.message}` };
     }
   }
 
-  /**
-   * Check if another git hook is currently running
-   */
   isGitHookLocked() {
     try {
-      if (!fs.existsSync(this.lockFile)) {
-        return false;
-      }
-
+      if (!fs.existsSync(this.lockFile)) return false;
       const stats = fs.statSync(this.lockFile);
       const ageMs = Date.now() - stats.mtime.getTime();
-      
-      // If lock is older than 2 minutes, consider it stale
       if (ageMs > 120000) {
         fs.unlinkSync(this.lockFile);
         return false;
       }
-
       return true;
-    } catch (error) {
-      return false;
-    }
+    } catch { return false; }
   }
 
-  /**
-   * Create lock file to indicate this hook is running
-   */
   createGitHookLock() {
     try {
       const lockDir = path.dirname(this.lockFile);
-      if (!fs.existsSync(lockDir)) {
-        fs.mkdirSync(lockDir, { recursive: true });
-      }
-
-      fs.writeFileSync(this.lockFile, JSON.stringify({
-        hook: this.hookName,
-        pid: process.pid,
-        timestamp: new Date().toISOString()
-      }));
-    } catch (error) {
-      // Ignore lock creation errors
-    }
+      fs.mkdirSync(lockDir, { recursive: true });
+      fs.writeFileSync(this.lockFile, JSON.stringify({ hook: this.hookName, pid: process.pid, timestamp: new Date().toISOString() }));
+    } catch {}
   }
 
-  /**
-   * Release the git hook lock
-   */
   releaseGitHookLock() {
     try {
-      if (fs.existsSync(this.lockFile)) {
-        fs.unlinkSync(this.lockFile);
-      }
-    } catch (error) {
-      // Ignore lock cleanup errors
-    }
+      if (fs.existsSync(this.lockFile)) fs.unlinkSync(this.lockFile);
+    } catch {}
   }
 
-  /**
-   * Quick detection of conflicting git hooks in settings
-   */
   detectQuickConflicts() {
     try {
-      if (!fs.existsSync(this.settingsPath)) {
-        return [];
-      }
-
+      if (!fs.existsSync(this.settingsPath)) return [];
       const settings = JSON.parse(fs.readFileSync(this.settingsPath, 'utf8'));
       const gitHooks = [];
-
       if (settings.hooks && settings.hooks.PostToolUse) {
         for (const hookGroup of settings.hooks.PostToolUse) {
           if (hookGroup.matcher && hookGroup.matcher.includes('Edit|Write|MultiEdit')) {
@@ -155,112 +115,45 @@ class GitHookCoordinator {
           }
         }
       }
-
       return gitHooks;
-    } catch (error) {
-      return [];
-    }
+    } catch { return []; }
   }
 
-  /**
-   * Extract hook name from command path
-   */
   extractHookName(command) {
     const match = command.match(/hooks\/([^\/]+)\/index\.js/);
     return match ? match[1] : null;
   }
 
-  /**
-   * Check if hook is a git hook
-   */
   isGitHook(hookName) {
-    const gitHookPatterns = [
-      'git-agentmcp',
-      'auto-commit', 
-      'git-commit',
-      'commit-hook',
-      'git-auto'
-    ];
-    
-    return gitHookPatterns.some(pattern => 
-      hookName && hookName.toLowerCase().includes(pattern.toLowerCase())
-    );
+    const gitHookPatterns = ['git-agentmcp', 'auto-commit', 'git-commit', 'commit-hook', 'git-auto'];
+    return gitHookPatterns.some(pattern => hookName && hookName.toLowerCase().includes(pattern.toLowerCase()));
   }
 }
 
 // Configuration
 const CONFIG = {
-  enabled: true,
-  lockTimeout: 600, // 10 minutes
-  commitMessageTemplate: `{{action}}: {{toolName}} modified {{fileName}}
-
-Session: {{sessionId}}
-PID: {{pid}} (parent: {{parentPid}})
-Tmux: {{tmuxInfo}}
-Timestamp: {{timestamp}}
-File: {{filePath}}
-Tool: {{toolName}}
-
-# Revert: git log --grep="PID: {{pid}}"`,
-  excludePatterns: [
-    /\.log$/,
-    /\.tmp$/,
-    /\.temp$/,
-    /\.lock$/,
-    /\.env/,
-    /\.git\//,
-    /\.agent/,
-    /node_modules\//,
-    /\.pyc$/,
-    /__pycache__\//
-  ],
-  skipEmptyCommits: true,
+  commitMessageTemplate: `{{action}}: {{toolName}} modified {{fileName}}\n\nSession: {{sessionId}}\nPID: {{pid}} (parent: {{parentPid}})\nTmux: {{tmuxInfo}}\nTimestamp: {{timestamp}}\nFile: {{filePath}}\nTool: {{toolName}}\n\n# Revert: git log --grep="PID: {{pid}}"`, 
+  excludePatterns: [/.log$/, /.tmp$/, /.temp$/, /.lock$/, /.env/, /.git\//, /.agent/, /node_modules\//, /.pyc$/, /__pycache__\//],
   maxCommitMessageLength: 800
 };
 
 // Utility functions
 function ensureAgentDirectory() {
-  const agentDir = path.join(process.cwd(), '.agent');
-
   try {
-    if (!fs.existsSync(agentDir)) {
-      // Create .agent directory with standard structure
-      fs.mkdirSync(agentDir, { recursive: true });
-
-      // Create subdirectories that don't conflict with Agent-MCP
-      const subdirs = ['session-activity'];
-      for (const subdir of subdirs) {
-        const subdirPath = path.join(agentDir, subdir);
-        if (!fs.existsSync(subdirPath)) {
-          fs.mkdirSync(subdirPath, { recursive: true });
-        }
-      }
-
-      // Create minimal config if none exists (compatible with Agent-MCP)
-      const configPath = path.join(agentDir, 'config.json');
-      if (!fs.existsSync(configPath)) {
-        const minimalConfig = {
-          project_name: path.basename(process.cwd()),
-          created_at: new Date().toISOString(),
-          created_by: 'rapala_git_hook',
-          hook_version: '1.0.0'
-        };
-        fs.writeFileSync(configPath, JSON.stringify(minimalConfig, null, 2));
-      }
+    const agentDir = path.join(process.cwd(), '.agent');
+    fs.mkdirSync(agentDir, { recursive: true });
+    const subdirs = ['session-activity'];
+    subdirs.forEach(subdir => fs.mkdirSync(path.join(agentDir, subdir), { recursive: true }));
+    const configPath = path.join(agentDir, 'config.json');
+    if (!fs.existsSync(configPath)) {
+      fs.writeFileSync(configPath, JSON.stringify({ project_name: path.basename(process.cwd()), created_at: new Date().toISOString(), created_by: 'rapala_git_hook', hook_version: '1.0.1' }, null, 2));
     }
-
     return true;
-  } catch (error) {
-    // Silent failure - don't block git operations
-    return false;
-  }
+  } catch { return false; }
 }
 
 function extractFilePath(toolInput) {
-  return toolInput.file_path ||
-         toolInput.filePath ||
-         (toolInput.edits && toolInput.edits[0] && toolInput.edits[0].file_path) ||
-         null;
+  return toolInput.file_path || toolInput.filePath || (toolInput.edits && toolInput.edits[0] && toolInput.edits[0].file_path) || null;
 }
 
 function extractAgentId(input) {
@@ -269,394 +162,135 @@ function extractAgentId(input) {
 
 function getTmuxInfo() {
   try {
-    const tmuxSession = process.env.TMUX_SESSION;
-    const tmuxPane = process.env.TMUX_PANE;
-    
-    // Try to get tmux info from environment variables
-    if (tmuxSession && tmuxPane) {
-      return `${tmuxSession}:${tmuxPane}`;
-    }
-    
-    // Fallback: Try to detect tmux through TMUX environment variable
     if (process.env.TMUX) {
-      try {
-        const { execSync } = require('child_process');
-        
-        // Get comprehensive tmux info in one call for accuracy
-        const tmuxInfo = execSync('tmux display-message -p "#S:#I:#W.#P"', { 
-          encoding: 'utf8', 
-          stdio: 'pipe',
-          timeout: 1000 
-        }).trim();
-        
-        // Also get the absolute pane ID for additional context
-        const absolutePaneId = execSync('tmux display-message -p "#{pane_id}"', { 
-          encoding: 'utf8', 
-          stdio: 'pipe',
-          timeout: 1000 
-        }).trim();
-        
-        return `${tmuxInfo}${absolutePaneId}`;
-      } catch (tmuxError) {
-        // If tmux commands fail, just indicate we're in tmux
-        return 'tmux-session';
-      }
+      const { execSync } = require('child_process');
+      return execSync('tmux display-message -p "#S:#I:#W.#P"', { encoding: 'utf8', stdio: 'pipe', timeout: 500 }).trim();
     }
-    
-    // Check if we're in a terminal that might be tmux
-    if (process.env.TERM && process.env.TERM.includes('tmux')) {
-      return 'tmux-detected';
-    }
-    
     return 'no-tmux';
-  } catch (error) {
-    return 'tmux-unknown';
-  }
+  } catch { return 'tmux-unknown'; }
 }
 
 function shouldExcludeFile(filePath) {
-  const fileName = path.basename(filePath);
-  const relativePath = path.relative(process.cwd(), filePath);
-  const normalizedPath = relativePath.replace(/\\/g, '/');
-
-  // Exclude files outside the git repository
-  if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
-    return true;
-  }
-
-  return CONFIG.excludePatterns.some(pattern => {
-    const regex = new RegExp(pattern.source.replace(/\*\*/g, '.*').replace(/\*/g, '[^/\\\\]*'));
-    return regex.test(fileName) || regex.test(normalizedPath);
-  });
+  const normalizedPath = path.relative(process.cwd(), filePath).replace(/\\/g, '/');
+  if (normalizedPath.startsWith('..') || path.isAbsolute(normalizedPath)) return true;
+  return CONFIG.excludePatterns.some(pattern => pattern.test(normalizedPath));
 }
 
 function generateCommitMessage(toolName, filePath, input) {
-  const fileName = path.basename(filePath);
-  const agentId = extractAgentId(input);
-  const timestamp = new Date().toISOString();
-  const tmuxInfo = getTmuxInfo();
-
-  // Determine action based on tool
-  let action = 'feat';
-  if (toolName === 'Edit') action = 'feat';
-  else if (toolName === 'Write') action = 'feat';
-  else if (toolName === 'MultiEdit') action = 'feat';
-
+  const action = (toolName === 'Edit' || toolName === 'Write' || toolName === 'MultiEdit') ? 'feat' : 'chore';
   let message = CONFIG.commitMessageTemplate
     .replace(/\{\{action\}\}/g, action)
     .replace(/\{\{toolName\}\}/g, toolName)
-    .replace(/\{\{fileName\}\}/g, fileName)
+    .replace(/\{\{fileName\}\}/g, path.basename(filePath))
     .replace(/\{\{filePath\}\}/g, filePath)
-    .replace(/\{\{sessionId\}\}/g, agentId)
+    .replace(/\{\{sessionId\}\}/g, extractAgentId(input))
     .replace(/\{\{pid\}\}/g, process.pid)
     .replace(/\{\{parentPid\}\}/g, process.ppid)
-    .replace(/\{\{tmuxInfo\}\}/g, tmuxInfo)
-    .replace(/\{\{timestamp\}\}/g, timestamp);
-
-  // Truncate if too long
-  if (message.length > CONFIG.maxCommitMessageLength) {
-    message = `${message.substring(0, CONFIG.maxCommitMessageLength - 3)}...`;
-  }
-
-  return message;
+    .replace(/\{\{tmuxInfo\}\}/g, getTmuxInfo())
+    .replace(/\{\{timestamp\}\}/g, new Date().toISOString());
+  return message.length > CONFIG.maxCommitMessageLength ? `${message.substring(0, CONFIG.maxCommitMessageLength - 3)}...` : message;
 }
 
-function runGitCommand(args, retries = 3, delay = 1000) {
+function runGitCommand(args) {
   return new Promise((resolve, reject) => {
-    const attemptCommand = (attempt) => {
-      const git = spawn('git', args, {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        cwd: process.cwd()
-      });
-
-      let stdout = '';
-      let stderr = '';
-
-      git.stdout.on('data', (data) => {
-        stdout += data.toString();
-      });
-
-      git.stderr.on('data', (data) => {
-        stderr += data.toString();
-      });
-
-      git.on('close', (code) => {
-        if (code === 0) {
-          resolve(stdout);
-        } else {
-          const errorMessage = stderr.trim();
-          const stdoutMessage = stdout.trim();
-          
-          // Enhanced error details
-          const fullError = [
-            `Git command failed (exit code ${code})`,
-            errorMessage ? `stderr: ${errorMessage}` : '',
-            stdoutMessage ? `stdout: ${stdoutMessage}` : '',
-            `command: git ${args.join(' ')}`
-          ].filter(Boolean).join('\n');
-          
-          // Check for git lock conflicts
-          if (isGitLockError(errorMessage) && attempt < retries) {
-            console.warn(`Git lock detected (attempt ${attempt}/${retries}), retrying in ${delay}ms...`);
-            
-            // Try to clean up stale locks
-            cleanupGitLocks();
-            
-            // Retry after delay
-            setTimeout(() => attemptCommand(attempt + 1), delay);
-          } else {
-            reject(new Error(fullError));
-          }
-        }
-      });
-
-      git.on('error', (error) => {
-        if (attempt < retries && isLockRelatedError(error)) {
-          console.warn(`Git command error (attempt ${attempt}/${retries}), retrying in ${delay}ms...`);
-          setTimeout(() => attemptCommand(attempt + 1), delay);
-        } else {
-          reject(error);
-        }
-      });
-    };
-
-    attemptCommand(1);
-  });
-}
-
-/**
- * Check if the error is related to git locks
- */
-function isGitLockError(errorMessage) {
-  const lockPatterns = [
-    'index.lock',
-    'config.lock', 
-    'HEAD.lock',
-    'refs/heads/',
-    'Another git process seems to be running',
-    'Unable to create',
-    'File exists'
-  ];
-  
-  return lockPatterns.some(pattern => 
-    errorMessage.toLowerCase().includes(pattern.toLowerCase())
-  );
-}
-
-/**
- * Check if error is lock-related
- */
-function isLockRelatedError(error) {
-  return error.message && isGitLockError(error.message);
-}
-
-/**
- * Clean up stale git lock files
- */
-function cleanupGitLocks() {
-  try {
-    const gitDir = path.join(process.cwd(), '.git');
-    if (!fs.existsSync(gitDir)) return;
-
-    // Common lock files that can be safely removed if stale
-    const lockFiles = [
-      path.join(gitDir, 'index.lock'),
-      path.join(gitDir, 'config.lock'),
-      path.join(gitDir, 'HEAD.lock')
-    ];
-
-    lockFiles.forEach(lockFile => {
-      if (fs.existsSync(lockFile)) {
-        try {
-          // Check if lock file is old (more than 60 seconds)
-          const stats = fs.statSync(lockFile);
-          const ageMs = Date.now() - stats.mtime.getTime();
-          
-          if (ageMs > 60000) { // 60 seconds
-            fs.unlinkSync(lockFile);
-            console.log(`Removed stale git lock: ${path.basename(lockFile)}`);
-          }
-        } catch (cleanupError) {
-          // Ignore cleanup errors
-          console.warn(`Could not clean up ${lockFile}: ${cleanupError.message}`);
-        }
-      }
+    const git = spawn('git', args, { cwd: process.cwd(), stdio: ['pipe', 'pipe', 'pipe'] });
+    let stdout = '', stderr = '';
+    git.stdout.on('data', data => stdout += data);
+    git.stderr.on('data', data => stderr += data);
+    git.on('close', code => {
+      if (code === 0) resolve(stdout.trim());
+      else reject(new Error(`Git command failed (exit code ${code}): git ${args.join(' ')}\n${stderr.trim()}`));
     });
-  } catch (error) {
-    // Ignore cleanup errors  
-    console.warn(`Git lock cleanup failed: ${error.message}`);
-  }
+    git.on('error', err => reject(err));
+  });
 }
 
 async function isGitRepository() {
   try {
     await runGitCommand(['rev-parse', '--git-dir']);
     return true;
-  } catch (error) {
-    return false;
-  }
-}
-
-async function hasChangesToCommit() {
-  try {
-    const status = await runGitCommand(['status', '--porcelain']);
-    return status.trim().length > 0;
-  } catch (error) {
-    return false;
-  }
+  } catch { return false; }
 }
 
 function logCommitActivity(agentId, filePath, commitHash, toolName) {
   try {
     ensureAgentDirectory();
-
-    const activityDir = path.join(process.cwd(), '.agent', 'session-activity');
-    const logFile = path.join(activityDir, 'git-commits.jsonl');
-
-    const logEntry = {
-      timestamp: new Date().toISOString(),
-      session_id: agentId,
-      pid: process.pid,
-      parent_pid: process.ppid,
-      commit_hash: commitHash,
-      file_path: filePath,
-      tool_name: toolName,
-      working_directory: process.cwd()
-    };
-
+    const logFile = path.join(process.cwd(), '.agent', 'session-activity', 'git-commits.jsonl');
+    const logEntry = { timestamp: new Date().toISOString(), session_id: agentId, pid: process.pid, commit_hash: commitHash, file_path: filePath, tool_name: toolName };
     fs.appendFileSync(logFile, `${JSON.stringify(logEntry)}\n`);
-  } catch (error) {
-    // Silent failure - don't block operations
-  }
+  } catch {}
 }
 
-// Parse input from stdin
 function parseInput() {
-  return new Promise((resolve, reject) => {
+  return new Promise(resolve => {
     let input = '';
-
-    process.stdin.on('data', (chunk) => {
-      input += chunk.toString();
-    });
-
+    process.stdin.on('data', chunk => input += chunk);
     process.stdin.on('end', () => {
       try {
-        const data = JSON.parse(input);
-        resolve(data);
-      } catch (error) {
-        reject(new Error(`Invalid JSON input: ${error.message}`));
+        resolve(JSON.parse(input));
+      } catch {
+        resolve({ tool_name: 'unknown', tool_input: {} });
       }
     });
-
-    process.stdin.on('error', reject);
   });
+}
+
+function outputResult(result) {
+  console.error(JSON.stringify(result, null, 2));
+  process.exit(result.success ? 0 : 1);
 }
 
 // Main execution function
 async function main() {
   const coordinator = new GitHookCoordinator();
-  
   try {
-    // Parse input from Claude Code
     const input = await parseInput();
     const { tool_name, tool_input } = input;
 
-    // Check if this hook should run (coordination check)
-    const shouldRun = await coordinator.shouldRunHook();
-    if (!shouldRun) {
-      console.log('Git hook coordination: Deferring to higher priority or already running hook');
-      process.exit(0);
+    const coordination = await coordinator.shouldRunHook();
+    if (!coordination.shouldRun) {
+      return outputResult({ success: true, data: { message: `Git hook deferred: ${coordination.reason}` } });
     }
 
-    // Only handle file modification tools
     if (!['Edit', 'Write', 'MultiEdit'].includes(tool_name)) {
-      process.exit(0);
+      return outputResult({ success: true, data: { message: 'Tool not applicable for git-agentmcp.' } });
     }
 
     const filePath = extractFilePath(tool_input);
-    if (!filePath) {
-      process.exit(0);
+    if (!filePath || !(await isGitRepository()) || shouldExcludeFile(filePath) || !fs.existsSync(filePath)) {
+      return outputResult({ success: true, data: { message: 'Commit skipped due to file path, git repo status, or exclusion.' } });
     }
 
-    // Check if we're in a git repository
-    if (!await isGitRepository()) {
-      console.log('Not in a git repository, skipping commit');
-      process.exit(0);
-    }
-
-    // Check if file should be excluded
-    if (shouldExcludeFile(filePath)) {
-      console.log(`File excluded from auto-commit: ${filePath}`);
-      process.exit(0);
-    }
-
-    // Check if file exists
-    if (!fs.existsSync(filePath)) {
-      console.error(`File does not exist: ${filePath}`);
-      process.exit(1);
-    }
-
-    // Check if file has any changes first
     const relativePath = path.relative(process.cwd(), filePath);
-    
-    try {
-      // Check if file has unstaged changes
-      const diffOutput = await runGitCommand(['diff', relativePath]);
-      const statusOutput = await runGitCommand(['status', '--porcelain', relativePath]);
-      
-      if (!diffOutput.trim() && !statusOutput.trim()) {
-        console.log(`No changes to commit for ${relativePath}`);
-        process.exit(0);
-      }
+    const diffOutput = await runGitCommand(['diff', '--', relativePath]);
+    const statusOutput = await runGitCommand(['status', '--porcelain', '--', relativePath]);
 
-      // Add the file
-      await runGitCommand(['add', filePath]);
-      
-      // Double-check something is staged for commit
-      const stagedFiles = await runGitCommand(['diff', '--cached', '--name-only']);
-      if (!stagedFiles.trim()) {
-        console.log(`No changes staged for ${relativePath}`);
-        process.exit(0);
-      }
-      
-    } catch (error) {
-      console.error(`Failed to stage ${relativePath}: ${error.message}`);
-      process.exit(1);
+    if (!diffOutput && !statusOutput) {
+      return outputResult({ success: true, data: { message: `No changes to commit for ${relativePath}` } });
     }
 
-    // Skip the global changes check - we only care about the specific file we staged
-    // The staging verification above already confirmed we have changes to commit
+    await runGitCommand(['add', filePath]);
+    const stagedFiles = await runGitCommand(['diff', '--cached', '--name-only']);
+    if (!stagedFiles.includes(relativePath.replace(/\\/g, '/'))) {
+        return outputResult({ success: true, data: { message: `No changes staged for ${relativePath}` } });
+    }
 
-    // Generate commit message
     const commitMessage = generateCommitMessage(tool_name, filePath, input);
-
-    // Create commit
     await runGitCommand(['commit', '-m', commitMessage]);
-
-    // Get commit hash for logging
     const commitHash = await runGitCommand(['rev-parse', 'HEAD']);
+    logCommitActivity(extractAgentId(input), filePath, commitHash, tool_name);
 
-    // Log commit activity to .agent directory
-    logCommitActivity(extractAgentId(input), filePath, commitHash.trim(), tool_name);
-
-    console.log(`Successfully committed ${path.basename(filePath)} with PID tracking`);
-    
-    // Release git hook lock
-    coordinator.releaseGitHookLock();
-    process.exit(0);
+    outputResult({ success: true, data: { message: `Successfully committed ${path.basename(filePath)}`, commitHash } });
 
   } catch (error) {
-    console.error(`Auto-commit failed: ${error.message}`);
-    
-    // Always release lock on error
+    outputResult({ success: false, error: `Auto-commit failed: ${error.message}` });
+  } finally {
     coordinator.releaseGitHookLock();
-    process.exit(1);
   }
 }
 
-// Execute if called directly
 if (require.main === module) {
   main();
 }
 
-module.exports = { main, parseInput, extractAgentId };
+module.exports = { main };

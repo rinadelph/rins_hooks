@@ -1,0 +1,10 @@
+Testing the new Session-Based Conversation Archiver!
+
+Expected behavior:
+✅ Create single worktree: conversations/session-1e47e6a9/
+✅ Each message/tool = commit in that session repo  
+✅ Clean hierarchy instead of hundreds of prompt-XXX worktrees
+✅ Meaningful commit messages with full context
+✅ Scalable architecture (100 sessions = 100 worktrees)
+
+This should fix the worktree explosion problem!

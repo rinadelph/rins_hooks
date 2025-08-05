@@ -1,19 +1,19 @@
 {
   "sessions": {
-    "71888bd3-d2ac-4582-bd5e-e944c59afcb8": {
-      "session_id": "71888bd3-d2ac-4582-bd5e-e944c59afcb8",
-      "pid": 3508779,
-      "parent_pid": 3508776,
-      "first_seen": 1754260663304,
-      "last_activity": 1754260857186,
-      "tool_name": "Edit",
-      "file_path": "/home/alejandro/Code/MCP/Hooks/Git/rins_hooks/hooks/extended-thinking/config.json",
+    "1e47e6a9-ccd9-49f5-b503-1badb7809953": {
+      "session_id": "1e47e6a9-ccd9-49f5-b503-1badb7809953",
+      "pid": 332680,
+      "parent_pid": 332669,
+      "first_seen": 1754362165088,
+      "last_activity": 1754362184341,
+      "tool_name": "Write",
+      "file_path": "/home/alejandro/Code/MCP/Hooks/Git/rins_hooks/test-session-based-archiver.txt",
       "working_directory": "/home/alejandro/Code/MCP/Hooks/Git/rins_hooks",
       "hook_event": "PostToolUse"
     }
   },
   "cleanup": {
-    "last_cleanup": 1754260857186,
+    "last_cleanup": 1754362184341,
     "timeout_minutes": 3
   }
 }

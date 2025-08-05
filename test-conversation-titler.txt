@@ -1,0 +1,5 @@
+Testing conversation-titler hook functionality.
+
+This file creation should trigger the hook and update the conversation title
+from generic "This session is being continued from a previous conversation"
+to something more meaningful like "💻 Code: Created test-conversation-titler.txt"

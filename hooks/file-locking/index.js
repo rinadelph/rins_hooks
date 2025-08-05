@@ -284,7 +284,7 @@ async function main() {
     if (hookPhase === 'PostToolUse') {
       // PostToolUse: Release lock and allow
       const released = releaseLock(filePath, agentId);
-      console.log(released ? `Lock released for "${filePath}"` : `No lock to release for "${filePath}"`);
+      console.error(released ? `Lock released for "${filePath}"` : `No lock to release for "${filePath}"`);
       process.exit(0);
     }
 
@@ -294,7 +294,7 @@ async function main() {
     if (existingLock) {
       if (existingLock.agent_id === agentId) {
         // Same agent already has the lock, allow operation
-        console.log(`File already locked by this agent: ${filePath}`);
+        console.error(`File already locked by this agent: ${filePath}`);
         process.exit(0);
       } else {
         // File locked by different agent, BLOCK operation
@@ -311,11 +311,11 @@ async function main() {
     const lockCreated = createLock(filePath, agentId, operation, session_id);
 
     if (lockCreated) {
-      console.log(`File lock acquired for "${filePath}"`);
+      console.error(`File lock acquired for "${filePath}"`);
       process.exit(0);
     } else {
       // Lock creation failed, allow operation with warning
-      console.log(`Warning: Could not create file lock for "${filePath}", proceeding without lock protection`);
+      console.error(`Warning: Could not create file lock for "${filePath}", proceeding without lock protection`);
       process.exit(0);
     }
 

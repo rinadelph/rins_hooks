@@ -1,0 +1,10 @@
+Final test for string content parsing!
+
+This test should capture the "continue" user prompt from this session.
+
+The conversation archiver should now handle:
+✅ String content: "continue" 
+✅ Array content: [{"type": "text", "text": "..."}]
+✅ Object content: {"text": "..."}
+
+Testing complete robust parsing!

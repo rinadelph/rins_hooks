@@ -1,0 +1,10 @@
+Testing improved robust conversation capture with enhanced filtering!
+
+Key improvements:
+✅ Better user prompt detection (skip hook messages)
+✅ Enhanced filtering for system messages  
+✅ Forward search for matching Claude responses
+✅ More comprehensive message format handling
+✅ Should now capture: "were still getting no prompt data or user data for claude we need this to be robust"
+
+Testing the 444clover case one more time with the improved parser!

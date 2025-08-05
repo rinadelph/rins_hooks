@@ -1,0 +1,7 @@
+Testing the conversation archiver debug output.
+
+This write should trigger both:
+1. The debug-hook (which works and logs to debug-hook.jsonl)
+2. The conversation archiver (which should now log raw input to stderr)
+
+Let's see if we can see what raw input the conversation archiver is actually receiving.

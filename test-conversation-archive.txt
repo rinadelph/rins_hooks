@@ -1,0 +1,13 @@
+Testing the conversation archiver system.
+
+This file creation should trigger:
+1. PostToolUse hook execution  
+2. Conversation archiver hook
+3. Git commit in worktree with tool execution details
+4. Structured storage of session/tool data
+
+The conversation archiver will:
+- Record this Write tool execution
+- Store tool metadata (timestamp, file, session)
+- Commit to git worktree with structured message
+- Enable querying via git log commands

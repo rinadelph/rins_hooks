@@ -46,7 +46,7 @@ class HookUpdater {
    * Check for available updates
    */
   async checkUpdates() {
-    console.log('🔍 Checking for hook updates...\n');
+    console.error('🔍 Checking for hook updates...\n');
     
     const VersionChecker = require('./index.js');
     const checker = new VersionChecker();
@@ -54,24 +54,24 @@ class HookUpdater {
     const versionData = await checker.checkVersions(this.projectDir);
     
     if (versionData.hasUpdates) {
-      console.log(`📦 Found ${versionData.updates.length} update(s):\n`);
+      console.error(`📦 Found ${versionData.updates.length} update(s):\n`);
       
       for (const update of versionData.updates) {
         const { hook, currentVersion, previousVersion, updateType } = update;
         const emoji = this.getUpdateEmoji(updateType);
         
-        console.log(`${emoji} ${hook.name}`);
-        console.log(`   Version: ${previousVersion} → ${currentVersion}`);
-        console.log(`   Type: ${updateType}`);
-        console.log(`   Description: ${hook.description || 'No description'}`);
-        console.log('');
+        console.error(`${emoji} ${hook.name}`);
+        console.error(`   Version: ${previousVersion} → ${currentVersion}`);
+        console.error(`   Type: ${updateType}`);
+        console.error(`   Description: ${hook.description || 'No description'}`);
+        console.error('');
       }
       
-      console.log('💡 Run `node hooks/version-checker/update.js update` to update all hooks');
-      console.log('💡 Run `node hooks/version-checker/update.js update <hook-name>` to update specific hook');
+      console.error('💡 Run `node hooks/version-checker/update.js update` to update all hooks');
+      console.error('💡 Run `node hooks/version-checker/update.js update <hook-name>` to update specific hook');
     } else {
-      console.log('✅ All hooks are up to date!');
-      console.log(`📊 Total hooks: ${versionData.totalHooks}`);
+      console.error('✅ All hooks are up to date!');
+      console.error(`📊 Total hooks: ${versionData.totalHooks}`);
     }
   }
 
@@ -80,7 +80,7 @@ class HookUpdater {
    * @param {string} hookName - Optional specific hook name
    */
   async updateHooks(hookName) {
-    console.log('🔄 Starting hook update process...\n');
+    console.error('🔄 Starting hook update process...\n');
     
     const VersionChecker = require('./index.js');
     const checker = new VersionChecker();
@@ -88,7 +88,7 @@ class HookUpdater {
     const versionData = await checker.checkVersions(this.projectDir);
     
     if (!versionData.hasUpdates) {
-      console.log('✅ No updates available');
+      console.error('✅ No updates available');
       return;
     }
 
@@ -97,7 +97,7 @@ class HookUpdater {
       : versionData.updates;
 
     if (updatesToApply.length === 0) {
-      console.log(`❌ No updates found for hook: ${hookName}`);
+      console.error(`❌ No updates found for hook: ${hookName}`);
       return;
     }
 
@@ -105,8 +105,8 @@ class HookUpdater {
       await this.updateSingleHook(update);
     }
 
-    console.log('\n✅ Update process completed!');
-    console.log('💡 Restart Claude Code to ensure hooks are properly reloaded');
+    console.error('\n✅ Update process completed!');
+    console.error('💡 Restart Claude Code to ensure hooks are properly reloaded');
   }
 
   /**
@@ -116,7 +116,7 @@ class HookUpdater {
   async updateSingleHook(update) {
     const { hook, currentVersion, previousVersion } = update;
     
-    console.log(`🔄 Updating ${hook.name}: ${previousVersion} → ${currentVersion}`);
+    console.error(`🔄 Updating ${hook.name}: ${previousVersion} → ${currentVersion}`);
     
     try {
       // For now, just update the version tracking
@@ -125,7 +125,7 @@ class HookUpdater {
       // 2. Download from package registry
       // 3. Copy from updated source
       
-      console.log(`   ✅ ${hook.name} updated successfully`);
+      console.error(`   ✅ ${hook.name} updated successfully`);
       
       // Update installation timestamp
       const configPath = path.join(hook.path, 'config.json');
@@ -144,7 +144,7 @@ class HookUpdater {
    * List all hooks with version information
    */
   async listHooks() {
-    console.log('📋 Installed Hooks:\n');
+    console.error('📋 Installed Hooks:\n');
     
     const VersionChecker = require('./index.js');
     const checker = new VersionChecker();
@@ -152,26 +152,26 @@ class HookUpdater {
     const hooks = checker.discoverHooks(this.hooksDir);
     
     if (hooks.length === 0) {
-      console.log('❌ No hooks found in hooks directory');
+      console.error('❌ No hooks found in hooks directory');
       return;
     }
 
-    console.log(`Found ${hooks.length} hook(s):\n`);
+    console.error(`Found ${hooks.length} hook(s):\n`);
     
     for (const hook of hooks) {
-      console.log(`📦 ${hook.name} v${hook.version}`);
-      console.log(`   Author: ${hook.author}`);
-      console.log(`   Path: ${path.relative(this.projectDir, hook.path)}`);
+      console.error(`📦 ${hook.name} v${hook.version}`);
+      console.error(`   Author: ${hook.author}`);
+      console.error(`   Path: ${path.relative(this.projectDir, hook.path)}`);
       if (hook.description) {
-        console.log(`   Description: ${hook.description}`);
+        console.error(`   Description: ${hook.description}`);
       }
       
       // Show events this hook handles
       if (hook.config.events) {
-        console.log(`   Events: ${hook.config.events.join(', ')}`);
+        console.error(`   Events: ${hook.config.events.join(', ')}`);
       }
       
-      console.log('');
+      console.error('');
     }
   }
 
@@ -179,33 +179,33 @@ class HookUpdater {
    * Reset version tracking
    */
   async resetVersions() {
-    console.log('🔄 Resetting version tracking...');
+    console.error('🔄 Resetting version tracking...');
     
     if (fs.existsSync(this.versionFile)) {
       fs.unlinkSync(this.versionFile);
-      console.log('✅ Version file deleted');
+      console.error('✅ Version file deleted');
     }
     
-    console.log('✅ Version tracking reset');
-    console.log('💡 Next session start will rebuild version information');
+    console.error('✅ Version tracking reset');
+    console.error('💡 Next session start will rebuild version information');
   }
 
   /**
    * Show help information
    */
   showHelp() {
-    console.log('🔧 Hook Update Utility\n');
-    console.log('Commands:');
-    console.log('  check              Check for available updates (default)');
-    console.log('  update [hook]      Update all hooks or specific hook');
-    console.log('  list               List all installed hooks');
-    console.log('  reset              Reset version tracking');
-    console.log('  help               Show this help message');
-    console.log('\nExamples:');
-    console.log('  node hooks/version-checker/update.js check');
-    console.log('  node hooks/version-checker/update.js update');
-    console.log('  node hooks/version-checker/update.js update extended-thinking');
-    console.log('  node hooks/version-checker/update.js list');
+    console.error('🔧 Hook Update Utility\n');
+    console.error('Commands:');
+    console.error('  check              Check for available updates (default)');
+    console.error('  update [hook]      Update all hooks or specific hook');
+    console.error('  list               List all installed hooks');
+    console.error('  reset              Reset version tracking');
+    console.error('  help               Show this help message');
+    console.error('\nExamples:');
+    console.error('  node hooks/version-checker/update.js check');
+    console.error('  node hooks/version-checker/update.js update');
+    console.error('  node hooks/version-checker/update.js update extended-thinking');
+    console.error('  node hooks/version-checker/update.js list');
   }
 
   /**

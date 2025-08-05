@@ -1,0 +1,10 @@
+Testing robust conversation capture with 444clover!
+
+This test should finally capture:
+✅ User prompt: "were still getting no prompt data or user data for claude we need this to be robust"
+✅ Claude response: My analysis and fix
+✅ Multiple content format handling (string, array, object)
+✅ Filtering out system/hook messages
+✅ Real conversation embedded in git commit
+
+The robust parser now handles all Claude Code transcript formats!

@@ -1,0 +1,9 @@
+Testing the conversation archiver with raw stdin processing.
+
+This should now:
+1. Receive the raw JSON input like debug-hook does
+2. Parse it correctly to extract tool_name, session_id, etc.
+3. Create proper commits with actual tool names instead of "Unknown"
+4. Store conversation data in the git worktree
+
+The key fix was switching from HookBase.parseInput() to raw stdin processing like the working debug-hook uses.

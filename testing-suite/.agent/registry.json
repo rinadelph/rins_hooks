@@ -1,0 +1,19 @@
+{
+  "sessions": {
+    "4e295d31-f756-4f6e-bf01-682bc287f060": {
+      "session_id": "4e295d31-f756-4f6e-bf01-682bc287f060",
+      "pid": 2998791,
+      "parent_pid": 2998784,
+      "first_seen": 1754331778484,
+      "last_activity": 1754331831326,
+      "tool_name": "Write",
+      "file_path": "/home/alejandro/Code/MCP/Hooks/Git/rins_hooks/src/agent-mcp-manager.js",
+      "working_directory": "/home/alejandro/Code/MCP/Hooks/Git/rins_hooks/testing-suite",
+      "hook_event": "PostToolUse"
+    }
+  },
+  "cleanup": {
+    "last_cleanup": 1754331831326,
+    "timeout_minutes": 3
+  }
+}

@@ -1,0 +1,5 @@
+Testing enhanced search range (150 entries)
+
+This should finally capture the "continue" user prompt that's buried in the conversation transcript beyond the original 50-entry search window.
+
+The conversation archiver now searches the last 150 entries to find real user prompts!

@@ -38,23 +38,23 @@ function main() {
     const status = stateManager.getStatus();
 
     // Output result
-    console.log(`🧠 ${displayName} is now: ${newState ? '✅ ENABLED' : '❌ DISABLED'}`);
-    console.log('');
+    console.error(`🧠 ${displayName} is now: ${newState ? '✅ ENABLED' : '❌ DISABLED'}`);
+    console.error('');
 
     if (newState) {
-      console.log(`All future prompts will automatically use ${displayName.toLowerCase()}.`);
+      console.error(`All future prompts will automatically use ${displayName.toLowerCase()}.`);
       if (toggleType === 'deepThinking' && status.thinking) {
-        console.log('Note: Deep thinking takes precedence over regular extended thinking.');
+        console.error('Note: Deep thinking takes precedence over regular extended thinking.');
       }
     } else {
-      console.log('Future prompts will use normal processing (unless explicitly using /think or /deep-think commands).');
+      console.error('Future prompts will use normal processing (unless explicitly using /think or /deep-think commands).');
     }
 
-    console.log('');
-    console.log('📊 Current Status:');
-    console.log(`   Extended Thinking: ${status.thinking ? '✅ ON' : '❌ OFF'}`);
-    console.log(`   Deep Thinking: ${status.deepThinking ? '✅ ON' : '❌ OFF'}`);
-    console.log(`   Active Mode: ${status.activeMode}`);
+    console.error('');
+    console.error('📊 Current Status:');
+    console.error(`   Extended Thinking: ${status.thinking ? '✅ ON' : '❌ OFF'}`);
+    console.error(`   Deep Thinking: ${status.deepThinking ? '✅ ON' : '❌ OFF'}`);
+    console.error(`   Active Mode: ${status.activeMode}`);
 
   } catch (error) {
     console.error(`Error managing ${toggleType} toggle:`, error.message);

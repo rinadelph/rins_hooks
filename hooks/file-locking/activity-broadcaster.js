@@ -290,7 +290,7 @@ class ActivityBroadcaster {
     if (result.success) {
       // Output success message to stdout for transcript
       if (result.message) {
-        console.log(result.message);
+        console.error(result.message);
       }
       process.exit(0);
     } else {

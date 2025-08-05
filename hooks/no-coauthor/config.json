@@ -1,12 +1,26 @@
 {
   "name": "no-coauthor",
-  "version": "1.0.0",
   "description": "Automatically disables co-authored-by credits in Claude Code",
-  "author": "rins_hooks",
-  "tags": ["settings", "git", "credits", "automation"],
-  "events": ["SessionStart"],
-  "matcher": "",
-  "timeout": 10,
-  "requirements": [],
-  "platforms": ["linux", "darwin", "win32"]
+  "version": "1.0.0",
+  "author": "Rapala Sync System",
+  "events": [
+    "SessionStart"
+  ],
+  "installationType": "synced",
+  "originalLocation": "user",
+  "syncedAt": "2025-08-05T00:41:17.320Z",
+  "tags": [
+    "synced",
+    "original-claude-code",
+    "settings",
+    "git",
+    "credits",
+    "automation"
+  ],
+  "timeout": null,
+  "platforms": [
+    "linux",
+    "darwin",
+    "win32"
+  ]
 }

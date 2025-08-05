@@ -1,0 +1,10 @@
+Testing the Rapala-generated hook!
+
+This file creation should trigger the Rapala hook system:
+
+1. Rapala Router (first hook in PostToolUse chain) should execute
+2. Rapala Router should discover the generated hook: listen-put-this-hook-and-modif-742866
+3. The generated hook should log execution to rapala-hook-test.log
+4. We should see both stderr output and a log file created
+
+Let's verify if the Rapala system is working!

@@ -1,0 +1,5 @@
+Debug test file for hook system debugging.
+Created: 2025-08-05
+Testing debug hooks and logging functionality.
+Debug level: INFO
+Test scenario: Hook execution verification

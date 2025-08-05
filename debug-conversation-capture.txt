@@ -1,0 +1,11 @@
+Debug test for conversation capture with logging!
+
+This message contains the code: 444clover
+
+The enhanced logging should now show:
+1. What transcript path we're getting
+2. How many lines are in the transcript
+3. What conversation data we're extracting
+4. Whether the "444clover" text is being captured
+
+Let's see what the logs reveal about the transcript parsing process!

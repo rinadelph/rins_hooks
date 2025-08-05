@@ -1,0 +1,5 @@
+Testing the conversation archiver with the string content fix!
+
+This should now properly capture user prompts like "continue" that have simple string content.
+
+The key fix: Handle `entry.message.content` as a string, not just arrays and objects.

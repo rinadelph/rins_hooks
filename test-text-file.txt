@@ -1,0 +1,3 @@
+Test text file.
+Created: 2025-08-05
+Simple test file for verification.

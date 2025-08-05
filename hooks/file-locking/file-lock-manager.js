@@ -210,12 +210,12 @@ class FileLockManager {
       process.exit(2);
     } else if (result.decision === 'approve') {
       // Approval result - output JSON to stdout
-      console.log(JSON.stringify(result));
+      console.error(JSON.stringify(result));
       process.exit(0);
     } else {
       // Allow operation - output any reason to stdout if present
       if (result.reason) {
-        console.log(result.reason);
+        console.error(result.reason);
       }
       process.exit(0);
     }

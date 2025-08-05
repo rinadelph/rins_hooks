@@ -1,0 +1,225 @@
+=== CLAUDE RESUME TEST ANALYSIS ===
+Analysis timestamp: Mon Aug  4 05:53:21 PM -04 2025
+
+=== FILE SIZES ===
+-rw-rw-r-- 1 alejandro alejandro  108 Aug  4 17:53 ./test-logs/claude-resume-analysis-20250804_175244.txt
+-rw-rw-r-- 1 alejandro alejandro  18K Aug  4 17:53 ./test-logs/claude-resume-debug-20250804_175244.log
+-rw-rw-r-- 1 alejandro alejandro 1.4K Aug  4 17:53 ./test-logs/claude-resume-debug-20250804_175244.log.interactive
+-rw-rw-r-- 1 alejandro alejandro 1.3K Aug  4 17:53 ./test-logs/claude-resume-debug-20250804_175244.log.tee
+-rw-rw-r-- 1 alejandro alejandro  458 Aug  4 17:53 ./test-logs/claude-resume-hooks-20250804_175244.log
+-rw-rw-r-- 1 alejandro alejandro 9.4K Aug  4 17:53 ./test-logs/claude-resume-master-20250804_175244.log
+-rw-rw-r-- 1 alejandro alejandro  136 Aug  4 17:52 ./test-logs/claude-resume-screen-20250804_175244.log
+-rw-rw-r-- 1 alejandro alejandro 2.3K Aug  4 17:52 ./test-logs/claude-resume-screen-20250804_175244.log.script1
+-rw-rw-r-- 1 alejandro alejandro 4.1K Aug  4 17:53 ./test-logs/claude-resume-screen-20250804_175244.log.script2
+-rw-rw-r-- 1 alejandro alejandro  22K Aug  4 17:53 ./test-logs/claude-resume-test-20250804_175244.log
+
+=== SCRIPT CAPTURES ===
+--- ./test-logs/claude-resume-screen-20250804_174556.log.script1 ---
+26 ./test-logs/claude-resume-screen-20250804_174556.log.script1
+First 10 lines:
+Script started on 2025-08-04 17:45:56-04:00 [<not executed on terminal>]
+[2J[3J[H      [1m[38;2;255;255;255mModified[39m[22m    [1m[38;2;255;255;255mCreated[39m[22m     [1m[38;2;255;255;255m# Messages[39m[22m [1m[38;2;255;255;255mGit Branch[39m[22m     [1m[38;2;255;255;255mSummary[39m[22m
+[38;2;37;99;235m❯ [2m1. [22m 3s ago      6m ago            1156 testing        This session is being [39m
+  [2m2. [22m 3s ago      1h ago            1093 testing        This session is being
+  [2m3. [22m 7m ago      6m ago            1154 testing        This session is being
+  [2m4. [22m 12m ago     6m ago            1137 testing        This session is being
+  [2m5. [22m 14m ago     6m ago            1137 testing        This session is being
+  [2m6. [22m 16m ago     6m ago            1130 testing        This session is being
+  [2m7. [22m 1h ago      2h ago             642 testing        This session is being
+  [2m8. [22m 1h ago      6m ago             308 testing        This session is being
+Last 10 lines:
+  [2m14.[22m 3h ago      3h ago             560 testing        This session is being
+  [2m15.[22m 3h ago      3h ago             272 testing        This session is being
+  [2m16.[22m 3h ago      3h ago             274 testing        This session is being
+  [2m17.[22m 3h ago      3h ago             281 testing        This session is being
+  [2m18.[22m 3h ago      3h ago             283 testing        This session is being
+  [2m19.[22m 3h ago      3h ago             289 testing        This session is being
+  [2m20.[22m 3h ago      3h ago             291 testing        This session is being
+[38;2;153;153;153m↓ and 100 more…[39m   3h ago             295 testing        This session is being
+[?25l[?2004h
+Script done on 2025-08-04 17:46:28-04:00 [COMMAND_EXIT_CODE="0"]
+
+--- ./test-logs/claude-resume-screen-20250804_174556.log.script2 ---
+0 ./test-logs/claude-resume-screen-20250804_174556.log.script2
+First 10 lines:
+Last 10 lines:
+
+--- ./test-logs/claude-resume-screen-20250804_175016.log.script1 ---
+26 ./test-logs/claude-resume-screen-20250804_175016.log.script1
+First 10 lines:
+Script started on 2025-08-04 17:50:17-04:00 [<not executed on terminal>]
+[2J[3J[H      [1m[38;2;255;255;255mModified[39m[22m    [1m[38;2;255;255;255mCreated[39m[22m     [1m[38;2;255;255;255m# Messages[39m[22m [1m[38;2;255;255;255mGit Branch[39m[22m     [1m[38;2;255;255;255mSummary[39m[22m
+[38;2;37;99;235m❯ [2m1. [22m 1s ago      2m ago              65 testing        This session is being [39m
+  [2m2. [22m 2s ago      1m ago              65 testing        This session is being
+  [2m3. [22m 2m ago      1h ago            1135 testing        This session is being
+  [2m4. [22m 3m ago      10m ago           1159 testing        This session is being
+  [2m5. [22m 11m ago     10m ago           1154 testing        This session is being
+  [2m6. [22m 17m ago     10m ago           1137 testing        This session is being
+  [2m7. [22m 18m ago     10m ago           1137 testing        This session is being
+  [2m8. [22m 20m ago     10m ago           1130 testing        This session is being
+Last 10 lines:
+  [2m14.[22m 2h ago      2h ago              95 testing        This session is being
+  [2m15.[22m 2h ago      3h ago             856 testing        This session is being
+  [2m16.[22m 3h ago      3h ago             560 testing        This session is being
+  [2m17.[22m 3h ago      3h ago             272 testing        This session is being
+  [2m18.[22m 3h ago      3h ago             274 testing        This session is being
+  [2m19.[22m 3h ago      3h ago             281 testing        This session is being
+  [2m20.[22m 3h ago      3h ago             283 testing        This session is being
+[38;2;153;153;153m↓ and 102 more…[39m   3h ago             289 testing        This session is being
+[?25l[?2004h
+Script done on 2025-08-04 17:50:49-04:00 [COMMAND_EXIT_CODE="0"]
+
+--- ./test-logs/claude-resume-screen-20250804_175016.log.script2 ---
+0 ./test-logs/claude-resume-screen-20250804_175016.log.script2
+First 10 lines:
+Last 10 lines:
+
+--- ./test-logs/claude-resume-screen-20250804_175244.log.script1 ---
+26 ./test-logs/claude-resume-screen-20250804_175244.log.script1
+First 10 lines:
+Script started on 2025-08-04 17:52:45-04:00 [<not executed on terminal>]
+[2J[3J[H      [1m[38;2;255;255;255mModified[39m[22m    [1m[38;2;255;255;255mCreated[39m[22m     [1m[38;2;255;255;255m# Messages[39m[22m [1m[38;2;255;255;255mGit Branch[39m[22m     [1m[38;2;255;255;255mSummary[39m[22m
+[38;2;37;99;235m❯ [2m1. [22m 1s ago      4m ago             100 testing        This session is being [39m
+  [2m2. [22m 2s ago      4m ago             146 testing        This session is being
+  [2m3. [22m 5m ago      1h ago            1135 testing        This session is being
+  [2m4. [22m 5m ago      12m ago           1159 testing        Claude Code Resume
+  [2m5. [22m 14m ago     12m ago           1154 testing        This session is being
+  [2m6. [22m 19m ago     12m ago           1137 testing        This session is being
+  [2m7. [22m 21m ago     12m ago           1137 testing        This session is being
+  [2m8. [22m 22m ago     12m ago           1130 testing        This session is being
+Last 10 lines:
+  [2m14.[22m 2h ago      2h ago              95 testing        This session is being
+  [2m15.[22m 2h ago      3h ago             856 testing        This session is being
+  [2m16.[22m 3h ago      3h ago             560 testing        This session is being
+  [2m17.[22m 3h ago      3h ago             272 testing        This session is being
+  [2m18.[22m 3h ago      3h ago             274 testing        This session is being
+  [2m19.[22m 3h ago      3h ago             281 testing        This session is being
+  [2m20.[22m 3h ago      3h ago             283 testing        This session is being
+[38;2;153;153;153m↓ and 102 more…[39m   3h ago             289 testing        This session is being
+[?25l[?2004h
+Script done on 2025-08-04 17:52:57-04:00 [COMMAND_EXIT_CODE="0"]
+
+--- ./test-logs/claude-resume-screen-20250804_175244.log.script2 ---
+45 ./test-logs/claude-resume-screen-20250804_175244.log.script2
+First 10 lines:
+Script started on 2025-08-04 17:52:57-04:00 [<not executed on terminal>]
+[2m[DEBUG] Writing to temp file: /home/alejandro/.claude.json.tmp.1982896.1754344377952[22m
+[2m[DEBUG] Preserving file permissions: 100664[22m
+[2m[DEBUG] Temp file written successfully, size: 13896946 bytes[22m
+[2m[DEBUG] Applied original permissions to temp file[22m
+[2m[DEBUG] Renaming /home/alejandro/.claude.json.tmp.1982896.1754344377952 to /home/alejandro/.claude.json[22m
+[2m[DEBUG] File /home/alejandro/.claude.json written atomically[22m
+[2m[DEBUG] Creating shell snapshot for bash (/bin/bash)[22m
+[2m[DEBUG] Creating snapshot at: /home/alejandro/.claude/shell-snapshots/snapshot-bash-1754344378195-wrk2th.sh[22m
+[2m[DEBUG] Writing to temp file: /home/alejandro/.claude/todos/91ed0a1e-06cb-42b8-a6d7-9fe87d788385-agent-91ed0a1e-06cb-42b8-a6d7-9fe87d788385.json.tmp.1982896.1754344378200[22m
+Last 10 lines:
+  [2m14.[22m 2h ago      2h ago              95 testing        This session is being
+  [2m15.[22m 2h ago      3h ago             856 testing        This session is being
+  [2m16.[22m 3h ago      3h ago             560 testing        This session is being
+  [2m17.[22m 3h ago      3h ago             272 testing        This session is being
+  [2m18.[22m 3h ago      3h ago             274 testing        This session is being
+  [2m19.[22m 3h ago      3h ago             281 testing        This session is being
+  [2m20.[22m 3h ago      3h ago             283 testing        This session is being
+[38;2;153;153;153m↓ and 102 more…[39m   3h ago             289 testing        This session is being
+[?25l[?2004h
+Script done on 2025-08-04 17:53:14-04:00 [COMMAND_EXIT_CODE="0"]
+
+=== SEARCH FOR KEY PATTERNS ===
+Searching in master log for important patterns...
+--- Hook executions ---
+Test directory: /home/alejandro/Code/MCP/Hooks/Git/rins_hooks
+
+--- Debug output ---
+[2m[DEBUG] Writing to temp file: /home/alejandro/.claude.json.tmp.1982896.1754344377952[22m
+[2m[DEBUG] Preserving file permissions: 100664[22m
+[2m[DEBUG] Temp file written successfully, size: 13896946 bytes[22m
+[2m[DEBUG] Applied original permissions to temp file[22m
+[2m[DEBUG] Renaming /home/alejandro/.claude.json.tmp.1982896.1754344377952 to /home/alejandro/.claude.json[22m
+[2m[DEBUG] File /home/alejandro/.claude.json written atomically[22m
+[2m[DEBUG] Creating shell snapshot for bash (/bin/bash)[22m
+[2m[DEBUG] Creating snapshot at: /home/alejandro/.claude/shell-snapshots/snapshot-bash-1754344378195-wrk2th.sh[22m
+[2m[DEBUG] Writing to temp file: /home/alejandro/.claude/todos/91ed0a1e-06cb-42b8-a6d7-9fe87d788385-agent-91ed0a1e-06cb-42b8-a6d7-9fe87d788385.json.tmp.1982896.1754344378200[22m
+[2m[DEBUG] Temp file written successfully, size: 2 bytes[22m
+[2m[DEBUG] Renaming /home/alejandro/.claude/todos/91ed0a1e-06cb-42b8-a6d7-9fe87d788385-agent-91ed0a1e-06cb-42b8-a6d7-9fe87d788385.json.tmp.1982896.1754344378200 to /home/alejandro/.claude/todos/91ed0a1e-06cb-42b8-a6d7-9fe87d788385-agent-91ed0a1e-06cb-42b8-a6d7-9fe87d788385.json[22m
+[2m[DEBUG] File /home/alejandro/.claude/todos/91ed0a1e-06cb-42b8-a6d7-9fe87d788385-agent-91ed0a1e-06cb-42b8-a6d7-9fe87d788385.json written atomically[22m
+[2m[DEBUG] Shell snapshot created successfully (2108 bytes)[22m
+[2m[DEBUG] Writing to temp file: /home/alejandro/.claude.json.tmp.1982896.1754344378369[22m
+[2m[DEBUG] Preserving file permissions: 100664[22m
+[2m[DEBUG] Temp file written successfully, size: 13896946 bytes[22m
+[2m[DEBUG] Applied original permissions to temp file[22m
+[2m[DEBUG] Renaming /home/alejandro/.claude.json.tmp.1982896.1754344378369 to /home/alejandro/.claude.json[22m
+[2m[DEBUG] File /home/alejandro/.claude.json written atomically[22m
+[DEBUG] Writing to temp file: /home/alejandro/.claude.json.tmp.1993068.1754344394957
+[DEBUG] Preserving file permissions: 100664
+[DEBUG] Temp file written successfully, size: 13896946 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /home/alejandro/.claude.json.tmp.1993068.1754344394957 to /home/alejandro/.claude.json
+[DEBUG] File /home/alejandro/.claude.json written atomically
+[DEBUG] Creating shell snapshot for bash (/bin/bash)
+[DEBUG] Creating snapshot at: /home/alejandro/.claude/shell-snapshots/snapshot-bash-1754344395139-h1iybp.sh
+[DEBUG] Writing to temp file: /home/alejandro/.claude/todos/c7093309-dee2-4bbc-a5ae-43bc19cb3bcc-agent-c7093309-dee2-4bbc-a5ae-43bc19cb3bcc.json.tmp.1993068.1754344395143
+[DEBUG] Temp file written successfully, size: 2 bytes
+[DEBUG] Renaming /home/alejandro/.claude/todos/c7093309-dee2-4bbc-a5ae-43bc19cb3bcc-agent-c7093309-dee2-4bbc-a5ae-43bc19cb3bcc.json.tmp.1993068.1754344395143 to /home/alejandro/.claude/todos/c7093309-dee2-4bbc-a5ae-43bc19cb3bcc-agent-c7093309-dee2-4bbc-a5ae-43bc19cb3bcc.json
+[DEBUG] File /home/alejandro/.claude/todos/c7093309-dee2-4bbc-a5ae-43bc19cb3bcc-agent-c7093309-dee2-4bbc-a5ae-43bc19cb3bcc.json written atomically
+[DEBUG] Writing to temp file: /home/alejandro/.claude.json.tmp.1994321.1754344396676
+[DEBUG] Preserving file permissions: 100664
+[DEBUG] Temp file written successfully, size: 13896946 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /home/alejandro/.claude.json.tmp.1994321.1754344396676 to /home/alejandro/.claude.json
+[DEBUG] File /home/alejandro/.claude.json written atomically
+[DEBUG] Creating shell snapshot for bash (/bin/bash)
+[DEBUG] Creating snapshot at: /home/alejandro/.claude/shell-snapshots/snapshot-bash-1754344396848-qem8fg.sh
+[DEBUG] Writing to temp file: /home/alejandro/.claude/todos/e9d47815-8ff9-4304-a09c-e4893aab92f7-agent-e9d47815-8ff9-4304-a09c-e4893aab92f7.json.tmp.1994321.1754344396854
+[DEBUG] Temp file written successfully, size: 2 bytes
+[DEBUG] Renaming /home/alejandro/.claude/todos/e9d47815-8ff9-4304-a09c-e4893aab92f7-agent-e9d47815-8ff9-4304-a09c-e4893aab92f7.json.tmp.1994321.1754344396854 to /home/alejandro/.claude/todos/e9d47815-8ff9-4304-a09c-e4893aab92f7-agent-e9d47815-8ff9-4304-a09c-e4893aab92f7.json
+[DEBUG] File /home/alejandro/.claude/todos/e9d47815-8ff9-4304-a09c-e4893aab92f7-agent-e9d47815-8ff9-4304-a09c-e4893aab92f7.json written atomically
+
+--- Session selection ---
+=== CLAUDE RESUME TEST - MASTER LOG ===
+=== SCRIPT CAPTURE: claude-resume-screen-20250804_175244.log.script1 ===
+  [2m4. [22m 5m ago      12m ago           1159 testing        Claude Code Resume
+=== SCRIPT CAPTURE: claude-resume-screen-20250804_175244.log.script2 ===
+[38;2;37;99;235m❯ [2m1. [22m 13s ago     5m ago             100 testing        Claude Resume Testing: [39m
+  [2m4. [22m 6m ago      13m ago           1159 testing        Claude Code Resume
+Error: --resume requires a valid session ID when used with --print
+Usage: claude -p --resume <session-id>
+Error: --resume requires a valid session ID when used with --print
+Usage: claude -p --resume <session-id>
+
+--- Model information ---
+No model references found
+
+--- Errors and warnings ---
+Error: --resume requires a valid session ID when used with --print
+Error: --resume requires a valid session ID when used with --print
+
+--- Screen control sequences ---
+[2J[3J[H      [1m[38;2;255;255;255mModified[39m[22m    [1m[38;2;255;255;255mCreated[39m[22m     [1m[38;2;255;255;255m# Messages[39m[22m [1m[38;2;255;255;255mGit Branch[39m[22m     [1m[38;2;255;255;255mSummary[39m[22m
+[38;2;37;99;235m❯ [2m1. [22m 1s ago      4m ago             100 testing        This session is being [39m
+  [2m2. [22m 2s ago      4m ago             146 testing        This session is being
+  [2m3. [22m 5m ago      1h ago            1135 testing        This session is being
+  [2m4. [22m 5m ago      12m ago           1159 testing        Claude Code Resume
+
+
+=== UNIQUE PATTERNS ===
+Unique first words of lines (showing patterns):
+    144 [DEBUG]
+    142 [2m[DEBUG]
+     50 ===
+     45 
+     31 -rw-rw-r--
+     24 Script
+     20 M
+     18 [2m4.
+     17 [38;2;37;99;235m❯
+     16 [38;2;153;153;153m↓
+     16 [2m3.
+     16 [2m20.[22m
+     16 [2m2.
+     16 [2m19.[22m
+     16 [2m18.[22m
+     16 [2m17.[22m
+     16 [2m16.[22m
+     16 [2m15.[22m
+     16 [2m14.[22m
+     16 [2J[3J[H

@@ -1,0 +1,15 @@
+Testing Git functionality in the rins_hooks project.
+
+This file is created to test git operations and hooks.
+
+Current branch: testing
+Working directory: /home/alejandro/Code/MCP/Hooks/Git/rins_hooks
+
+Test scenarios:
+1. File creation
+2. Git add operations
+3. Git commit operations
+4. Hook triggering
+5. Branch management
+
+Date: 2025-08-05

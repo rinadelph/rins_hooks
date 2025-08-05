@@ -39,7 +39,7 @@ class ConversationSaver {
       try {
         await fs.access(claudeProjectsDir);
       } catch {
-        console.log(`[ConversationSaver] No Claude conversations found for this project`);
+        console.error(`[ConversationSaver] No Claude conversations found for this project`);
         return;
       }
 
@@ -48,11 +48,11 @@ class ConversationSaver {
       const jsonlFiles = files.filter(file => file.endsWith('.jsonl'));
       
       if (jsonlFiles.length === 0) {
-        console.log(`[ConversationSaver] No conversation files to archive`);
+        console.error(`[ConversationSaver] No conversation files to archive`);
         return;
       }
 
-      console.log(`[ConversationSaver] Copying ${jsonlFiles.length} conversation files...`);
+      console.error(`[ConversationSaver] Copying ${jsonlFiles.length} conversation files...`);
       
       // Simple copy operation - no modification of originals
       for (const file of jsonlFiles) {
@@ -61,7 +61,7 @@ class ConversationSaver {
         
         try {
           await fs.copyFile(sourcePath, targetPath);
-          console.log(`[ConversationSaver] Copied: ${file}`);
+          console.error(`[ConversationSaver] Copied: ${file}`);
         } catch (error) {
           console.error(`[ConversationSaver] Failed to copy ${file}:`, error.message);
         }
@@ -81,7 +81,7 @@ class ConversationSaver {
         JSON.stringify(indexData, null, 2)
       );
       
-      console.log(`[ConversationSaver] Archive complete: ${jsonlFiles.length} files saved to .agent/conversations`);
+      console.error(`[ConversationSaver] Archive complete: ${jsonlFiles.length} files saved to .agent/conversations`);
       
     } catch (error) {
       console.error(`[ConversationSaver] Archive error:`, error.message);
@@ -96,7 +96,7 @@ if (require.main === module) {
   saver.execute()
     .then(result => {
       if (result.success) {
-        console.log(`[ConversationSaver] ${result.message}`);
+        console.error(`[ConversationSaver] ${result.message}`);
       } else {
         console.error(`[ConversationSaver] Failed: ${result.error}`);
         process.exit(1);

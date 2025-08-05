@@ -119,7 +119,7 @@ class NoCoAuthorHook {
 
       if (migrated) {
         fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
-        console.log('✓ Migrated no-coauthor hook to SessionStart');
+        console.error('✓ Migrated no-coauthor hook to SessionStart');
       }
 
     } catch (error) {
@@ -158,7 +158,7 @@ class NoCoAuthorHook {
       // Write back to settings
       try {
         fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
-        console.log('✓ Disabled co-authored-by credits in Claude Code settings');
+        console.error('✓ Disabled co-authored-by credits in Claude Code settings');
       } catch (error) {
         console.warn(`Could not update settings: ${error.message}`);
       }

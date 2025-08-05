@@ -4,7 +4,7 @@ const chalk = require('chalk');
 
 /**
  * Version Check Utility
- * Checks for hook updates when rins_hooks is run
+ * Checks for hook updates when rapala is run
  */
 
 class VersionCheck {
@@ -15,7 +15,7 @@ class VersionCheck {
   }
 
   /**
-   * Quick check for updates - runs on every rins_hooks command
+   * Quick check for updates - runs on every rapala command
    */
   async quickCheck() {
     try {

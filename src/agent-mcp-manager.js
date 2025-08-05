@@ -294,8 +294,8 @@ class AgentMCPManager {
     console.log();
     console.log(chalk.cyan('Next steps:'));
     console.log(chalk.gray('• Use Claude Code as normal - hooks will activate automatically'));
-    console.log(chalk.gray('• Check status: rins_hooks agentmcp --status')); 
-    console.log(chalk.gray('• View coordination: rins_hooks agentmcp'));
+    console.log(chalk.gray('• Check status: rapala agentmcp --status')); 
+    console.log(chalk.gray('• View coordination: rapala agentmcp'));
   }
 
   /**

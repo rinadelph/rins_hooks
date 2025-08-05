@@ -1,7 +1,7 @@
 ---
 description: Apply deep analytical thinking to thoroughly analyze and respond to a complex prompt
 argument-hint: [your complex prompt here]
-model: claude-3-5-sonnet-20241022
+allowed-tools: Bash(node:*)
 ---
 
 Before responding to the following prompt, engage in DEEP analytical thinking. Work through this systematically:

@@ -1,1 +1,6 @@
-{"thinkingToggle": true, "deepThinkingToggle": false, "lastModified": "2025-08-03T22:31:00.000Z"}
+{
+  "thinkingToggle": false,
+  "deepThinkingToggle": true,
+  "lastModified": "2025-08-05T00:27:42.327Z",
+  "deep_thinking": true
+}

@@ -256,7 +256,7 @@ class VersionCheckerHook {
       }
     };
 
-    console.log(JSON.stringify(result));
+    console.error(JSON.stringify(result));
     process.exit(0);
   }
 
@@ -378,7 +378,7 @@ class VersionCheckerHook {
         }
       };
 
-      console.log(JSON.stringify(result));
+      console.error(JSON.stringify(result));
       process.exit(0);
 
     } catch (error) {
@@ -480,29 +480,29 @@ if (require.main === module) {
   // Handle command-line arguments for auto-update control
   if (args.includes('--toggle-auto-update')) {
     const currentStatus = VersionCheckerHook.toggleAutoUpdate();
-    console.log(`🔄 Auto-update is now: ${currentStatus ? '✅ ENABLED' : '❌ DISABLED'}`);
+    console.error(`🔄 Auto-update is now: ${currentStatus ? '✅ ENABLED' : '❌ DISABLED'}`);
     process.exit(0);
   }
   
   if (args.includes('--enable-auto-update')) {
     VersionCheckerHook.toggleAutoUpdate(process.cwd(), true);
-    console.log('🔄 Auto-update: ✅ ENABLED');
+    console.error('🔄 Auto-update: ✅ ENABLED');
     process.exit(0);
   }
   
   if (args.includes('--disable-auto-update')) {
     VersionCheckerHook.toggleAutoUpdate(process.cwd(), false);
-    console.log('🔄 Auto-update: ❌ DISABLED');
+    console.error('🔄 Auto-update: ❌ DISABLED');
     process.exit(0);
   }
   
   if (args.includes('--status')) {
     const status = VersionCheckerHook.getAutoUpdateStatus();
-    console.log('📊 Version Checker Status:');
-    console.log(`   Auto-update: ${status.autoUpdate ? '✅ ENABLED' : '❌ DISABLED'}`);
-    console.log(`   Notifications: ${status.notifyUpdates ? '✅ ENABLED' : '❌ DISABLED'}`);
-    console.log(`   Last checked: ${status.lastChecked || 'Never'}`);
-    console.log(`   Check interval: ${Math.round(status.checkInterval / 3600000)} hours`);
+    console.error('📊 Version Checker Status:');
+    console.error(`   Auto-update: ${status.autoUpdate ? '✅ ENABLED' : '❌ DISABLED'}`);
+    console.error(`   Notifications: ${status.notifyUpdates ? '✅ ENABLED' : '❌ DISABLED'}`);
+    console.error(`   Last checked: ${status.lastChecked || 'Never'}`);
+    console.error(`   Check interval: ${Math.round(status.checkInterval / 3600000)} hours`);
     process.exit(0);
   }
   

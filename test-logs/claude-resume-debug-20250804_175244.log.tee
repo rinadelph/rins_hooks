@@ -1,0 +1,14 @@
+[DEBUG] Writing to temp file: /home/alejandro/.claude.json.tmp.1993068.1754344394957
+[DEBUG] Preserving file permissions: 100664
+[DEBUG] Temp file written successfully, size: 13896946 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /home/alejandro/.claude.json.tmp.1993068.1754344394957 to /home/alejandro/.claude.json
+[DEBUG] File /home/alejandro/.claude.json written atomically
+[DEBUG] Creating shell snapshot for bash (/bin/bash)
+[DEBUG] Creating snapshot at: /home/alejandro/.claude/shell-snapshots/snapshot-bash-1754344395139-h1iybp.sh
+[DEBUG] Writing to temp file: /home/alejandro/.claude/todos/c7093309-dee2-4bbc-a5ae-43bc19cb3bcc-agent-c7093309-dee2-4bbc-a5ae-43bc19cb3bcc.json.tmp.1993068.1754344395143
+[DEBUG] Temp file written successfully, size: 2 bytes
+[DEBUG] Renaming /home/alejandro/.claude/todos/c7093309-dee2-4bbc-a5ae-43bc19cb3bcc-agent-c7093309-dee2-4bbc-a5ae-43bc19cb3bcc.json.tmp.1993068.1754344395143 to /home/alejandro/.claude/todos/c7093309-dee2-4bbc-a5ae-43bc19cb3bcc-agent-c7093309-dee2-4bbc-a5ae-43bc19cb3bcc.json
+[DEBUG] File /home/alejandro/.claude/todos/c7093309-dee2-4bbc-a5ae-43bc19cb3bcc-agent-c7093309-dee2-4bbc-a5ae-43bc19cb3bcc.json written atomically
+Error: --resume requires a valid session ID when used with --print
+Usage: claude -p --resume <session-id>

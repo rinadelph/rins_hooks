@@ -46,11 +46,11 @@ async function main() {
     }
     
     if (updated) {
-      console.log(chalk.blue('🎣 Rapala Command Manager'));
-      console.log(chalk.green('✅ /rapala slash command updated and ready to use'));
-      console.log(chalk.gray('   Available globally and in this project'));
-      console.log();
-      console.log(chalk.cyan('💡 Usage: /rapala "format Python files after editing"'));
+      console.error(chalk.blue('🎣 Rapala Command Manager'));
+      console.error(chalk.green('✅ /rapala slash command updated and ready to use'));
+      console.error(chalk.gray('   Available globally and in this project'));
+      console.error();
+      console.error(chalk.cyan('💡 Usage: /rapala "format Python files after editing"'));
     }
     
     // Exit successfully - this hook just ensures the command is available

@@ -1,0 +1,3 @@
+Triggering conversation archiver with debug logging!
+
+This should create archiver-debug.log with detailed information about what the conversation archiver is doing and why it's returning empty results.

@@ -1,0 +1,6 @@
+Testing the enhanced conversation archiver with robust filtering!
+
+This should capture the actual user prompt: "continue" 
+And this Claude response explaining the issue.
+
+Key test: Does it skip the hook messages and capture real conversation?

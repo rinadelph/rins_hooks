@@ -204,7 +204,8 @@ function logSessionActivity(agentId, toolName, filePath, action) {
       working_directory: process.cwd()
     };
 
-    fs.appendFileSync(logFile, `${JSON.stringify(logEntry)}\n`);
+    fs.appendFileSync(logFile, `${JSON.stringify(logEntry)}
+`);
   } catch (error) {
     // Silent failure - don't block operations
   }
@@ -224,12 +225,19 @@ function parseInput() {
         const data = JSON.parse(input);
         resolve(data);
       } catch (error) {
-        reject(new Error(`Invalid JSON input: ${error.message}`));
+        // On invalid JSON, resolve with a minimal object to avoid crashing
+        resolve({ tool_name: 'unknown', tool_input: {}, error: 'Invalid JSON input' });
       }
     });
 
     process.stdin.on('error', reject);
   });
+}
+
+// Output JSON result
+function outputResult(result) {
+  console.error(JSON.stringify(result, null, 2));
+  process.exit(result.success ? 0 : 1);
 }
 
 // Main execution function
@@ -241,28 +249,42 @@ async function main() {
 
     // Only handle file modification tools
     if (!['Edit', 'Write', 'MultiEdit'].includes(tool_name)) {
-      process.exit(0);
+      outputResult({ success: true, data: { message: 'Tool not applicable for agent registry.' } });
+      return;
     }
 
     const filePath = extractFilePath(tool_input);
     if (!filePath) {
-      process.exit(0);
+      outputResult({ success: true, data: { message: 'No file path found in tool input.' } });
+      return;
     }
 
     // Update agent registry
     const success = updateAgentRegistry(input, tool_name, filePath);
+    const agentId = extractAgentId(input);
 
     if (success) {
-      console.log(`Agent session registered: ${extractAgentId(input)}`);
+      outputResult({
+        success: true,
+        data: {
+          message: `Agent session registered: ${agentId}`,
+          sessionId: agentId
+        }
+      });
     } else {
-      console.log('Agent registry update skipped (concurrent access)');
+      outputResult({
+        success: true, // Still a success, just skipped
+        data: {
+          message: 'Agent registry update skipped (concurrent access).'
+        }
+      });
     }
 
-    process.exit(0);
-
   } catch (error) {
-    console.error(`Agent registry failed: ${error.message}`);
-    process.exit(1);
+    outputResult({
+      success: false,
+      error: `Agent registry failed: ${error.message}`
+    });
   }
 }
 

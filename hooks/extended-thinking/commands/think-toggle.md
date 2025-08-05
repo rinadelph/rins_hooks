@@ -1,16 +1,16 @@
 ---
 description: Toggle extended thinking mode on/off for all subsequent prompts
 argument-hint: [on|off] (optional)
-model: claude-3-5-sonnet-20241022
 allowed-tools: Bash(node:*)
 ---
 
-!`node -e "
+```bash
+node -e "
 const fs = require('fs');
 const path = require('path');
 
 const toggleType = 'thinking';
-const value = process.argv[2]; // Get the argument passed to node
+const value = process.argv[2];
 
 const projectDir = process.cwd();
 const stateDir = path.join(projectDir, '.claude');
@@ -77,4 +77,5 @@ console.log(\`   Deep Thinking: \${state.deepThinkingToggle ? '✅ ON' : '❌ OF
 const activeMode = state.deepThinkingToggle ? 'Deep Thinking' : 
                   state.thinkingToggle ? 'Extended Thinking' : 'Normal';
 console.log(\`   Active Mode: \${activeMode}\`);
-" $ARGUMENTS`
+" $ARGUMENTS
+```

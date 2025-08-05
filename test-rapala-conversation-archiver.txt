@@ -1,0 +1,10 @@
+Testing the Rapala-converted conversation archiver!
+
+This should now:
+1. Be discovered by Rapala Router
+2. Execute with proper input parsing 
+3. Get real tool data instead of "Unknown"
+4. Create proper git commits in the conversation worktree
+5. Log actual session IDs and file paths
+
+The key fix was converting it from a direct Claude Code hook to a Rapala-managed hook using the proven working pattern.

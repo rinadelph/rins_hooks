@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(rm:*)",
+      "Bash(find:*)",
+      "Bash(git pull:*)",
+      "Bash(git merge:*)",
+      "Bash(npm version:*)",
+      "Bash(tmux source-file:*)"
+    ]
+  }
+}

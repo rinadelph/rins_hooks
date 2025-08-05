@@ -2,16 +2,22 @@
   "name": "version-checker",
   "description": "Checks for hook updates and manages version information across all installed hooks",
   "version": "1.0.0",
-  "author": "rins_hooks",
-  "events": ["SessionStart"],
-  "installationType": "standard",
-  "supportedPlatforms": ["linux", "darwin", "win32"],
-  "dependencies": [],
-  "settings": {
-    "checkOnStartup": true,
-    "autoUpdate": false,
-    "notifyUpdates": true,
-    "versionFile": "hook-versions.json",
-    "updateCheckInterval": 86400
-  }
+  "author": "Rapala Sync System",
+  "events": [
+    "SessionStart"
+  ],
+  "installationType": "synced",
+  "originalLocation": "user",
+  "syncedAt": "2025-08-05T00:41:17.319Z",
+  "tags": [
+    "synced",
+    "original-claude-code"
+  ],
+  "timeout": null,
+  "platforms": [
+    "linux",
+    "darwin",
+    "win32"
+  ],
+  "disabled": true
 }

@@ -1,7 +1,6 @@
 ---
 description: Toggle deep thinking mode on/off for all subsequent prompts
 argument-hint: [on|off] (optional)
-model: claude-3-5-sonnet-20241022
 allowed-tools: Bash(node:*)
 ---
 
@@ -10,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 
 const toggleType = 'deepThinking';
-const value = process.argv[2]; // Get the argument passed to node
+const value = process.argv[2];
 
 const projectDir = process.cwd();
 const stateDir = path.join(projectDir, '.claude');
@@ -57,11 +56,11 @@ try {
 const displayName = 'Deep Thinking';
 const newState = state.deepThinkingToggle;
 
-console.log(\`🧠 \${displayName} is now: \${newState ? '✅ ENABLED' : '❌ DISABLED'}\`);
+console.log('🧠 ' + displayName + ' is now: ' + (newState ? '✅ ENABLED' : '❌ DISABLED'));
 console.log('');
 
 if (newState) {
-  console.log(\`All future prompts will automatically use \${displayName.toLowerCase()}.\`);
+  console.log('All future prompts will automatically use ' + displayName.toLowerCase() + '.');
   if (state.thinkingToggle) {
     console.log('Note: Deep thinking takes precedence over regular extended thinking.');
   }
@@ -71,10 +70,10 @@ if (newState) {
 
 console.log('');
 console.log('📊 Current Status:');
-console.log(\`   Extended Thinking: \${state.thinkingToggle ? '✅ ON' : '❌ OFF'}\`);
-console.log(\`   Deep Thinking: \${state.deepThinkingToggle ? '✅ ON' : '❌ OFF'}\`);
+console.log('   Extended Thinking: ' + (state.thinkingToggle ? '✅ ON' : '❌ OFF'));
+console.log('   Deep Thinking: ' + (state.deepThinkingToggle ? '✅ ON' : '❌ OFF'));
 
 const activeMode = state.deepThinkingToggle ? 'Deep Thinking' : 
                   state.thinkingToggle ? 'Extended Thinking' : 'Normal';
-console.log(\`   Active Mode: \${activeMode}\`);
+console.log('   Active Mode: ' + activeMode);
 " $ARGUMENTS`

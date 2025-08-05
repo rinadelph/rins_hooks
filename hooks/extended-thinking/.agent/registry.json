@@ -1,0 +1,19 @@
+{
+  "sessions": {
+    "95597abf-548c-498b-bc73-d08bcbc8f8e0": {
+      "session_id": "95597abf-548c-498b-bc73-d08bcbc8f8e0",
+      "pid": 1877648,
+      "parent_pid": 1877647,
+      "first_seen": 1754328165405,
+      "last_activity": 1754328165405,
+      "tool_name": "Write",
+      "file_path": "/home/alejandro/Code/MCP/Hooks/Git/rins_hooks/hooks/extended-thinking/test-file.txt",
+      "working_directory": "/home/alejandro/Code/MCP/Hooks/Git/rins_hooks/hooks/extended-thinking",
+      "hook_event": "PostToolUse"
+    }
+  },
+  "cleanup": {
+    "last_cleanup": 1754328165405,
+    "timeout_minutes": 3
+  }
+}

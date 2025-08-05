@@ -1,0 +1,27 @@
+{
+  "name": "format-python-files-after-edit-212827",
+  "description": "Format Python files after editing",
+  "version": "1.0.0",
+  "author": "Rapala Sync System",
+  "events": [
+    "PostToolUse"
+  ],
+  "matcher": "Edit|MultiEdit|Write",
+  "installationType": "synced",
+  "originalLocation": "user",
+  "syncedAt": "2025-08-05T00:41:17.321Z",
+  "tags": [
+    "synced",
+    "original-claude-code",
+    "generated",
+    "dynamic",
+    "edit|multiedit|write"
+  ],
+  "timeout": null,
+  "platforms": [
+    "linux",
+    "darwin",
+    "win32"
+  ],
+  "disabled": true
+}

@@ -1,0 +1,17 @@
+Rapala Core Infrastructure Test
+
+Fixed the settings.json to include BOTH core components:
+✅ rapala-router - In all events (SessionStart, PostToolUse, PreToolUse, etc.)
+✅ rapala-command - In SessionStart event
+
+Core Rapala Infrastructure:
+🔒 rapala-router - Routes all hook events to Rapala-managed hooks
+🔒 rapala-command - Maintains /rapala slash command
+
+This ensures:
+- /rapala slash command works for hook generation
+- All hook events are properly routed through Rapala
+- Dynamic hook discovery and execution
+- Clean architecture with core + managed hooks
+
+Test timestamp: 2025-08-05T01:47:00Z

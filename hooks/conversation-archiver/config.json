@@ -1,0 +1,24 @@
+{
+  "name": "conversation-archiver",
+  "description": "Archives tool executions and conversations to git worktree",
+  "version": "1.0.0",
+  "author": "Rapala Sync System",
+  "tags": ["synced", "original-claude-code", "archiver", "git"],
+  "platforms": ["linux", "darwin", "win32"],
+  "events": ["PostToolUse"],
+  "matcher": "",
+  "installationType": "generated",
+  "disabled": false,
+  "settings": {
+    "worktree_path": "../rins_hooks_conversations",
+    "commit_every_tool": true,
+    "branch_per_session": false,
+    "archive_conversations": true,
+    "archive_mcp_logs": true
+  },
+  "integration": {
+    "git_worktree": true,
+    "uses_session_tracking": true,
+    "creates_commits": true
+  }
+}

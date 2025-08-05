@@ -188,7 +188,11 @@ class IntelligentGitManager {
     if (!repoAnalysis.hasChanges) return false;
     
     // Skip conversation archiver activities (they create their own commits in worktrees)
-    if (toolRecord.file_path && toolRecord.file_path.includes('/prompt-')) return false;
+    if (toolRecord.file_path && (
+        toolRecord.file_path.includes('/prompt-') ||
+        toolRecord.file_path.includes('/conversations/') ||
+        toolRecord.file_path.includes('/session-')
+    )) return false;
     
     // Skip debug/log files that don't need main repo commits
     if (toolRecord.file_path && (
@@ -205,8 +209,41 @@ class IntelligentGitManager {
     try {
       const workingDir = toolRecord.working_directory || '/home/alejandro/Code/MCP/Hooks/Git/rins_hooks';
       
-      // Stage changes in main repo
-      execSync('git add .', { cwd: workingDir });
+      // Stage changes selectively, excluding session worktrees and problematic directories
+      try {
+        // Add all files first
+        execSync('git add .', { cwd: workingDir });
+      } catch (addError) {
+        // If that fails, try selective adding
+        this.log(`Standard git add failed, trying selective approach`);
+        
+        // Get list of changed files
+        const status = execSync('git status --porcelain', { cwd: workingDir, encoding: 'utf8' });
+        const changedFiles = status.split('\n').filter(line => line.trim());
+        
+        // Add files selectively, excluding problematic ones
+        for (const fileLine of changedFiles) {
+          const file = fileLine.substring(3).trim(); // Remove status prefix
+          if (!file.includes('conversations/') && 
+              !file.includes('testing_different_project/') &&
+              !file.includes('session-')) {
+            try {
+              execSync(`git add "${file}"`, { cwd: workingDir });
+            } catch (fileError) {
+              this.log(`Could not add ${file}: ${fileError.message}`);
+            }
+          }
+        }
+      }
+      
+      // Ensure problematic directories are not staged
+      try {
+        execSync('git reset HEAD conversations/ 2>/dev/null || true', { cwd: workingDir, shell: true });
+        execSync('git reset HEAD testing_different_project/ 2>/dev/null || true', { cwd: workingDir, shell: true });
+      } catch (resetError) {
+        // Ignore reset errors
+      }
+      
       this.log(`Staged main repo changes in ${workingDir}`);
       
       // Generate intelligent commit message with conversation context
@@ -216,10 +253,22 @@ class IntelligentGitManager {
         repoAnalysis
       );
       
+      // Write commit message to temporary file and use it
+      const fs = require('fs');
+      const tempMsgFile = path.join(workingDir, '.git', 'COMMIT_MSG_TEMP');
+      fs.writeFileSync(tempMsgFile, commitMessage);
+      
       // Commit to main repo with conversation intelligence
-      execSync(`git commit -m "${commitMessage.replace(/"/g, '\\\\"')}"`, { 
+      execSync(`git commit -F "${tempMsgFile}"`, { 
         cwd: workingDir 
       });
+      
+      // Clean up temp file
+      try {
+        fs.unlinkSync(tempMsgFile);
+      } catch (cleanupError) {
+        // Ignore cleanup errors
+      }
       
       this.log(`🎉 Main repo commit: ${repoAnalysis.changeType}: ${repoAnalysis.summary}`);
       

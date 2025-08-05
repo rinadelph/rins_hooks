@@ -1,0 +1,26 @@
+{
+  "name": "run-tests-when-finished-221252",
+  "description": "Run tests when finished",
+  "version": "1.0.0",
+  "author": "Rapala Sync System",
+  "events": [
+    "PostToolUse"
+  ],
+  "installationType": "synced",
+  "originalLocation": "user",
+  "syncedAt": "2025-08-05T00:41:17.321Z",
+  "tags": [
+    "synced",
+    "original-claude-code",
+    "generated",
+    "dynamic",
+    "general"
+  ],
+  "timeout": null,
+  "platforms": [
+    "linux",
+    "darwin",
+    "win32"
+  ],
+  "disabled": true
+}

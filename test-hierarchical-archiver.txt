@@ -1,0 +1,19 @@
+Testing the enhanced hierarchical conversation archiver!
+
+This should now create a proper conversation structure:
+
+1. 📁 conversations/session-id/
+   ├── 📁 prompt-001/
+   │   ├── 📄 user-prompt.md (your input)
+   │   ├── 📄 claude-response.md (my response)
+   │   └── 📁 tools/
+   │       └── 📄 Write-timestamp.json (this tool execution)
+   └── 📄 session.json (metadata)
+
+This gives us a clear hierarchy where:
+- Each conversation session is separate
+- Each user prompt gets its own directory
+- All tools executed under that prompt are grouped together
+- Full conversation context is preserved
+
+Perfect for analyzing conversation patterns and tool usage!

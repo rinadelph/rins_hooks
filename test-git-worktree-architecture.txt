@@ -1,0 +1,14 @@
+Testing the new git worktree architecture!
+
+This should now:
+1. Create a separate git worktree for each user prompt
+2. Embed the full conversation (user prompt + Claude response) in git commit messages
+3. Create structure like:
+   - rins_hooks_conversations/ (main conversation worktree)
+   - prompt-001/ (git worktree for first prompt)
+   - prompt-002/ (git worktree for second prompt)
+   - etc.
+
+Each tool execution creates a commit with the FULL conversation context embedded.
+
+This includes your "444clover" code and everything else in the commit messages themselves!

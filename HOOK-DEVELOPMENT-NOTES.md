@@ -39,13 +39,27 @@ node "/path/to/hook/index.js"
 - ✅ **Use `/hooks` CLI command** - changes apply immediately without restart
 - ⚠️ **Manual settings edits** - require restart to take effect
 
-## Recent Example
+## Recent Examples
+
+### Git Hook Staging Fix
 When we fixed the git hook staging issue:
 1. **Modified** `hooks/git-agentmcp/index.js` staging logic
 2. **Tested** immediately with Edit command
 3. **Worked** without any restart - fresh Node.js execution picked up changes
 
-This is why our git hook fixes were effective immediately during development.
+### Dynamic Test Confirmation
+To prove our understanding, we ran a live test:
+1. **Added dynamic-test hook to settings.json** → Required restart (didn't run)
+2. **Modified debug-git hook script** → Added "🧪 DYNAMIC TEST: Code changes take effect immediately! v2.0"
+3. **Triggered Edit operation** → Hook immediately showed new message
+
+**Result:** The modified debug-git hook output:
+```
+🔍 Git Debug Hook - Issues After Tool Execution:
+🧪 DYNAMIC TEST: Code changes take effect immediately! v2.0
+```
+
+This definitively proves code changes work immediately while config changes need restart.
 
 ## Best Practices
 1. **Develop hooks** by editing the `.js` files directly

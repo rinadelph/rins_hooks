@@ -1,6 +1,5 @@
 ---
 description: Show current status of thinking toggles and modes
-model: claude-3-5-sonnet-20241022
 allowed-tools: Bash(node:*)
 ---
 
