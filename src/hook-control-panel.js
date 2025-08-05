@@ -874,6 +874,13 @@ class HookControlPanel {
       choices.push({ name: chalk.red('ESC - Exit'), value: 'exit' });
 
       const selection = await new Promise((resolve, reject) => {
+        // Set up keypress handling
+        const readline = require('readline');
+        readline.emitKeypressEvents(process.stdin);
+        if (process.stdin.isTTY) {
+          process.stdin.setRawMode(true);
+        }
+
         const prompt = inquirer.prompt([{
           type: 'list',
           name: 'choice',
@@ -884,14 +891,33 @@ class HookControlPanel {
         }]);
 
         // Handle escape key
-        process.stdin.on('keypress', (ch, key) => {
+        const escapeHandler = (ch, key) => {
           if (key && key.name === 'escape') {
-            process.stdin.removeAllListeners('keypress');
+            process.stdin.removeListener('keypress', escapeHandler);
+            if (process.stdin.isTTY) {
+              process.stdin.setRawMode(false);
+            }
+            // Force close the prompt
+            prompt.ui.close();
             resolve({ choice: 'back' });
           }
-        });
+        };
 
-        prompt.then(resolve).catch(reject);
+        process.stdin.on('keypress', escapeHandler);
+
+        prompt.then((result) => {
+          process.stdin.removeListener('keypress', escapeHandler);
+          if (process.stdin.isTTY) {
+            process.stdin.setRawMode(false);
+          }
+          resolve(result);
+        }).catch((error) => {
+          process.stdin.removeListener('keypress', escapeHandler);
+          if (process.stdin.isTTY) {
+            process.stdin.setRawMode(false);
+          }
+          reject(error);
+        });
       });
 
       if (selection.choice === 'back') {
