@@ -7,6 +7,7 @@
   "platforms": ["linux", "darwin", "win32"],
   "matcher": "Edit|Write|MultiEdit",
   "timeout": 30,
+  "disabled": true,
   "defaultConfig": {
     "enabled": true,
     "commitMessageTemplate": "Auto-commit: {{toolName}} modified {{fileName}}\n\n- File: {{filePath}}\n- Tool: {{toolName}}\n- Session: {{sessionId}}\n\n🤖 Generated with Claude Code via rins_hooks\nCo-Authored-By: Claude <noreply@anthropic.com>",
