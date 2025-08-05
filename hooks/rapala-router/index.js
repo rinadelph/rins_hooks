@@ -79,6 +79,7 @@ class RapalaRouter extends HookBase {
             
             // Only include Rapala-managed hooks that are not disabled and have an index.js file
             if ((config.installationType === 'generated' || config.installationType === 'synced') && !config.disabled && await fs.pathExists(hookPath)) {
+              console.error(`[DEBUG] Found hook: ${config.name}, events: ${JSON.stringify(config.events)}`);
               hooks.push({
                 name: config.name,
                 config: config,
@@ -86,6 +87,8 @@ class RapalaRouter extends HookBase {
                 events: config.events || [],
                 matcher: config.matcher
               });
+            } else {
+              console.error(`[DEBUG] Skipping hook ${entry.name}: disabled=${config.disabled}, installationType=${config.installationType}, hasIndex=${await fs.pathExists(hookPath)}`);
             }
           }
         }
