@@ -173,7 +173,6 @@ class SessionConversationArchiver {
             }
           }
         } catch (parseError) {
-          jsonParseErrors++;
           continue;
         }
       }
