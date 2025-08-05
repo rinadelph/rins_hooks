@@ -35,12 +35,9 @@ class RapalaRouter extends HookBase {
       
       // Execute matching hooks and merge results
       let mergedResult = {};
-      console.error(`[DEBUG] Found ${matchingHooks.length} matching hooks for ${eventType}`);
       for (const hook of matchingHooks) {
         try {
-          console.error(`[DEBUG] Executing hook: ${hook.name}`);
           const result = await this.executeGeneratedHook(hook, input);
-          console.error(`[DEBUG] Hook ${hook.name} result:`, JSON.stringify(result, null, 2));
           if (result && result.hookSpecificOutput) {
             // Merge hookSpecificOutput from each hook
             if (!mergedResult.hookSpecificOutput) {
