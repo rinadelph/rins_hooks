@@ -3,57 +3,109 @@
 const fs = require('fs').promises;
 const path = require('path');
 
-async function saveConversations() {
-  try {
-    const projectPath = process.cwd();
-    const encodedPath = projectPath.replace(/\//g, '-');
-    
-    const claudeDir = path.join(process.env.HOME, '.claude', 'projects', encodedPath);
+class ConversationSaver {
+  constructor() {
+    this.name = 'conversation-saver';
+  }
+
+  async execute() {
+    try {
+      const projectPath = process.cwd();
+      const encodedPath = this.encodeProjectPath(projectPath);
+      
+      await this.saveConversations(projectPath, encodedPath);
+      
+      return { success: true, message: 'Conversations archived to .agent' };
+    } catch (error) {
+      console.error('[ConversationSaver] Error:', error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
+  encodeProjectPath(projectPath) {
+    // Match Claude's encoding: /home/user/project -> -home-user-project
+    return projectPath.replace(/\//g, '-');
+  }
+
+  async saveConversations(projectPath, encodedPath) {
+    const claudeProjectsDir = path.join(process.env.HOME, '.claude', 'projects', encodedPath);
     const agentDir = path.join(projectPath, '.agent', 'conversations');
     
-    // Create .agent/conversations directory
-    await fs.mkdir(agentDir, { recursive: true });
-    
-    // Check if Claude conversations exist
     try {
-      const files = await fs.readdir(claudeDir);
+      // Create .agent/conversations directory
+      await fs.mkdir(agentDir, { recursive: true });
+      
+      // Check if Claude conversation directory exists
+      try {
+        await fs.access(claudeProjectsDir);
+      } catch {
+        console.log(`[ConversationSaver] No Claude conversations found for this project`);
+        return;
+      }
+
+      // Get all JSONL files
+      const files = await fs.readdir(claudeProjectsDir);
       const jsonlFiles = files.filter(file => file.endsWith('.jsonl'));
       
-      console.log(`[ConversationSaver] Found ${jsonlFiles.length} conversation files`);
+      if (jsonlFiles.length === 0) {
+        console.log(`[ConversationSaver] No conversation files to archive`);
+        return;
+      }
+
+      console.log(`[ConversationSaver] Copying ${jsonlFiles.length} conversation files...`);
       
-      // Copy each JSONL file
+      // Simple copy operation - no modification of originals
       for (const file of jsonlFiles) {
-        const source = path.join(claudeDir, file);
-        const target = path.join(agentDir, file);
-        await fs.copyFile(source, target);
-        console.log(`[ConversationSaver] Copied: ${file}`);
+        const sourcePath = path.join(claudeProjectsDir, file);
+        const targetPath = path.join(agentDir, file);
+        
+        try {
+          await fs.copyFile(sourcePath, targetPath);
+          console.log(`[ConversationSaver] Copied: ${file}`);
+        } catch (error) {
+          console.error(`[ConversationSaver] Failed to copy ${file}:`, error.message);
+        }
       }
       
-      // Simple index file
-      const index = {
-        saved_at: new Date().toISOString(),
-        project: projectPath,
-        files: jsonlFiles.length
+      // Create simple index file
+      const indexData = {
+        project_path: projectPath,
+        claude_source: claudeProjectsDir,
+        archived_at: new Date().toISOString(),
+        file_count: jsonlFiles.length,
+        files: jsonlFiles
       };
       
       await fs.writeFile(
         path.join(agentDir, 'index.json'), 
-        JSON.stringify(index, null, 2)
+        JSON.stringify(indexData, null, 2)
       );
       
-      console.log(`[ConversationSaver] Saved ${jsonlFiles.length} conversations to .agent/conversations/`);
+      console.log(`[ConversationSaver] Archive complete: ${jsonlFiles.length} files saved to .agent/conversations`);
       
     } catch (error) {
-      console.log(`[ConversationSaver] No Claude conversations found for this project`);
+      console.error(`[ConversationSaver] Archive error:`, error.message);
     }
-    
-  } catch (error) {
-    console.error(`[ConversationSaver] Error:`, error.message);
   }
 }
 
+// Command-line execution
 if (require.main === module) {
-  saveConversations();
+  const saver = new ConversationSaver();
+  
+  saver.execute()
+    .then(result => {
+      if (result.success) {
+        console.log(`[ConversationSaver] ${result.message}`);
+      } else {
+        console.error(`[ConversationSaver] Failed: ${result.error}`);
+        process.exit(1);
+      }
+    })
+    .catch(error => {
+      console.error(`[ConversationSaver] Execution error:`, error.message);
+      process.exit(1);
+    });
 }
 
-module.exports = { saveConversations };
+module.exports = ConversationSaver;
