@@ -137,6 +137,7 @@ class SessionConversationArchiver {
           const entry = JSON.parse(lines[i]);
           if (entry.type === 'user') {
             userEntriesFound++;
+            if (userEntriesFound <= 3) { // Debug first 3 entries
             this.log(`🔍 Found user entry ${userEntriesFound}: ${JSON.stringify(entry.message || {}).substring(0, 100)}...`);
             
             if (entry.message) {
