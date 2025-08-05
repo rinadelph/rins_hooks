@@ -1,45 +1,6 @@
 {
   "name": "conversation-saver",
-  "description": "Archives Claude Code conversations to .agent/conversations with metadata",
+  "description": "Simple conversation backup to .agent/conversations",
   "version": "1.0.0",
-  "author": "rins_hooks",
-  "events": {
-    "SessionEnd": {
-      "description": "Archive conversations when Claude sessions end",
-      "matcher": ".*",
-      "priority": "low",
-      "timeout": 30
-    },
-    "ManualTrigger": {
-      "description": "Manual conversation archival trigger",
-      "matcher": "conversation-saver",
-      "priority": "normal",
-      "timeout": 30
-    }
-  },
-  "settings": {
-    "auto_archive": true,
-    "archive_on_session_end": true,
-    "max_file_size_mb": 50,
-    "retention_days": 365,
-    "include_metadata": true,
-    "compress_archives": false
-  },
-  "outputs": {
-    "archive_directory": ".agent/conversations/archived",
-    "metadata_directory": ".agent/conversations/metadata",
-    "activity_log": ".agent/session-activity/conversation-saver.jsonl"
-  },
-  "dependencies": {
-    "requires": [
-      ".agent/registry.json",
-      "~/.claude/projects/"
-    ],
-    "creates": [
-      ".agent/conversations/",
-      ".agent/conversations/active/",
-      ".agent/conversations/archived/",
-      ".agent/conversations/metadata/"
-    ]
-  }
+  "type": "manual"
 }
