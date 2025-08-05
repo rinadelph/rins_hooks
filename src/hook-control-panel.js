@@ -832,6 +832,163 @@ class HookControlPanel {
     await this.manageIndividualItem(selection.item);
   }
 
+  /**
+   * Enhanced hook management with toggle functionality
+   * Press Enter to toggle between enabled (green) and disabled (red)
+   */
+  async manageHooksWithToggle() {
+    while (true) {
+      console.clear();
+      
+      // Get all hooks including disabled ones
+      const allHooks = await this.getAllHooksWithStatus();
+      
+      if (allHooks.length === 0) {
+        console.log(chalk.yellow('No hooks installed to manage.'));
+        await this.waitForEnter(false);
+        return;
+      }
+
+      // Display header
+      console.log(chalk.cyan('🎣 Rapala Hook Management - Toggle with Enter'));
+      console.log(chalk.gray('Green = Enabled, Red = Disabled, Arrow keys to navigate, Enter to toggle, Q to quit'));
+      console.log(chalk.gray('━'.repeat(70)));
+      console.log();
+
+      // Create choices with status indicators
+      const choices = allHooks.map(hook => {
+        const statusIcon = hook.disabled ? '🔴' : '🟢';
+        const statusText = hook.disabled ? chalk.red('DISABLED') : chalk.green('ENABLED');
+        const typeIcon = hook.hookType === 'rapala-generated' ? '🎣' : '🔧';
+        const typeLabel = hook.hookType === 'rapala-generated' ? chalk.magenta('[Rapala]') : chalk.blue('[Claude]');
+        
+        return {
+          name: `${statusIcon} ${typeIcon} ${hook.name} ${typeLabel} - ${statusText}`,
+          value: hook,
+          short: hook.name
+        };
+      });
+
+      choices.push(new inquirer.Separator());
+      choices.push({ name: chalk.yellow('← Back to sections'), value: 'back' });
+
+      const selection = await inquirer.prompt([{
+        type: 'list',
+        name: 'choice',
+        message: 'Select hook to toggle or navigate:',
+        choices,
+        pageSize: 15,
+        loop: false
+      }]);
+
+      if (selection.choice === 'back') {
+        return;
+      }
+
+      // Toggle the selected hook
+      await this.toggleHookStatus(selection.choice);
+    }
+  }
+
+  /**
+   * Get all hooks with their current status (enabled/disabled)
+   */
+  async getAllHooksWithStatus() {
+    const hooks = [];
+    
+    // Get regular hooks from enhancement states
+    const sectionData = this.enhancementStates.hooks;
+    const regularHooks = [...sectionData.user, ...sectionData.project, ...sectionData.local];
+    
+    // Get Rapala hooks from file system
+    const rapalaHooks = await this.scanRapalaHooks();
+    
+    // Combine and return all hooks
+    return [...regularHooks, ...rapalaHooks];
+  }
+
+  /**
+   * Scan for Rapala hooks in the hooks directory
+   */
+  async scanRapalaHooks() {
+    const hooks = [];
+    const hooksDir = path.join(__dirname, '..', 'hooks');
+    
+    try {
+      if (!fs.existsSync(hooksDir)) {
+        return hooks;
+      }
+
+      const entries = fs.readdirSync(hooksDir, { withFileTypes: true });
+      
+      for (const entry of entries) {
+        if (entry.isDirectory()) {
+          const configPath = path.join(hooksDir, entry.name, 'config.json');
+          
+          if (fs.existsSync(configPath)) {
+            try {
+              const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+              
+              if (config.installationType === 'generated' || config.installationType === 'synced') {
+                hooks.push({
+                  name: config.name,
+                  description: config.description || 'No description',
+                  version: config.version || '1.0.0',
+                  author: config.author || 'Unknown',
+                  hookType: 'rapala-generated',
+                  disabled: config.disabled || false,
+                  configPath: configPath,
+                  config: config
+                });
+              }
+            } catch (error) {
+              // Skip malformed config files
+              console.error(`Error reading config for ${entry.name}:`, error.message);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error scanning Rapala hooks:', error.message);
+    }
+    
+    return hooks;
+  }
+
+  /**
+   * Toggle a hook's enabled/disabled status
+   */
+  async toggleHookStatus(hook) {
+    try {
+      if (hook.hookType === 'rapala-generated') {
+        // Handle Rapala-generated hooks
+        const config = hook.config;
+        config.disabled = !config.disabled;
+        
+        // Write back to config file
+        fs.writeFileSync(hook.configPath, JSON.stringify(config, null, 2));
+        
+        const statusText = config.disabled ? chalk.red('DISABLED') : chalk.green('ENABLED');
+        console.log(`✅ ${hook.name} is now ${statusText}`);
+        
+      } else {
+        // Handle regular Claude Code hooks using existing methods
+        if (hook.disabled) {
+          await this.enableHook(hook, false);
+        } else {
+          await this.disableHook(hook, false);
+        }
+      }
+      
+      // Brief pause to show the result
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+    } catch (error) {
+      console.log(chalk.red(`❌ Failed to toggle ${hook.name}: ${error.message}`));
+      await this.waitForEnter(false);
+    }
+  }
+
   async viewSectionItems(sectionType) {
     await this.displayDetailedSection(sectionType);
     await this.waitForEnter(false);
