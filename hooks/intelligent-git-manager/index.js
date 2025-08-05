@@ -123,9 +123,41 @@ class IntelligentGitManager {
     return '';
   }
 
+  async ensureGitRepository(workingDir) {
+    try {
+      // Check if .git directory exists
+      const fs = require('fs');
+      const gitDir = path.join(workingDir, '.git');
+      
+      if (!fs.existsSync(gitDir)) {
+        this.log(`🆕 No git repository found in ${workingDir}, initializing...`);
+        
+        // Initialize git repository
+        execSync('git init', { cwd: workingDir });
+        
+        // Set up initial commit
+        const readmePath = path.join(workingDir, 'README.md');
+        if (!fs.existsSync(readmePath)) {
+          fs.writeFileSync(readmePath, `# Project\n\nInitialized by Claude Code Git Agent\n`);
+        }
+        
+        execSync('git add .', { cwd: workingDir });
+        execSync('git commit -m "Initial commit"', { cwd: workingDir });
+        
+        this.log(`✅ Git repository initialized in ${workingDir}`);
+      }
+    } catch (error) {
+      this.log(`⚠️  Warning: Could not ensure git repository: ${error.message}`);
+      // Don't throw - continue without git if initialization fails
+    }
+  }
+
   async analyzeRepositoryChanges(toolRecord) {
     try {
-      const workingDir = toolRecord.working_directory || '/home/alejandro/Code/MCP/Hooks/Git/rins_hooks';
+      const workingDir = toolRecord.working_directory || process.cwd();
+      
+      // Ensure git repository exists
+      await this.ensureGitRepository(workingDir);
       
       // Get git status
       const status = execSync('git status --porcelain', { 
@@ -207,7 +239,7 @@ class IntelligentGitManager {
 
   async createIntelligentMainRepoCommit(toolRecord, conversationContext, repoAnalysis) {
     try {
-      const workingDir = toolRecord.working_directory || '/home/alejandro/Code/MCP/Hooks/Git/rins_hooks';
+      const workingDir = toolRecord.working_directory || process.cwd();
       
       // Stage changes selectively, excluding session worktrees and problematic directories
       try {

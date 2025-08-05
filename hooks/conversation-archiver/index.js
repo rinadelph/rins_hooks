@@ -86,8 +86,12 @@ class SessionConversationArchiver {
         this.log(`🆕 Creating new session worktree: ${shortSessionId}`);
       }
       
-      // Create git worktree for this session
-      const mainRepoPath = '/home/alejandro/Code/MCP/Hooks/Git/rins_hooks';
+      // Create git worktree for this session - use current project directory
+      const mainRepoPath = currentProjectDir;
+      
+      // Ensure git repository exists in main project
+      await this.ensureGitRepository(mainRepoPath);
+      
       const branchName = `session-${shortSessionId}`;
       
       // Create new orphan branch and worktree
@@ -113,6 +117,38 @@ class SessionConversationArchiver {
     } catch (error) {
       this.log(`❌ Failed to create session worktree: ${error.message}`);
       throw error;
+    }
+  }
+
+  async ensureGitRepository(workingDir) {
+    try {
+      // Check if .git directory exists
+      const gitDir = path.join(workingDir, '.git');
+      
+      try {
+        await fs.access(gitDir);
+      } catch {
+        this.log(`🆕 No git repository found in ${workingDir}, initializing...`);
+        
+        // Initialize git repository
+        await this.runGitCommand(workingDir, ['init']);
+        
+        // Set up initial commit
+        const readmePath = path.join(workingDir, 'README.md');
+        try {
+          await fs.access(readmePath);
+        } catch {
+          await fs.writeFile(readmePath, `# Project\n\nInitialized by Claude Code Session Archiver\n`);
+        }
+        
+        await this.runGitCommand(workingDir, ['add', '.']);
+        await this.runGitCommand(workingDir, ['commit', '-m', 'Initial commit']);
+        
+        this.log(`✅ Git repository initialized in ${workingDir}`);
+      }
+    } catch (error) {
+      this.log(`⚠️  Warning: Could not ensure git repository: ${error.message}`);
+      // Don't throw - continue without git if initialization fails
     }
   }
 

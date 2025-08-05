@@ -33,18 +33,23 @@ class RapalaRouter extends HookBase {
         return this.hookMatches(hook, eventType, toolName);
       });
       
-      const results = [];
-      // Execute matching hooks
+      // Execute matching hooks and merge results
+      let mergedResult = {};
       for (const hook of matchingHooks) {
         try {
           const result = await this.executeGeneratedHook(hook, input);
-          results.push({ hook: hook.name, result });
+          if (result && result.hookSpecificOutput) {
+            // Merge hookSpecificOutput from each hook
+            if (!mergedResult.hookSpecificOutput) {
+              mergedResult.hookSpecificOutput = {};
+            }
+            Object.assign(mergedResult.hookSpecificOutput, result.hookSpecificOutput);
+          }
         } catch (error) {
           console.error(`❌ Hook ${hook.name} failed:`, error.message);
-          results.push({ hook: hook.name, error: error.message });
         }
       }
-      return this.success({ executedHooks: results });
+      return this.success(mergedResult);
     } catch (error) {
       console.error(`❌ Rapala Router failed: ${error.message}`);
       console.error(`❌ Error stack:`, error.stack);
