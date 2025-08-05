@@ -1,0 +1,21 @@
+{
+  "name": "make-it-so-every-command-gets-439288",
+  "description": "make it so every command gets ran inside of a tmux session every bash command unique to each session in 1 tmux session",
+  "version": "1.0.0",
+  "author": "Rapala Hook Generator",
+  "tags": [
+    "generated",
+    "dynamic",
+    "bash"
+  ],
+  "platforms": [
+    "linux",
+    "darwin",
+    "win32"
+  ],
+  "events": [
+    "PostToolUse"
+  ],
+  "matcher": "Bash",
+  "installationType": "generated"
+}
