@@ -177,6 +177,7 @@ class SessionConversationArchiver {
         }
       }
       
+      this.log(`📈 Parsing results: ${userEntriesFound} user entries, ${userTextFound} with text, ${userTextFiltered} passed filters`);
       return { userPrompt: '', claudeResponse: '', messageNumber: 1 };
     } catch (error) {
       this.log(`Error getting conversation data: ${error.message}`);
