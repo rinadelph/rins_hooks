@@ -61,10 +61,12 @@ class RapalaRouter extends HookBase {
    * Discover all generated hooks in the hooks directory
    */
   async discoverGeneratedHooks() {
+    // Always use the original Rapala hooks directory where this router is installed
     const hooksDir = path.join(__dirname, '..');
     const hooks = [];
     
     try {
+      console.error(`[DEBUG] Looking for hooks in: ${hooksDir}`);
       const entries = await fs.readdir(hooksDir, { withFileTypes: true });
       
       for (const entry of entries) {
