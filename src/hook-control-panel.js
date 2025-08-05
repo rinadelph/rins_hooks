@@ -212,18 +212,19 @@ class HookControlPanel {
   }
 
   /**
-   * Classify hook type: Claude Code built-in vs Rapala generated
+   * Classify hook type: Claude Code built-in vs Rapala managed
    */
   classifyHookType(item) {
-    // Check if hook has installationType indicating it's generated
-    if (item.installationType === 'generated') {
+    // Check if hook has installationType indicating it's Rapala managed
+    if (item.installationType === 'generated' || item.installationType === 'synced') {
       return 'rapala-generated';
     }
 
     // Check for Rapala hook generator patterns
-    if (item.author === 'Rapala Hook Generator' || 
+    if (item.author === 'Rapala Hook Generator' || item.author === 'Rapala Sync System' ||
         (item.tags && item.tags.includes('generated')) ||
-        (item.tags && item.tags.includes('dynamic'))) {
+        (item.tags && item.tags.includes('dynamic')) ||
+        (item.tags && item.tags.includes('synced'))) {
       return 'rapala-generated';
     }
 
