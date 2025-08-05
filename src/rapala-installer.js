@@ -11,17 +11,20 @@ const os = require('os');
 
 class RapalaInstaller {
   constructor() {
+    // Get absolute path to Rapala installation
+    const rapalaPath = path.resolve(__dirname, '..');
+    
     this.coreHooks = {
       "SessionStart": [{
         "matcher": "",
         "hooks": [
           {
             "type": "command",
-            "command": `node "${path.join(__dirname, '../hooks/rapala-router/index.js')}"`
+            "command": `node "${path.join(rapalaPath, 'hooks/rapala-router/index.js')}"`
           },
           {
             "type": "command", 
-            "command": `node "${path.join(__dirname, '../hooks/rapala-command/index.js')}"`
+            "command": `node "${path.join(rapalaPath, 'hooks/rapala-command/index.js')}"`
           }
         ]
       }]
