@@ -126,50 +126,43 @@ class SessionConversationArchiver {
       this.log(`📊 Parsing ${lines.length} transcript lines, checking recent ${recentLines.length}`);
       this.log(`🔍 Transcript path: ${transcriptPath}`);
       
-      // Find the most recent real user prompt (same as working intelligent git manager)
+      // EXACT COPY of working intelligent git manager logic
       for (let i = recentLines.length - 1; i >= 0; i--) {
         try {
           const entry = JSON.parse(recentLines[i]);
           if (entry.type === 'user' && entry.message) {
-            this.log(`🔍 Found user entry: ${JSON.stringify(entry.message).substring(0, 100)}...`);
+            let userText = '';
             
-            if (entry.message) {
-              let userText = '';
+            // Handle string content (most common)
+            if (typeof entry.message.content === 'string') {
+              userText = entry.message.content;
+            } else if (Array.isArray(entry.message.content)) {
+              const textParts = entry.message.content
+                .filter(item => item.type === 'text')
+                .map(item => item.text);
+              userText = textParts.join(' ');
+            }
+            
+            // Skip hook/system messages, find real user intent
+            if (userText && 
+                !userText.includes('<user-prompt-submit-hook>') &&
+                !userText.includes('tool_use_id') &&
+                !userText.includes('<system-reminder>') &&
+                userText.trim().length > 5) {
               
-              if (typeof entry.message.content === 'string') {
-                userText = entry.message.content;
-              } else if (Array.isArray(entry.message.content)) {
-                const textParts = entry.message.content
-                  .filter(item => item.type === 'text')
-                  .map(item => item.text);
-                userText = textParts.join(' ');
-              }
+              this.log(`✅ Found user text: "${userText.substring(0, 100)}..."`);
               
-              if (userText && userText.trim().length > 0) {
-                userTextFound++;
-                this.log(`📝 User text candidate: "${userText.substring(0, 100)}..."`);
-                
-                // Skip hook/system messages
-                if (!userText.includes('<user-prompt-submit-hook>') &&
-                    !userText.includes('tool_use_id') &&
-                    !userText.includes('<system-reminder>') &&
-                    userText.trim().length > 5) {
-                  userTextFiltered++;
-                  this.log(`✅ User text passed filters: "${userText.substring(0, 50)}..."`);
-                  
-                  // Find corresponding Claude response
-                  const claudeResponse = await this.findClaudeResponse(lines, i);
+              // Find corresponding Claude response
+              const claudeResponse = await this.findClaudeResponse(recentLines, i);
               
-                  // Count total messages to get message number
-                  const messageNumber = this.countUserMessages(lines);
-                  
-                  return { 
-                    userPrompt: userText.length > 150 ? userText.substring(0, 150) + '...' : userText,
-                    claudeResponse: claudeResponse.length > 200 ? claudeResponse.substring(0, 200) + '...' : claudeResponse,
-                    messageNumber
-                  };
-                }
-              }
+              // Count total messages to get message number  
+              const messageNumber = this.countUserMessages(lines);
+              
+              return { 
+                userPrompt: userText.length > 150 ? userText.substring(0, 150) + '...' : userText,
+                claudeResponse: claudeResponse.length > 200 ? claudeResponse.substring(0, 200) + '...' : claudeResponse,
+                messageNumber
+              };
             }
           }
         } catch (parseError) {
