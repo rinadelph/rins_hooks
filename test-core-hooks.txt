@@ -1,0 +1,17 @@
+Testing Core Hook Protection
+
+The Rapala system should now:
+✅ Mark rapala-router and rapala-command as CORE hooks
+✅ Prevent them from being disabled via the management interface  
+✅ Show them with 🔒 CORE status instead of toggle options
+✅ Display warning if user tries to disable them
+
+Core hooks should always remain active as they are essential 
+Rapala infrastructure.
+
+Expected behavior:
+- Core hooks show as 🔒 [Type] - CORE
+- Attempting to toggle shows warning message
+- They remain always enabled in the router
+
+Test completed: 2025-08-05T01:35:00Z
