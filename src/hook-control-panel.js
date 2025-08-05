@@ -789,6 +789,12 @@ class HookControlPanel {
   }
 
   async manageSectionItems(sectionType) {
+    // Special handling for hooks with toggle functionality
+    if (sectionType === 'hooks') {
+      await this.manageHooksWithToggle();
+      return;
+    }
+
     const sectionData = this.enhancementStates[sectionType];
     const allInstalled = [...sectionData.user, ...sectionData.project, ...sectionData.local];
 
