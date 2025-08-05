@@ -160,9 +160,10 @@ class SessionConversationArchiver {
                     !userText.includes('<system-reminder>') &&
                     userText.trim().length > 5) {
                   userTextFiltered++;
-              
-              // Find corresponding Claude response
-              const claudeResponse = await this.findClaudeResponse(lines, i);
+                  this.log(`✅ User text passed filters: "${userText.substring(0, 50)}..."`);
+                  
+                  // Find corresponding Claude response
+                  const claudeResponse = await this.findClaudeResponse(lines, i);
               
               // Count total messages to get message number
               const messageNumber = this.countUserMessages(lines);
