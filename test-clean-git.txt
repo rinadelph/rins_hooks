@@ -1,0 +1,14 @@
+Testing Clean Intelligent Git Manager
+
+Now with cleaned settings.json that only has Rapala Router:
+- All old hardcoded hooks removed
+- Only Rapala Router should execute
+- Intelligent Git Manager should analyze state
+- Should see proper commit message format
+
+Expected behavior with 70+ unstaged files:
+Strategy: SKIP due to complexity threshold exceeded
+
+Let's see if this works correctly now.
+
+Timestamp: 2025-08-05T01:25:00Z
