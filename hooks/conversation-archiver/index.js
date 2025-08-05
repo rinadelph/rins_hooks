@@ -47,7 +47,7 @@ class SessionConversationArchiver {
       this.log(`📁 Session worktree: ${sessionWorktreePath}`);
       
       // Ensure session worktree exists
-      await this.ensureSessionWorktree(conversationsDir, sessionWorktreePath, shortSessionId);
+      await this.ensureSessionWorktree(conversationsDir, sessionWorktreePath, shortSessionId, currentProjectDir);
       
       // Get conversation context
       const conversationData = await this.getConversationData(toolRecord.transcript_path);
@@ -67,7 +67,7 @@ class SessionConversationArchiver {
     }
   }
 
-  async ensureSessionWorktree(conversationsDir, sessionWorktreePath, shortSessionId) {
+  async ensureSessionWorktree(conversationsDir, sessionWorktreePath, shortSessionId, currentProjectDir) {
     try {
       // Check if conversations directory exists
       try {
