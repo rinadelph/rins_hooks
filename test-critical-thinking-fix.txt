@@ -1,0 +1,8 @@
+Testing if session archiver can now find user entries with the exact same logic as the working intelligent git manager.
+
+Expected: Should see "✅ Found user text" in session-archiver-debug.log
+Current: Still seeing empty user prompt despite identical parsing logic
+
+The intelligent git manager consistently captures: "lets think critically since we got this to work in the past but we are doing it wrong now"
+
+But session archiver still shows: 💬 User prompt: ""
