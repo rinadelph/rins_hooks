@@ -1,0 +1,15 @@
+Testing which git hook is actually running
+
+This file should trigger the intelligent git manager, not the old auto-commit hook.
+
+If we see the old format:
+"Auto-commit: Write modified commit-test.txt"
+
+Then the old hook is still running.
+
+If we see the new format:
+"feat: Write modified commit-test.txt" with detailed session info
+
+Then the intelligent git manager is working.
+
+Let's see what happens!
