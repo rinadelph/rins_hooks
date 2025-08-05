@@ -972,6 +972,14 @@ class HookControlPanel {
    */
   async toggleHookStatus(hook) {
     try {
+      // Check if this is a core/critical hook that cannot be disabled
+      if (this.isCoreHook(hook)) {
+        console.log(chalk.yellow(`⚠️ ${hook.name} is core Rapala infrastructure and cannot be disabled`));
+        console.log(chalk.gray('Core hooks: rapala-router, rapala-command'));
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        return;
+      }
+
       if (hook.hookType === 'rapala-generated') {
         // Handle Rapala-generated hooks
         const config = hook.config;
@@ -999,6 +1007,17 @@ class HookControlPanel {
       console.log(chalk.red(`❌ Failed to toggle ${hook.name}: ${error.message}`));
       await this.waitForEnter(false);
     }
+  }
+
+  /**
+   * Check if a hook is core infrastructure that cannot be disabled
+   */
+  isCoreHook(hook) {
+    const coreHookNames = ['rapala-router', 'rapala-command'];
+    return coreHookNames.includes(hook.name) || 
+           hook.config?.installationType === 'core' ||
+           hook.config?.systemCritical === true ||
+           hook.config?.cannotDisable === true;
   }
 
   async viewSectionItems(sectionType) {
