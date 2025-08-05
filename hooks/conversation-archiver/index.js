@@ -126,10 +126,15 @@ class SessionConversationArchiver {
       this.log(`📊 Parsing ${lines.length} transcript lines for conversation context`);
       
       // Find the most recent real user prompt by searching backwards through ALL lines
+      let userEntriesFound = 0;
+      let userTextFound = 0;
+      let userTextFiltered = 0;
+      
       for (let i = lines.length - 1; i >= 0; i--) {
         try {
           const entry = JSON.parse(lines[i]);
           if (entry.type === 'user' && entry.message) {
+            userEntriesFound++;
             let userText = '';
             
             if (typeof entry.message.content === 'string') {
@@ -141,12 +146,18 @@ class SessionConversationArchiver {
               userText = textParts.join(' ');
             }
             
+            if (userText && userText.trim().length > 0) {
+              userTextFound++;
+              this.log(`🔍 User text candidate: "${userText.substring(0, 100)}..."`);
+            }
+            
             // Skip hook/system messages
             if (userText && 
                 !userText.includes('<user-prompt-submit-hook>') &&
                 !userText.includes('tool_use_id') &&
                 !userText.includes('<system-reminder>') &&
                 userText.trim().length > 5) {
+              userTextFiltered++;
               
               // Find corresponding Claude response
               const claudeResponse = await this.findClaudeResponse(lines, i);

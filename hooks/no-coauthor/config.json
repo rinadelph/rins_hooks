@@ -22,5 +22,6 @@
     "linux",
     "darwin",
     "win32"
-  ]
+  ],
+  "disabled": false
 }
