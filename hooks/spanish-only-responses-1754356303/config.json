@@ -1,0 +1,24 @@
+{
+  "name": "spanish-only-responses-1754356303",
+  "description": "Test hook - Forces Claude to respond only in Spanish when enabled",
+  "version": "1.0.0",
+  "author": "Rapala Hook Generator",
+  "tags": [
+    "generated",
+    "dynamic",
+    "test",
+    "spanish",
+    "prompt-injection"
+  ],
+  "platforms": [
+    "linux",
+    "darwin",
+    "win32"
+  ],
+  "events": [
+    "UserPromptSubmit"
+  ],
+  "matcher": "",
+  "installationType": "generated",
+  "disabled": false
+}
