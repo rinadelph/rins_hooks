@@ -993,12 +993,12 @@ class HookControlPanel {
         console.log(`✅ ${hook.name} is now ${statusText}`);
         
       } else {
-        // Handle regular Claude Code hooks using existing methods
-        if (hook.disabled) {
-          await this.enableHook(hook, false);
-        } else {
-          await this.disableHook(hook, false);
-        }
+        // Handle regular Claude Code hooks - these should also be managed through config files now
+        // since most hooks have been converted to Rapala format
+        console.log(chalk.yellow(`⚠️ Legacy Claude Code hook: ${hook.name}`));
+        console.log(chalk.gray('This hook should be converted to Rapala format for proper management'));
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        return;
       }
       
       // Brief pause to show the result
