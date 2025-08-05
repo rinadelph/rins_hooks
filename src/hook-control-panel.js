@@ -886,6 +886,10 @@ class HookControlPanel {
         return;
       }
 
+      if (selection.choice === 'exit') {
+        process.exit(0);
+      }
+
       // Toggle the selected hook
       await this.toggleHookStatus(selection.choice);
     }
