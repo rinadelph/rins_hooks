@@ -1,8 +1,20 @@
-# rins_hooks
+# Rins Hooks - Advanced Claude Code Git Integration
 
-Universal Claude Code hooks collection with cross-platform installer
+A sophisticated hook system for Claude Code that provides intelligent git management and conversation archiving across multiple projects.
 
-> 🤖 **Interested in AI Multi-Agent workflows?** Join the [Swarm Community](https://discord.gg/7Jm7nrhjGn) to discuss agentic development, share tools, and collaborate on building better AI workflows!
+## 🚀 Key Features
+
+### 🤖 Intelligent Git Manager
+- **Auto-initialization**: Automatically initializes git repositories in new projects
+- **Smart commits**: Creates meaningful commit messages with conversation context
+- **Multi-project support**: Works seamlessly across different project directories
+- **Change analysis**: Intelligently categorizes changes (feat, fix, chore, etc.)
+
+### 📚 Session-Based Conversation Archiver
+- **Session isolation**: Each conversation gets its own git worktree
+- **Conversation tracking**: Archives user prompts and tool executions
+- **Message numbering**: Maintains chronological order of interactions
+- **Tool execution logs**: Detailed records of all tool usage
 
 ## 🌐 Cross-Platform Support
 
