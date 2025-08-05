@@ -871,56 +871,16 @@ class HookControlPanel {
 
       choices.push(new inquirer.Separator());
       choices.push({ name: chalk.yellow('← Back to sections'), value: 'back' });
-      choices.push({ name: chalk.red('ESC - Exit'), value: 'exit' });
+      choices.push({ name: chalk.red('Q - Quit'), value: 'exit' });
 
-      const selection = await new Promise((resolve, reject) => {
-        // Set up keypress handling
-        const readline = require('readline');
-        readline.emitKeypressEvents(process.stdin);
-        if (process.stdin.isTTY) {
-          process.stdin.setRawMode(true);
-        }
-
-        const prompt = inquirer.prompt([{
-          type: 'list',
-          name: 'choice',
-          message: 'Select hook to toggle or navigate (ESC to exit):',
-          choices,
-          pageSize: 15,
-          loop: false
-        }]);
-
-        // Handle escape key
-        const escapeHandler = (ch, key) => {
-          if (key && (key.name === 'escape' || (key.ctrl && key.name === 'c'))) {
-            process.stdin.removeListener('keypress', escapeHandler);
-            if (process.stdin.isTTY) {
-              process.stdin.setRawMode(false);
-            }
-            // Force close the prompt and return to previous menu
-            if (prompt.ui && prompt.ui.close) {
-              prompt.ui.close();
-            }
-            resolve({ choice: 'back' });
-          }
-        };
-
-        process.stdin.on('keypress', escapeHandler);
-
-        prompt.then((result) => {
-          process.stdin.removeListener('keypress', escapeHandler);
-          if (process.stdin.isTTY) {
-            process.stdin.setRawMode(false);
-          }
-          resolve(result);
-        }).catch((error) => {
-          process.stdin.removeListener('keypress', escapeHandler);
-          if (process.stdin.isTTY) {
-            process.stdin.setRawMode(false);
-          }
-          reject(error);
-        });
-      });
+      const selection = await inquirer.prompt([{
+        type: 'list',
+        name: 'choice',
+        message: 'Select hook to toggle or navigate (Q to quit):',
+        choices,
+        pageSize: 15,
+        loop: false
+      }]);
 
       if (selection.choice === 'back') {
         return;
