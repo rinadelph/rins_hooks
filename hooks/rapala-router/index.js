@@ -70,8 +70,8 @@ class RapalaRouter extends HookBase {
           if (await fs.pathExists(configPath) && await fs.pathExists(hookPath)) {
             const config = await fs.readJson(configPath);
             
-            // Only include generated hooks
-            if (config.installationType === 'generated') {
+            // Only include generated hooks that are not disabled
+            if (config.installationType === 'generated' && !config.disabled) {
               hooks.push({
                 name: config.name,
                 config: config,
