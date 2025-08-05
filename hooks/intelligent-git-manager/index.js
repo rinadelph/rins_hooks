@@ -305,9 +305,6 @@ class IntelligentGitManager {
     message += `\\n- Session: ${toolRecord.session_id?.substring(0, 8)}`;
     message += `\\n- Timestamp: ${new Date(toolRecord.timestamp).toLocaleString()}`;
     
-    // Mark as AI-assisted
-    message += `\\n\\nCo-authored-by: Claude <claude@anthropic.com>`;
-    
     return message;
   }
 }
