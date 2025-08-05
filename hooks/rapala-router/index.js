@@ -69,7 +69,6 @@ class RapalaRouter extends HookBase {
     const hooks = [];
     
     try {
-      console.error(`[DEBUG] Looking for hooks in: ${hooksDir}`);
       const entries = await fs.readdir(hooksDir, { withFileTypes: true });
       
       for (const entry of entries) {
