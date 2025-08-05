@@ -37,7 +37,6 @@ class RapalaRouter extends HookBase {
       // Execute matching hooks
       for (const hook of matchingHooks) {
         try {
-          console.error(`🎣 Rapala Router: Executing ${hook.name} for ${eventType}/${toolName}`);
           const result = await this.executeGeneratedHook(hook, input);
           results.push({ hook: hook.name, result });
         } catch (error) {
@@ -45,8 +44,6 @@ class RapalaRouter extends HookBase {
           results.push({ hook: hook.name, error: error.message });
         }
       }
-      
-      console.error(`🎣 Rapala Router: Completed with ${results.length} executed hooks`);
       return this.success({ executedHooks: results });
     } catch (error) {
       console.error(`❌ Rapala Router failed: ${error.message}`);
