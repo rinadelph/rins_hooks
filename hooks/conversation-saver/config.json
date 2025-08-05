@@ -1,0 +1,46 @@
+{
+  "name": "conversation-saver",
+  "description": "Archives Claude Code conversations to .agent/conversations for persistent storage and analysis",
+  "version": "1.0.0",
+  "events": [
+    "SessionEnd",
+    "PostToolUse"
+  ],
+  "triggers": {
+    "SessionEnd": {
+      "description": "Archive conversations when Claude session ends",
+      "priority": "low"
+    },
+    "PostToolUse": {
+      "description": "Track conversation activity for archival candidates",
+      "matcher": "compact",
+      "priority": "normal"
+    }
+  },
+  "dependencies": {
+    "node": ">=14.0.0",
+    "fs": "builtin",
+    "path": "builtin"
+  },
+  "configuration": {
+    "auto_archive_on_session_end": true,
+    "archive_large_conversations_only": false,
+    "min_conversation_size": 1000,
+    "max_archive_age_days": 30,
+    "create_search_index": true
+  },
+  "integration": {
+    "agent_system": true,
+    "registry_tracking": true,
+    "session_activity_logging": true,
+    "claude_projects_integration": true
+  },
+  "storage": {
+    "base_path": ".agent/conversations",
+    "structure": {
+      "active": "Currently active conversation files",
+      "archived": "Archived conversation files with timestamps",
+      "metadata": "Conversation metadata and search indices"
+    }
+  }
+}
