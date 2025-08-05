@@ -858,8 +858,9 @@ class HookControlPanel {
 
       // Create choices with status indicators
       const choices = allHooks.map(hook => {
-        const statusIcon = hook.disabled ? '🔴' : '🟢';
-        const statusText = hook.disabled ? chalk.red('DISABLED') : chalk.green('ENABLED');
+        const isCoreHook = this.isCoreHook(hook);
+        const statusIcon = isCoreHook ? '🔒' : (hook.disabled ? '🔴' : '🟢');
+        const statusText = isCoreHook ? chalk.cyan('CORE') : (hook.disabled ? chalk.red('DISABLED') : chalk.green('ENABLED'));
         const typeIcon = hook.hookType === 'rapala-generated' ? '🎣' : '🔧';
         const typeLabel = hook.hookType === 'rapala-generated' ? chalk.magenta('[Rapala]') : chalk.blue('[Claude]');
         
