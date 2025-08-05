@@ -128,7 +128,7 @@ class SessionConversationArchiver {
       // Find the most recent real user prompt by searching backwards through ALL lines
       for (let i = lines.length - 1; i >= 0; i--) {
         try {
-          const entry = JSON.parse(recentLines[i]);
+          const entry = JSON.parse(lines[i]);
           if (entry.type === 'user' && entry.message) {
             let userText = '';
             
