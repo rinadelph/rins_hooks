@@ -1,485 +1,285 @@
 #!/usr/bin/env node
 
 /**
- * Intelligent Git Manager Hook
- * Advanced git management with repository state awareness and smart commit strategies
+ * Intelligent Git Agent - Rapala Managed
+ * Integrates conversation intelligence directly into main repo git commits
  * 
- * Features:
- * - Repository state analysis
- * - Smart commit strategies (single, batch, skip)
- * - Conflict prevention and detection
- * - User intent detection
- * - Graceful error handling with recovery suggestions
+ * This replaces separate worktree chaos with intelligent main repo commits
  */
 
-const HookBase = require('../../src/hook-base');
-const fs = require('fs');
+const fs = require('fs').promises;
 const path = require('path');
 const { execSync } = require('child_process');
 
-class IntelligentGitManager extends HookBase {
+class IntelligentGitManager {
   constructor() {
-    super('intelligent-git-manager', {
-      description: 'Advanced git management with repository state awareness',
-      matcher: 'Edit|Write|MultiEdit',
-      timeout: 30
-    });
-    
-    this.thresholds = {
-      maxUnstagedFiles: 15,
-      maxCommitsAhead: 50,
-      batchCommitMinFiles: 3,
-      complexStateSkipThreshold: 25
-    };
+    this.debugLog = '/home/alejandro/Code/MCP/Hooks/Git/rins_hooks/git-agent-debug.log';
   }
 
-  async execute(input) {
+  log(message) {
+    const timestamp = new Date().toISOString();
+    const logMsg = `[${timestamp}] ${message}\n`;
+    require('fs').appendFileSync(this.debugLog, logMsg);
+  }
+
+  async execute(toolRecord) {
     try {
-      const { tool_name, tool_input } = input;
+      this.log(`=== INTELLIGENT GIT AGENT START ===`);
+      this.log(`Tool: ${toolRecord.tool_name}, File: ${toolRecord.file_path || 'N/A'}`);
       
-      // Only process file editing tools
-      if (!['Edit', 'Write', 'MultiEdit'].includes(tool_name)) {
-        return this.success({ message: 'Tool not applicable for git management' });
-      }
-
-      const filePath = this.extractFilePath(tool_input);
-      if (!filePath) {
-        return this.success({ message: 'No file path detected' });
-      }
-
-      // Check if we're in a git repository
-      if (!this.isGitRepository()) {
-        return this.success({ message: 'Not a git repository' });
-      }
-
-      // Analyze repository state
-      const repoState = await this.analyzeRepositoryState();
-      console.log(`🔍 Repository State Analysis:`);
-      console.log(`  Status: ${repoState.status}`);
-      console.log(`  Unstaged files: ${repoState.unstagedFiles.length}`);
-      console.log(`  Commits ahead: ${repoState.commitsAhead}`);
-      console.log(`  Recommendation: ${repoState.recommendation}`);
-
-      // Determine strategy based on repository state
-      const strategy = this.determineStrategy(repoState, filePath);
-      console.log(`🎯 Strategy: ${strategy.action} - ${strategy.reason}`);
-
-      // Execute the chosen strategy
-      const result = await this.executeStrategy(strategy, filePath, tool_name, input);
+      // Get conversation context using the working conversation archiver logic
+      const conversationContext = await this.getConversationContext(toolRecord.transcript_path);
+      this.log(`User Intent: "${conversationContext.userPrompt}"`);
       
-      return this.success({
-        message: result.message,
-        strategy: strategy.action,
-        repositoryState: repoState.status,
-        details: result.details || {}
-      });
-
+      // Analyze what actually changed in the repo
+      const repoAnalysis = await this.analyzeRepositoryChanges(toolRecord);
+      this.log(`Changes: ${repoAnalysis.changeType} - ${repoAnalysis.summary}`);
+      
+      // Only commit meaningful main repo changes (not archiver files or debug logs)
+      if (this.shouldCommitToMainRepo(toolRecord, repoAnalysis)) {
+        await this.createIntelligentMainRepoCommit(toolRecord, conversationContext, repoAnalysis);
+        this.log(`✅ Created intelligent main repo commit`);
+      } else {
+        this.log(`⏭️  Skipped - archiver activity or no meaningful changes`);
+      }
+      
+      this.log(`=== INTELLIGENT GIT AGENT COMPLETE ===\n`);
+      return '';
     } catch (error) {
-      console.error('❌ Intelligent Git Manager Error:', error.message);
-      return this.error(`Git management failed: ${error.message}`);
+      this.log(`❌ Error: ${error.message}`);
+      return '';
     }
   }
 
-  /**
-   * Analyze the current repository state
-   */
-  async analyzeRepositoryState() {
+  async getConversationContext(transcriptPath) {
     try {
-      const status = {
-        isClean: false,
-        unstagedFiles: [],
-        stagedFiles: [],
-        commitsAhead: 0,
-        commitsBehind: 0,
-        currentBranch: '',
-        hasConflicts: false,
-        inMerge: false,
-        inRebase: false,
-        recommendation: ''
-      };
-
-      // Get current branch
-      try {
-        status.currentBranch = execSync('git branch --show-current', { encoding: 'utf8' }).trim();
-      } catch (e) {
-        status.currentBranch = 'unknown';
-      }
-
-      // Check for special git states
-      const gitDir = path.join(process.cwd(), '.git');
-      status.inMerge = fs.existsSync(path.join(gitDir, 'MERGE_HEAD'));
-      status.inRebase = fs.existsSync(path.join(gitDir, 'rebase-merge')) || fs.existsSync(path.join(gitDir, 'rebase-apply'));
-
-      // Get file status
-      const statusOutput = execSync('git status --porcelain', { encoding: 'utf8' });
-      const lines = statusOutput.split('\n').filter(line => line.trim());
+      if (!transcriptPath) return { userPrompt: '', claudeResponse: '' };
       
-      for (const line of lines) {
-        const status_char = line.substring(0, 2);
-        const fileName = line.substring(3);
-        
-        if (status_char.includes('M') && status_char[1] === 'M') {
-          // Modified in both index and working tree
-          status.stagedFiles.push(fileName);
-          status.unstagedFiles.push(fileName);
-        } else if (status_char[0] !== ' ' && status_char[0] !== '?') {
-          // Staged changes
-          status.stagedFiles.push(fileName);
-        } else if (status_char[1] !== ' ') {
-          // Unstaged changes
-          status.unstagedFiles.push(fileName);
-        }
-        
-        // Check for conflicts
-        if (status_char.includes('U') || line.includes('both modified')) {
-          status.hasConflicts = true;
-        }
-      }
-
-      // Check ahead/behind status
-      try {
-        const trackingBranch = execSync(`git rev-parse --abbrev-ref ${status.currentBranch}@{upstream}`, { encoding: 'utf8' }).trim();
-        const aheadBehind = execSync(`git rev-list --left-right --count ${trackingBranch}...HEAD`, { encoding: 'utf8' }).trim();
-        const [behind, ahead] = aheadBehind.split('\t').map(Number);
-        status.commitsBehind = behind;
-        status.commitsAhead = ahead;
-      } catch (e) {
-        // No upstream or other issue - not necessarily an error
-        status.commitsAhead = 0;
-        status.commitsBehind = 0;
-      }
-
-      status.isClean = status.unstagedFiles.length === 0 && status.stagedFiles.length === 0;
-
-      // Generate recommendation
-      status.recommendation = this.generateRecommendation(status);
-      status.status = this.summarizeStatus(status);
-
-      return status;
-    } catch (error) {
-      throw new Error(`Repository analysis failed: ${error.message}`);
-    }
-  }
-
-  /**
-   * Generate human-readable recommendation
-   */
-  generateRecommendation(status) {
-    if (status.hasConflicts) return 'Resolve conflicts first';
-    if (status.inMerge) return 'Complete merge operation first';
-    if (status.inRebase) return 'Complete rebase operation first';
-    if (status.commitsAhead > this.thresholds.maxCommitsAhead) return 'Consider pushing commits to remote';
-    if (status.unstagedFiles.length > this.thresholds.complexStateSkipThreshold) return 'Too many changes - manual review recommended';
-    if (status.unstagedFiles.length > this.thresholds.batchCommitMinFiles) return 'Batch commit recommended';
-    if (status.unstagedFiles.length > 0) return 'Individual file commit suitable';
-    return 'Repository is clean';
-  }
-
-  /**
-   * Summarize repository status
-   */
-  summarizeStatus(status) {
-    if (status.hasConflicts) return 'CONFLICTS';
-    if (status.inMerge) return 'MERGING';
-    if (status.inRebase) return 'REBASING';
-    if (status.unstagedFiles.length > this.thresholds.complexStateSkipThreshold) return 'COMPLEX';
-    if (status.commitsAhead > this.thresholds.maxCommitsAhead) return 'AHEAD';
-    if (status.unstagedFiles.length > this.thresholds.batchCommitMinFiles) return 'BATCH_READY';
-    if (status.unstagedFiles.length > 0) return 'DIRTY';
-    return 'CLEAN';
-  }
-
-  /**
-   * Determine the best strategy based on repository state
-   */
-  determineStrategy(repoState, filePath) {
-    // Blocking conditions - never auto-commit
-    if (repoState.hasConflicts) {
-      return { action: 'SKIP', reason: 'Repository has merge conflicts' };
-    }
-    
-    if (repoState.inMerge || repoState.inRebase) {
-      return { action: 'SKIP', reason: 'Repository is in merge/rebase state' };
-    }
-
-    if (repoState.unstagedFiles.length > this.thresholds.complexStateSkipThreshold) {
-      return { action: 'SKIP', reason: `Too many changes (${repoState.unstagedFiles.length}) - manual review needed` };
-    }
-
-    // Check if the specific file should be excluded
-    if (this.shouldExcludeFile(filePath)) {
-      return { action: 'SKIP', reason: 'File matches exclusion patterns' };
-    }
-
-    // Warning conditions - proceed with caution
-    if (repoState.commitsAhead > this.thresholds.maxCommitsAhead) {
-      return { action: 'SINGLE_COMMIT', reason: `Branch is ${repoState.commitsAhead} commits ahead - single commit only` };
-    }
-
-    // Optimal conditions - choose best strategy
-    if (repoState.unstagedFiles.length >= this.thresholds.batchCommitMinFiles) {
-      // Check if most changes are related to current edit
-      const relatedFiles = this.findRelatedFiles(filePath, repoState.unstagedFiles);
-      if (relatedFiles.length >= 2) {
-        return { action: 'BATCH_COMMIT', reason: `Found ${relatedFiles.length} related files` };
-      }
-    }
-
-    // Default to single file commit
-    return { action: 'SINGLE_COMMIT', reason: 'Standard single file commit' };
-  }
-
-  /**
-   * Find files related to the current edit
-   */
-  findRelatedFiles(currentFile, allFiles) {
-    const currentDir = path.dirname(currentFile);
-    const currentExt = path.extname(currentFile);
-    const currentBase = path.basename(currentFile, currentExt);
-    
-    return allFiles.filter(file => {
-      // Same directory
-      if (path.dirname(file) === currentDir) return true;
+      const data = await fs.readFile(transcriptPath, 'utf8');
+      const lines = data.trim().split('\n');
+      const recentLines = lines.slice(-150);
       
-      // Same extension and similar name
-      if (path.extname(file) === currentExt && 
-          path.basename(file, path.extname(file)).includes(currentBase)) return true;
-      
-      // Configuration files that often go together
-      const configFiles = ['.json', '.yml', '.yaml', '.toml', '.ini'];
-      if (configFiles.includes(currentExt) && configFiles.includes(path.extname(file))) return true;
-      
-      return false;
-    });
-  }
-
-  /**
-   * Execute the chosen strategy
-   */
-  async executeStrategy(strategy, filePath, toolName, input) {
-    switch (strategy.action) {
-      case 'SKIP':
-        return {
-          message: `Git commit skipped: ${strategy.reason}`,
-          details: { skipped: true, reason: strategy.reason }
-        };
-
-      case 'SINGLE_COMMIT':
-        return await this.executeSingleCommit(filePath, toolName, input);
-
-      case 'BATCH_COMMIT':
-        return await this.executeBatchCommit(filePath, toolName, input);
-
-      default:
-        throw new Error(`Unknown strategy: ${strategy.action}`);
-    }
-  }
-
-  /**
-   * Execute single file commit
-   */
-  async executeSingleCommit(filePath, toolName, input) {
-    try {
-      // Check if file has actual changes
-      const relativePath = path.relative(process.cwd(), filePath);
-      const diffOutput = execSync(`git diff -- "${relativePath}"`, { encoding: 'utf8' });
-      
-      if (!diffOutput.trim()) {
-        return {
-          message: `No changes detected in ${path.basename(filePath)}`,
-          details: { committed: false, reason: 'no_changes' }
-        };
-      }
-
-      // Stage and commit the file
-      execSync(`git add "${filePath}"`);
-      const commitMessage = this.generateCommitMessage(toolName, filePath, input);
-      execSync(`git commit -m "${commitMessage}"`);
-      
-      const commitHash = execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim();
-      
-      return {
-        message: `Successfully committed ${path.basename(filePath)}`,
-        details: { 
-          committed: true, 
-          commitHash: commitHash.substring(0, 8),
-          filesCommitted: 1 
-        }
-      };
-    } catch (error) {
-      throw new Error(`Single commit failed: ${error.message}`);
-    }
-  }
-
-  /**
-   * Execute batch commit for related files
-   */
-  async executeBatchCommit(filePath, toolName, input) {
-    try {
-      const repoState = await this.analyzeRepositoryState();
-      const relatedFiles = this.findRelatedFiles(filePath, repoState.unstagedFiles);
-      
-      // Add all related files
-      const filesToCommit = [filePath, ...relatedFiles.slice(0, 5)]; // Limit to 5 files max
-      
-      for (const file of filesToCommit) {
+      // Use the same robust parsing logic as conversation archiver
+      for (let i = recentLines.length - 1; i >= 0; i--) {
         try {
-          execSync(`git add "${file}"`);
-        } catch (e) {
-          // Skip files that can't be added
-          console.log(`⚠️ Skipped ${file}: ${e.message}`);
+          const entry = JSON.parse(recentLines[i]);
+          if (entry.type === 'user' && entry.message) {
+            let userText = '';
+            
+            // Handle string content (most common)
+            if (typeof entry.message.content === 'string') {
+              userText = entry.message.content;
+            } else if (Array.isArray(entry.message.content)) {
+              const textParts = entry.message.content
+                .filter(item => item.type === 'text')
+                .map(item => item.text);
+              userText = textParts.join(' ');
+            }
+            
+            // Skip hook/system messages, find real user intent
+            if (userText && 
+                !userText.includes('<user-prompt-submit-hook>') &&
+                !userText.includes('tool_use_id') &&
+                !userText.includes('<system-reminder>') &&
+                userText.trim().length > 5) {
+              
+              // Find corresponding Claude response
+              const claudeResponse = await this.findClaudeResponse(recentLines, i);
+              return { 
+                userPrompt: userText.length > 150 ? userText.substring(0, 150) + '...' : userText,
+                claudeResponse: claudeResponse.length > 200 ? claudeResponse.substring(0, 200) + '...' : claudeResponse
+              };
+            }
+          }
+        } catch (parseError) {
+          continue;
         }
       }
-
-      const commitMessage = this.generateBatchCommitMessage(toolName, filesToCommit, input);
-      execSync(`git commit -m "${commitMessage}"`);
       
-      const commitHash = execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim();
+      return { userPrompt: '', claudeResponse: '' };
+    } catch (error) {
+      this.log(`Error getting conversation context: ${error.message}`);
+      return { userPrompt: '', claudeResponse: '' };
+    }
+  }
+
+  async findClaudeResponse(lines, userIndex) {
+    for (let i = userIndex + 1; i < lines.length; i++) {
+      try {
+        const entry = JSON.parse(lines[i]);
+        if (entry.type === 'assistant' && entry.message && Array.isArray(entry.message.content)) {
+          const textParts = entry.message.content
+            .filter(item => item.type === 'text')
+            .map(item => item.text);
+          const response = textParts.join(' ');
+          if (response && response.trim().length > 10) {
+            return response;
+          }
+        }
+      } catch (parseError) {
+        continue;
+      }
+    }
+    return '';
+  }
+
+  async analyzeRepositoryChanges(toolRecord) {
+    try {
+      const workingDir = toolRecord.working_directory || '/home/alejandro/Code/MCP/Hooks/Git/rins_hooks';
+      
+      // Get git status
+      const status = execSync('git status --porcelain', { 
+        cwd: workingDir,
+        encoding: 'utf8' 
+      }).trim();
+      
+      let changeType = 'chore';
+      let summary = 'Update files';
+      
+      if (toolRecord.file_path) {
+        const fileName = path.basename(toolRecord.file_path);
+        const fileDir = path.dirname(toolRecord.file_path);
+        
+        // Intelligent change type detection
+        if (fileName.includes('test') || fileName.includes('debug')) {
+          changeType = 'test';
+          summary = `Update ${fileName}`;
+        } else if (fileDir.includes('hooks') && fileName.endsWith('.js')) {
+          changeType = 'feat';
+          summary = `Enhance ${fileName.replace('.js', '')} hook`;
+        } else if (fileName.endsWith('.md')) {
+          changeType = 'docs';
+          summary = `Update ${fileName}`;
+        } else if (fileName.endsWith('.json')) {
+          changeType = 'config';
+          summary = `Update ${fileName}`;
+        } else if (toolRecord.tool_name === 'Write') {
+          changeType = 'feat';
+          summary = `Add ${fileName}`;
+        } else if (toolRecord.tool_name === 'Edit') {
+          changeType = 'refactor';
+          summary = `Refactor ${fileName}`;
+        } else if (toolRecord.tool_name === 'MultiEdit') {
+          changeType = 'refactor';
+          summary = `Refactor ${fileName}`;
+        }
+      }
       
       return {
-        message: `Successfully batch committed ${filesToCommit.length} related files`,
-        details: { 
-          committed: true, 
-          commitHash: commitHash.substring(0, 8),
-          filesCommitted: filesToCommit.length,
-          primaryFile: path.basename(filePath)
-        }
+        status,
+        changeType,
+        summary,
+        hasChanges: status.length > 0
       };
+      
     } catch (error) {
-      // Fallback to single commit
-      console.log(`⚠️ Batch commit failed, falling back to single commit: ${error.message}`);
-      return await this.executeSingleCommit(filePath, toolName, input);
+      this.log(`Error analyzing repo: ${error.message}`);
+      return {
+        status: '',
+        changeType: 'chore',
+        summary: 'Update files',
+        hasChanges: false
+      };
     }
   }
 
-  /**
-   * Generate commit message for single file
-   */
-  generateCommitMessage(toolName, filePath, input) {
-    const action = this.getCommitAction(toolName);
-    const fileName = path.basename(filePath);
-    const sessionId = input.session_id || `pid-${process.pid}`;
+  shouldCommitToMainRepo(toolRecord, repoAnalysis) {
+    // Skip if no actual repository changes
+    if (!repoAnalysis.hasChanges) return false;
     
-    return `${action}: ${toolName} modified ${fileName}
-
-Session: ${sessionId}
-Tool: ${toolName}
-File: ${path.relative(process.cwd(), filePath)}
-Timestamp: ${new Date().toISOString()}
-
-# Auto-committed by Intelligent Git Manager`;
-  }
-
-  /**
-   * Generate commit message for batch commit
-   */
-  generateBatchCommitMessage(toolName, files, input) {
-    const action = this.getCommitAction(toolName);
-    const primaryFile = path.basename(files[0]);
-    const sessionId = input.session_id || `pid-${process.pid}`;
+    // Skip conversation archiver activities (they create their own commits in worktrees)
+    if (toolRecord.file_path && toolRecord.file_path.includes('/prompt-')) return false;
     
-    let message = `${action}: ${toolName} batch update (${files.length} files)
-
-Primary: ${primaryFile}
-Session: ${sessionId}
-Tool: ${toolName}
-
-Files modified:`;
-
-    files.slice(0, 5).forEach(file => {
-      message += `\n- ${path.relative(process.cwd(), file)}`;
-    });
-
-    if (files.length > 5) {
-      message += `\n... and ${files.length - 5} more files`;
-    }
-
-    message += `\n\nTimestamp: ${new Date().toISOString()}
-# Auto-committed by Intelligent Git Manager (Batch)`;
-
-    return message;
+    // Skip debug/log files that don't need main repo commits
+    if (toolRecord.file_path && (
+        toolRecord.file_path.includes('.log') ||
+        toolRecord.file_path.includes('-debug') ||
+        toolRecord.file_path.includes('test-') ||
+        toolRecord.file_path.includes('archiver-debug')
+    )) return false;
+    
+    return true;
   }
 
-  /**
-   * Get appropriate commit action prefix
-   */
-  getCommitAction(toolName) {
-    switch (toolName) {
-      case 'Write': return 'feat';
-      case 'Edit': return 'refactor';
-      case 'MultiEdit': return 'refactor';
-      default: return 'chore';
-    }
-  }
-
-  /**
-   * Extract file path from tool input
-   */
-  extractFilePath(toolInput) {
-    return toolInput.file_path || 
-           toolInput.filePath || 
-           (toolInput.edits && toolInput.edits[0] && toolInput.edits[0].file_path) || 
-           null;
-  }
-
-  /**
-   * Check if we're in a git repository
-   */
-  isGitRepository() {
+  async createIntelligentMainRepoCommit(toolRecord, conversationContext, repoAnalysis) {
     try {
-      execSync('git rev-parse --git-dir', { stdio: 'pipe' });
-      return true;
-    } catch {
-      return false;
+      const workingDir = toolRecord.working_directory || '/home/alejandro/Code/MCP/Hooks/Git/rins_hooks';
+      
+      // Stage changes in main repo
+      execSync('git add .', { cwd: workingDir });
+      this.log(`Staged main repo changes in ${workingDir}`);
+      
+      // Generate intelligent commit message with conversation context
+      const commitMessage = this.generateIntelligentCommitMessage(
+        toolRecord, 
+        conversationContext, 
+        repoAnalysis
+      );
+      
+      // Commit to main repo with conversation intelligence
+      execSync(`git commit -m "${commitMessage.replace(/"/g, '\\\\"')}"`, { 
+        cwd: workingDir 
+      });
+      
+      this.log(`🎉 Main repo commit: ${repoAnalysis.changeType}: ${repoAnalysis.summary}`);
+      
+    } catch (error) {
+      // Don't fail if nothing to commit
+      if (error.message.includes('nothing to commit')) {
+        this.log(`Nothing to commit - working tree clean`);
+        return;
+      }
+      throw error;
     }
   }
 
-  /**
-   * Check if file should be excluded from auto-commit
-   */
-  shouldExcludeFile(filePath) {
-    const excludePatterns = [
-      /\.log$/,
-      /\.tmp$/,
-      /\.temp$/,
-      /\.lock$/,
-      /\.env$/,
-      /\.git\//,
-      /\.agent\//,
-      /node_modules\//,
-      /\.pyc$/,
-      /__pycache__\//,
-      /\.DS_Store$/,
-      /Thumbs\.db$/
-    ];
-
-    const normalizedPath = path.relative(process.cwd(), filePath).replace(/\\/g, '/');
+  generateIntelligentCommitMessage(toolRecord, conversationContext, repoAnalysis) {
+    const fileName = toolRecord.file_path ? path.basename(toolRecord.file_path) : '';
     
-    // Don't commit files outside the repository
-    if (normalizedPath.startsWith('..') || path.isAbsolute(normalizedPath)) {
-      return true;
+    let message = `${repoAnalysis.changeType}: ${repoAnalysis.summary}`;
+    
+    // Add conversation context to give commits meaning
+    if (conversationContext.userPrompt) {
+      message += `\\n\\nUser Request: "${conversationContext.userPrompt}"`;
     }
-
-    return excludePatterns.some(pattern => pattern.test(normalizedPath));
+    
+    if (conversationContext.claudeResponse) {
+      message += `\\nImplementation: ${conversationContext.claudeResponse}`;
+    }
+    
+    // Add technical metadata
+    message += `\\n\\nTechnical Details:`;
+    message += `\\n- Tool: ${toolRecord.tool_name}`;
+    if (fileName) {
+      message += `\\n- File: ${fileName}`;
+    }
+    message += `\\n- Session: ${toolRecord.session_id?.substring(0, 8)}`;
+    message += `\\n- Timestamp: ${new Date(toolRecord.timestamp).toLocaleString()}`;
+    
+    // Mark as AI-assisted
+    message += `\\n\\nCo-authored-by: Claude <claude@anthropic.com>`;
+    
+    return message;
   }
 }
 
-// Main execution logic
+// Rapala execution pattern
 if (require.main === module) {
-  (async () => {
+  const manager = new IntelligentGitManager();
+  
+  // Parse input from Rapala
+  let input = '';
+  process.stdin.on('data', chunk => input += chunk);
+  process.stdin.on('end', async () => {
     try {
-      const input = await HookBase.parseInput();
-      const gitManager = new IntelligentGitManager();
-      const result = await gitManager.execute(input);
-      HookBase.outputResult(result);
-    } catch (e) {
-      HookBase.outputResult({
-        success: false,
-        error: `IntelligentGitManager execution failed: ${e.message}`,
-        hook: 'intelligent-git-manager'
-      });
+      const toolRecord = JSON.parse(input);
+      const result = await manager.execute(toolRecord);
+      console.log(result);
+    } catch (error) {
+      console.error('');
+      process.exit(1);
     }
-  })();
+  });
 }
 
 module.exports = IntelligentGitManager;
