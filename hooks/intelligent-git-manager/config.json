@@ -1,0 +1,24 @@
+{
+  "name": "intelligent-git-manager",
+  "description": "Advanced git management with repository state awareness and smart commit strategies",
+  "version": "2.0.0",
+  "author": "Rapala Hook Generator",
+  "tags": [
+    "generated",
+    "dynamic",
+    "git",
+    "intelligent",
+    "auto-commit"
+  ],
+  "platforms": [
+    "linux",
+    "darwin",
+    "win32"
+  ],
+  "events": [
+    "PostToolUse"
+  ],
+  "matcher": "Edit|Write|MultiEdit",
+  "installationType": "generated",
+  "disabled": false
+}
