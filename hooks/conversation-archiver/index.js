@@ -124,6 +124,7 @@ class SessionConversationArchiver {
       
       // Search ALL lines, not just recent 150 - user prompts might be much earlier!
       this.log(`📊 Parsing ${lines.length} transcript lines for conversation context`);
+      this.log(`🔍 Transcript path: ${transcriptPath}`);
       
       // Find the most recent real user prompt by searching backwards through ALL lines
       let userEntriesFound = 0;
