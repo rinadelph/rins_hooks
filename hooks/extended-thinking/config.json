@@ -2,14 +2,33 @@
   "name": "extended-thinking",
   "description": "Provides extended thinking capabilities with user control through toggles and explicit commands",
   "version": "2.0.0",
-  "author": "rins_hooks",
-  "events": ["UserPromptSubmit", "PreToolUse", "PostToolUse"],
-  "installationType": "standard",
-  "supportedPlatforms": ["linux", "darwin", "win32"],
-  "dependencies": [],
-  "settings": {
-    "stateFile": "extended-thinking-state.json",
-    "defaultThinkingToggle": false,
-    "defaultDeepThinkingToggle": false
+  "author": "Rapala Sync System",
+  "tags": [
+    "thinking", 
+    "analysis", 
+    "cognition", 
+    "utility",
+    "rapala-managed"
+  ],
+  "platforms": [
+    "linux",
+    "darwin",
+    "win32"
+  ],
+  "events": [
+    "UserPromptSubmit",
+    "PreToolUse"
+  ],
+  "matcher": "",
+  "installationType": "generated",
+  "disabled": false,
+  "originalLocation": "user",
+  "syncedAt": "2025-08-05T00:41:17.322Z",
+  "timeout": 10,
+  "features": {
+    "hasSlashCommands": true,
+    "hasStateManagement": true,
+    "hasCoordination": true,
+    "multiEvent": true
   }
 }
