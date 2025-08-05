@@ -1,0 +1,13 @@
+Testing Toggle Fix
+
+The error "hookManager.disableHook is not a function" should now be fixed.
+
+The toggle functionality should now:
+✅ Handle core hooks (show warning)
+✅ Handle Rapala hooks (toggle via config.json)
+✅ Handle legacy Claude hooks (show conversion message)
+✅ No more missing function errors
+
+This test should complete without errors.
+
+Test timestamp: 2025-08-05T01:40:00Z
