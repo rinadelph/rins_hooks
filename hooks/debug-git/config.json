@@ -8,5 +8,7 @@
   "matcher": "Edit|Write|MultiEdit",
   "timeout": 10,
   "requirements": [],
-  "platforms": ["linux", "darwin", "win32"]
+  "platforms": ["linux", "darwin", "win32"],
+  "installationType": "synced",
+  "disabled": true
 }
