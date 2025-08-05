@@ -881,7 +881,13 @@ class HookControlPanel {
         choices,
         pageSize: 15,
         loop: false
-      }]);
+      }]).catch(error => {
+        // Handle Ctrl+C gracefully
+        if (error.isTtyError || error.name === 'ExitPromptError') {
+          return { choice: 'back' };
+        }
+        throw error;
+      });
 
       if (selection.choice === 'back') {
         return;
