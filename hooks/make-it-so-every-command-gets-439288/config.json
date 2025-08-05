@@ -17,5 +17,6 @@
     "PostToolUse"
   ],
   "matcher": "Bash",
-  "installationType": "generated"
+  "installationType": "generated",
+  "disabled": true
 }
