@@ -25,26 +25,33 @@ class RapalaRouter extends HookBase {
       const eventType = input.hook_event_name;
       const toolName = input.tool_name;
       
-      console.log(`🎣 Rapala Router: Event=${eventType}, Tool=${toolName}`);
+      // Always log to stderr so we can see what's happening
+      console.error(`🎣 Rapala Router: Event=${eventType}, Tool=${toolName}`);
+      console.error(`🎣 Rapala Router: Full input:`, JSON.stringify(input, null, 2));
       
       // Discover all generated hooks
       const generatedHooks = await this.discoverGeneratedHooks();
-      console.log(`🎣 Rapala Router: Found ${generatedHooks.length} generated hooks`);
+      console.error(`🎣 Rapala Router: Found ${generatedHooks.length} generated hooks`);
+      
+      // Log all hooks for debugging
+      generatedHooks.forEach(hook => {
+        console.error(`🎣 Available Hook: ${hook.name} - Events: [${hook.events.join(',')}], Matcher: "${hook.matcher}"`);
+      });
       
       // Filter hooks that match this event and tool
       const matchingHooks = generatedHooks.filter(hook => {
         const matches = this.hookMatches(hook, eventType, toolName);
-        console.log(`🎣 Rapala Router: Hook ${hook.name} - Events: [${hook.events.join(',')}], Matcher: "${hook.matcher}" - Matches: ${matches}`);
+        console.error(`🎣 Rapala Router: Hook ${hook.name} - Events: [${hook.events.join(',')}], Matcher: "${hook.matcher}" - Matches: ${matches}`);
         return matches;
       });
       
-      console.log(`🎣 Rapala Router: ${matchingHooks.length} hooks match ${eventType}/${toolName}`);
+      console.error(`🎣 Rapala Router: ${matchingHooks.length} hooks match ${eventType}/${toolName}`);
       
       const results = [];
       // Execute matching hooks
       for (const hook of matchingHooks) {
         try {
-          console.log(`🎣 Rapala Router: Executing ${hook.name} for ${eventType}/${toolName}`);
+          console.error(`🎣 Rapala Router: Executing ${hook.name} for ${eventType}/${toolName}`);
           const result = await this.executeGeneratedHook(hook, input);
           results.push({ hook: hook.name, result });
         } catch (error) {
@@ -53,10 +60,11 @@ class RapalaRouter extends HookBase {
         }
       }
       
-      console.log(`🎣 Rapala Router: Completed with ${results.length} executed hooks`);
+      console.error(`🎣 Rapala Router: Completed with ${results.length} executed hooks`);
       return this.success({ executedHooks: results });
     } catch (error) {
       console.error(`❌ Rapala Router failed: ${error.message}`);
+      console.error(`❌ Error stack:`, error.stack);
       return this.error(`Rapala Router failed: ${error.message}`);
     }
   }
@@ -133,17 +141,21 @@ class RapalaRouter extends HookBase {
       
       child.stdout.on('data', (data) => {
         output += data.toString();
-        process.stdout.write(data); // Pass through to console
       });
       
       child.stderr.on('data', (data) => {
         errorOutput += data.toString();
-        process.stderr.write(data); // Pass through to console
       });
       
       child.on('close', (code) => {
         if (code === 0) {
-          resolve(output);
+          try {
+            // Try to parse output as JSON
+            resolve(JSON.parse(output));
+          } catch (e) {
+            // If not JSON, return as plain text
+            resolve(output.trim());
+          }
         } else {
           reject(new Error(`Hook exited with code ${code}: ${errorOutput}`));
         }
