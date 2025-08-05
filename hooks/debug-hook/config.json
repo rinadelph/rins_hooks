@@ -1,0 +1,24 @@
+{
+  "name": "debug-hook",
+  "description": "debug-hook hook",
+  "version": "1.0.0",
+  "author": "Rapala Sync System",
+  "events": [
+    "PostToolUse"
+  ],
+  "matcher": "Edit|Write|MultiEdit",
+  "installationType": "synced",
+  "originalLocation": "project",
+  "syncedAt": "2025-08-05T00:41:17.322Z",
+  "tags": [
+    "synced",
+    "original-claude-code"
+  ],
+  "timeout": null,
+  "platforms": [
+    "linux",
+    "darwin", 
+    "win32"
+  ],
+  "disabled": true
+}
