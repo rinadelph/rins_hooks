@@ -1,0 +1,22 @@
+{
+  "name": "listen-put-this-hook-and-modif-742866",
+  "description": "listen put this hook and modify and turn it into a rapala hook - creates a simple test hook that logs execution to verify Claude Code is calling hooks",
+  "version": "1.0.0",
+  "author": "Rapala Hook Generator",
+  "tags": [
+    "generated",
+    "dynamic",
+    "edit|multiedit|write"
+  ],
+  "platforms": [
+    "linux",
+    "darwin",
+    "win32"
+  ],
+  "events": [
+    "PostToolUse"
+  ],
+  "matcher": "",
+  "installationType": "generated",
+  "disabled": true
+}
