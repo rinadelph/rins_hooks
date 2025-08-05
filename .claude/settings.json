@@ -16,5 +16,20 @@
     "deny": [
       "Task"
     ]
-  }
+  },
+  "SessionStart": [
+    {
+      "matcher": "",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "node \"/home/alejandro/Code/MCP/Hooks/Git/rins_hooks/hooks/rapala-router/index.js\""
+        },
+        {
+          "type": "command",
+          "command": "node \"/home/alejandro/Code/MCP/Hooks/Git/rins_hooks/hooks/rapala-command/index.js\""
+        }
+      ]
+    }
+  ]
 }

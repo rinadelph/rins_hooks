@@ -131,3 +131,86 @@ settings.local.json
 Network Trash Folder
 Temporary Items
 .apdisk
+
+# === RAPALA SPECIFIC EXCLUSIONS ===
+
+# Claude Code & Personal Configuration
+.claude/
+conversations/
+*.backup.*
+
+# Development Notes & Documentation
+*-NOTES.md
+HOOK-DEVELOPMENT-NOTES.md
+CLAUDE_*.md
+CONTROL_PANEL_*.md
+FULLY_INTERACTIVE_*.md
+NO_SCROLL_INTERFACE_*.md
+INTELLIGENT_MANAGEMENT.md
+UPDATE_FEATURES.md
+RAPALA-*.md
+claude-code-*.md
+git-agents-*.md
+example-rules.md
+
+# Test Files & Debugging
+test-*.txt
+test-*.js
+test-*.py
+test-*.md
+test_*.md
+test_*.txt
+*-test.txt
+*-test.js
+*-test.log
+debug-*.txt
+debug-*.js
+debug-*.log
+archiver-*.txt
+archiver-*.log
+final-*.txt
+enhanced-*.txt
+robust-*.txt
+rapala-*.txt
+thinking-*.txt
+integration_test.md
+final_integration_test.md
+complete_integration_test.md
+
+# Test Directories
+test-logs/
+test_global/
+testing-suite/
+testing_different_project/
+tool-test-files/
+test-git-init/
+
+# Hook Development & Temporary Files
+simple-test-hook.js
+analyze-tool-results.js
+debug-transcript-parsing.js
+test-parsing-debug.js
+test-title-update.js
+test-tool-investigation.js
+trigger-debug-logging.txt
+hook-test-trigger.txt
+hook_debug_test.txt
+pid-tracking-test.txt
+system-wide-cleanup-test.txt
+settings-cleanup-test.txt
+commit-test.txt
+conversation-test.txt
+
+# Backup & Archive Files
+claude-backup-*.json
+cleanup-all-hooks.sh
+
+# Additional Log Files
+git-agent-debug.log
+session-archiver-debug.log
+task-blocker.log
+tool-investigation.log
+rapala-hook-test.log
+
+# Script outputs
+*.typescript
