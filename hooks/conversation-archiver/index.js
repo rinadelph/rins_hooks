@@ -39,8 +39,9 @@ class SessionConversationArchiver {
       const shortSessionId = sessionId.substring(0, 8);
       this.log(`📋 Processing session: ${shortSessionId}`);
       
-      // Set up session worktree path
-      const conversationsDir = '/home/alejandro/Code/MCP/Hooks/Git/rins_hooks/conversations';
+      // Set up session worktree path - use current project directory
+      const currentProjectDir = toolRecord.working_directory || process.cwd();
+      const conversationsDir = path.join(currentProjectDir, 'conversations');
       const sessionWorktreePath = path.join(conversationsDir, `session-${shortSessionId}`);
       
       this.log(`📁 Session worktree: ${sessionWorktreePath}`);
