@@ -121,10 +121,12 @@ class SessionConversationArchiver {
       
       const data = await fs.readFile(transcriptPath, 'utf8');
       const lines = data.trim().split('\\n');
-      const recentLines = lines.slice(-150);
       
-      // Find the most recent real user prompt (same logic as before)
-      for (let i = recentLines.length - 1; i >= 0; i--) {
+      // Search ALL lines, not just recent 150 - user prompts might be much earlier!
+      this.log(`📊 Parsing ${lines.length} transcript lines for conversation context`);
+      
+      // Find the most recent real user prompt by searching backwards through ALL lines
+      for (let i = lines.length - 1; i >= 0; i--) {
         try {
           const entry = JSON.parse(recentLines[i]);
           if (entry.type === 'user' && entry.message) {
