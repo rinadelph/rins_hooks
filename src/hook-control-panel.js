@@ -851,7 +851,8 @@ class HookControlPanel {
 
       // Display header
       console.log(chalk.cyan('🎣 Rapala Hook Management - Toggle with Enter'));
-      console.log(chalk.gray('Green = Enabled, Red = Disabled, Arrow keys to navigate, Enter to toggle, ESC to go back'));
+      console.log(chalk.gray('Green = Enabled, Red = Disabled, Arrow keys to navigate, Enter to toggle'));
+      console.log(chalk.gray('Use ← Back option or Q to quit'));
       console.log(chalk.gray('━'.repeat(70)));
       console.log();
 
