@@ -149,7 +149,7 @@ class SessionConversationArchiver {
                 userText.trim().length > 5) {
               
               // Find corresponding Claude response
-              const claudeResponse = await this.findClaudeResponse(recentLines, i);
+              const claudeResponse = await this.findClaudeResponse(lines, i);
               
               // Count total messages to get message number
               const messageNumber = this.countUserMessages(lines);
