@@ -129,35 +129,37 @@ class SessionConversationArchiver {
       let userEntriesFound = 0;
       let userTextFound = 0;
       let userTextFiltered = 0;
+      let jsonParseErrors = 0;
       
       for (let i = lines.length - 1; i >= 0; i--) {
         try {
           const entry = JSON.parse(lines[i]);
-          if (entry.type === 'user' && entry.message) {
+          if (entry.type === 'user') {
             userEntriesFound++;
-            let userText = '';
+            this.log(`🔍 Found user entry ${userEntriesFound}: ${JSON.stringify(entry.message || {}).substring(0, 100)}...`);
             
-            if (typeof entry.message.content === 'string') {
-              userText = entry.message.content;
-            } else if (Array.isArray(entry.message.content)) {
-              const textParts = entry.message.content
-                .filter(item => item.type === 'text')
-                .map(item => item.text);
-              userText = textParts.join(' ');
-            }
-            
-            if (userText && userText.trim().length > 0) {
-              userTextFound++;
-              this.log(`🔍 User text candidate: "${userText.substring(0, 100)}..."`);
-            }
-            
-            // Skip hook/system messages
-            if (userText && 
-                !userText.includes('<user-prompt-submit-hook>') &&
-                !userText.includes('tool_use_id') &&
-                !userText.includes('<system-reminder>') &&
-                userText.trim().length > 5) {
-              userTextFiltered++;
+            if (entry.message) {
+              let userText = '';
+              
+              if (typeof entry.message.content === 'string') {
+                userText = entry.message.content;
+              } else if (Array.isArray(entry.message.content)) {
+                const textParts = entry.message.content
+                  .filter(item => item.type === 'text')
+                  .map(item => item.text);
+                userText = textParts.join(' ');
+              }
+              
+              if (userText && userText.trim().length > 0) {
+                userTextFound++;
+                this.log(`📝 User text candidate: "${userText.substring(0, 100)}..."`);
+                
+                // Skip hook/system messages
+                if (!userText.includes('<user-prompt-submit-hook>') &&
+                    !userText.includes('tool_use_id') &&
+                    !userText.includes('<system-reminder>') &&
+                    userText.trim().length > 5) {
+                  userTextFiltered++;
               
               // Find corresponding Claude response
               const claudeResponse = await this.findClaudeResponse(lines, i);
