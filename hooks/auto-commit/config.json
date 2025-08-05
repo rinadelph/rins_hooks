@@ -9,6 +9,7 @@
   "timeout": 30,
   "installationType": "synced",
   "disabled": true,
+  "COMPLETELY_DISABLED": true,
   "defaultConfig": {
     "enabled": true,
     "commitMessageTemplate": "Auto-commit: {{toolName}} modified {{fileName}}\n\n- File: {{filePath}}\n- Tool: {{toolName}}\n- Session: {{sessionId}}\n\n🤖 Generated with Claude Code via rins_hooks\nCo-Authored-By: Claude <noreply@anthropic.com>",
