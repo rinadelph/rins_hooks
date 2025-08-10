@@ -3139,18 +3139,18 @@ class HookControlPanel {
    */
   async enterStatusLineEditor(debug = false) {
     console.clear();
-    console.log(chalk.bold.magenta('📊 Status Line Editor'));
-    console.log(chalk.gray('━'.repeat(50)));
+    console.log(chalk.bold.magenta('📊 Advanced Status Line Editor'));
+    console.log(chalk.gray('━'.repeat(60)));
     console.log();
 
     // Show current status
     const statusLineConfig = await this.getStatusLineConfig();
     if (statusLineConfig) {
-      console.log(chalk.green('✅ Status line is configured'));
+      console.log(chalk.green('✅ Status line is active'));
       try {
         const preview = await this.executeStatusLineCommand(statusLineConfig);
         if (preview) {
-          console.log(chalk.blue('Preview: ') + preview);
+          console.log(chalk.blue('Current: ') + preview);
         }
       } catch (error) {
         console.log(chalk.red('❌ Status line has errors'));
@@ -3161,26 +3161,46 @@ class HookControlPanel {
     }
     console.log();
 
-    // Simple menu
+    // Advanced menu with full feature set
     const inquirer = require('inquirer');
     const choices = [
-      { name: '🧪 Test Status Line', value: 'test' },
-      { name: '📄 Show Current Config', value: 'config' },
+      { name: '🎨 Visual Editor (Advanced)', value: 'visual' },
+      { name: '📄 Template Gallery', value: 'templates' },
+      { name: '🧩 Component Manager', value: 'components' },
+      new inquirer.Separator(),
+      { name: '🧪 Test Current Status Line', value: 'test' },
+      { name: '📄 Show Configuration', value: 'config' },
       { name: '📝 Edit Script File', value: 'edit' },
-      { name: '🗑️  Remove Status Line', value: 'remove', disabled: !statusLineConfig }
+      new inquirer.Separator(),
+      { name: '📥 Import PS1 Prompt', value: 'import-ps1' },
+      { name: '📤 Export Configuration', value: 'export' },
+      { name: '🔧 Advanced Settings', value: 'advanced' },
+      new inquirer.Separator(),
+      { name: '🗑️  Remove Status Line', value: 'remove', disabled: !statusLineConfig },
+      { name: '← Back to Sections', value: 'back' }
     ];
 
     try {
       const answer = await inquirer.prompt([{
         type: 'list',
         name: 'action', 
-        message: 'Choose an action:',
-        choices: choices
+        message: 'Choose an option:',
+        choices: choices,
+        pageSize: 15
       }]);
 
       switch (answer.action) {
+        case 'visual':
+          await this.startVisualEditor();
+          break;
+        case 'templates':
+          await this.showTemplateGallery();
+          break;
+        case 'components':
+          await this.showComponentManager();
+          break;
         case 'test':
-          await this.quickTestStatusLine();
+          await this.advancedTestStatusLine();
           break;
         case 'config':
           await this.showStatusLineConfig();
@@ -3188,12 +3208,25 @@ class HookControlPanel {
         case 'edit':
           await this.quickEditStatusLine();
           break;
+        case 'import-ps1':
+          await this.importPS1Prompt();
+          break;
+        case 'export':
+          await this.exportStatusLineConfig();
+          break;
+        case 'advanced':
+          await this.showAdvancedSettings();
+          break;
         case 'remove':
           await this.quickRemoveStatusLine();
           break;
+        case 'back':
+        default:
+          return false;
       }
     } catch (error) {
       console.log(chalk.red('Error: ' + error.message));
+      await this.waitForEnter(false);
     }
 
     return false; // Go back to sections
@@ -3394,6 +3427,236 @@ class HookControlPanel {
   }
 
   /**
+   * Start the visual status line editor
+   */
+  async startVisualEditor() {
+    try {
+      const StatusLineManager = require('./statusline/StatusLineManager');
+      const InteractiveEditor = require('./statusline/InteractiveEditor');
+      
+      const manager = new StatusLineManager();
+      const editor = new InteractiveEditor(manager);
+      
+      return await editor.start();
+    } catch (error) {
+      console.log(chalk.red('❌ Visual editor not available:'), error.message);
+      console.log(chalk.yellow('💡 Falling back to basic editor...'));
+      await this.quickTestStatusLine();
+      return false;
+    }
+  }
+
+  /**
+   * Show template gallery
+   */
+  async showTemplateGallery() {
+    console.clear();
+    console.log(chalk.bold.yellow('📄 Status Line Template Gallery'));
+    console.log(chalk.gray('━'.repeat(50)));
+    console.log();
+
+    try {
+      const StatusLineManager = require('./statusline/StatusLineManager');
+      const manager = new StatusLineManager();
+      const templates = manager.availableTemplates;
+
+      for (const template of templates) {
+        console.log(chalk.bold.cyan(`${template.displayName}`));
+        console.log(chalk.gray(`  ${template.description}`));
+        console.log(chalk.blue('  Preview: ') + template.preview);
+        console.log(chalk.gray(`  Components: ${template.components.join(', ')}`));
+        console.log();
+      }
+
+      const choices = templates.map(t => ({
+        name: `${t.displayName} - ${t.description}`,
+        value: t.name
+      }));
+      choices.push({ name: '← Back', value: 'back' });
+
+      const answer = await inquirer.prompt([{
+        type: 'list',
+        name: 'template',
+        message: 'Apply a template?',
+        choices: choices
+      }]);
+
+      if (answer.template !== 'back') {
+        const template = templates.find(t => t.name === answer.template);
+        if (template) {
+          console.log(chalk.green(`✅ Applied template: ${template.displayName}`));
+          console.log(chalk.blue('🚧 Auto-configuration coming soon!'));
+        }
+      }
+    } catch (error) {
+      console.log(chalk.red('❌ Template gallery not available:'), error.message);
+    }
+
+    console.log();
+    await this.waitForEnter(false);
+  }
+
+  /**
+   * Show component manager
+   */
+  async showComponentManager() {
+    console.clear();
+    console.log(chalk.bold.blue('🧩 Status Line Components'));
+    console.log(chalk.gray('━'.repeat(50)));
+    console.log();
+
+    try {
+      const StatusLineManager = require('./statusline/StatusLineManager');
+      const manager = new StatusLineManager();
+      const components = manager.availableComponents;
+
+      console.log(chalk.bold.cyan('Available Components:'));
+      console.log();
+
+      for (const component of components) {
+        console.log(`${component.icon} ${chalk.bold(component.displayName)}`);
+        console.log(chalk.gray(`  ${component.description}`));
+        if (component.configurable) {
+          console.log(chalk.blue('  Configurable: ') + 'Yes');
+        }
+        console.log();
+      }
+
+      console.log(chalk.yellow('💡 Use the Visual Editor to add and configure components'));
+    } catch (error) {
+      console.log(chalk.red('❌ Component manager not available:'), error.message);
+    }
+
+    console.log();
+    await this.waitForEnter(false);
+  }
+
+  /**
+   * Advanced status line testing
+   */
+  async advancedTestStatusLine() {
+    console.clear();
+    console.log(chalk.bold.blue('🧪 Advanced Status Line Testing'));
+    console.log(chalk.gray('━'.repeat(50)));
+    console.log();
+
+    const statusLineConfig = await this.getStatusLineConfig();
+    
+    if (!statusLineConfig) {
+      console.log(chalk.yellow('⚠️  No status line configured'));
+      console.log(chalk.cyan('💡 Use the Visual Editor or Templates to create one'));
+    } else {
+      console.log(chalk.green('Testing with different scenarios...'));
+      console.log();
+
+      // Test scenarios
+      const scenarios = [
+        { name: 'Current Directory', data: { workspace: { current_dir: process.cwd() } } },
+        { name: 'Different Model', data: { model: { display_name: 'Claude-4' } } },
+        { name: 'Mock Git Changes', data: { workspace: { current_dir: '/mock/project' } } }
+      ];
+
+      for (const scenario of scenarios) {
+        console.log(chalk.blue(`${scenario.name}:`));
+        try {
+          const result = await this.executeStatusLineCommand(statusLineConfig);
+          if (result) {
+            console.log(`  ${result}`);
+          } else {
+            console.log(chalk.red('  No output'));
+          }
+        } catch (error) {
+          console.log(chalk.red(`  Error: ${error.message}`));
+        }
+        console.log();
+      }
+
+      console.log(chalk.green('✅ Testing complete'));
+    }
+
+    console.log();
+    await this.waitForEnter(false);
+  }
+
+  /**
+   * Import PS1 prompt
+   */
+  async importPS1Prompt() {
+    console.clear();
+    console.log(chalk.bold.green('📥 Import Shell PS1 Prompt'));
+    console.log(chalk.gray('━'.repeat(50)));
+    console.log();
+
+    console.log(chalk.blue('🚧 PS1 Import Feature Coming Soon!'));
+    console.log();
+    console.log('This will analyze your shell prompt and convert it to a status line:');
+    console.log(chalk.gray('• Detect Bash PS1 variables'));
+    console.log(chalk.gray('• Parse Zsh/Oh-My-Zsh themes'));
+    console.log(chalk.gray('• Convert colors and components'));
+    console.log(chalk.gray('• Generate equivalent status line'));
+    console.log();
+    
+    console.log('Current PS1:', chalk.cyan(process.env.PS1 || '(not detected)'));
+
+    console.log();
+    await this.waitForEnter(false);
+  }
+
+  /**
+   * Export status line configuration
+   */
+  async exportStatusLineConfig() {
+    console.clear();
+    console.log(chalk.bold.blue('📤 Export Status Line Configuration'));
+    console.log(chalk.gray('━'.repeat(50)));
+    console.log();
+
+    const statusLineConfig = await this.getStatusLineConfig();
+    
+    if (!statusLineConfig) {
+      console.log(chalk.yellow('⚠️  No status line configured to export'));
+      console.log(chalk.cyan('💡 Create one first using the Visual Editor or Templates'));
+    } else {
+      console.log(chalk.green('Current Configuration:'));
+      console.log(chalk.gray(JSON.stringify(statusLineConfig, null, 2)));
+      console.log();
+      
+      console.log(chalk.blue('🚧 Advanced Export Features Coming Soon!'));
+      console.log();
+      console.log('Planned export options:');
+      console.log(chalk.gray('• Export as JSON configuration'));
+      console.log(chalk.gray('• Export as shell script'));
+      console.log(chalk.gray('• Share with community'));
+      console.log(chalk.gray('• Generate installation commands'));
+    }
+
+    console.log();
+    await this.waitForEnter(false);
+  }
+
+  /**
+   * Show advanced settings
+   */
+  async showAdvancedSettings() {
+    console.clear();
+    console.log(chalk.bold.magenta('🔧 Advanced Status Line Settings'));
+    console.log(chalk.gray('━'.repeat(50)));
+    console.log();
+
+    console.log(chalk.blue('🚧 Advanced Settings Coming Soon!'));
+    console.log();
+    console.log('Features in development:');
+    console.log(chalk.gray('• Update frequency configuration'));
+    console.log(chalk.gray('• Terminal compatibility settings'));
+    console.log(chalk.gray('• Performance optimization'));
+    console.log(chalk.gray('• Custom component registration'));
+    console.log(chalk.gray('• Theme marketplace integration'));
+
+    console.log();
+    await this.waitForEnter(false);
+  }
+
+  /**
    * Load session data from conversations directory
    */
   async loadSessionData() {
@@ -3420,15 +3683,27 @@ class HookControlPanel {
       // Sort by last activity (most recent first)
       sessions.sort((a, b) => new Date(b.lastActivity) - new Date(a.lastActivity));
 
-      // Categorize sessions
-      const cutoffDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // 7 days ago
-      const active = sessions.filter(s => new Date(s.lastActivity) > cutoffDate);
-      const archived = sessions.filter(s => new Date(s.lastActivity) <= cutoffDate);
+      // Categorize sessions by actual process status (not timestamp)
+      const active = [];
+      const archived = [];
+      
+      for (const session of sessions) {
+        const isProcessActive = await this.isSessionProcessActive(session.sessionId);
+        if (isProcessActive) {
+          session.status = 'active';
+          session.processInfo = await this.getSessionProcessInfo(session.sessionId);
+          active.push(session);
+        } else {
+          session.status = 'dead';
+          session.processInfo = null;
+          archived.push(session);
+        }
+      }
 
       this.enhancementStates.sessions = {
-        active: active,
-        archived: archived,
-        available: sessions // All sessions for searching/filtering
+        active: active,        // Currently running Claude Code processes
+        archived: archived,    // Dead sessions (process ended)
+        available: sessions    // All sessions for searching/filtering
       };
 
     } catch (error) {
@@ -3649,8 +3924,8 @@ class HookControlPanel {
         console.log();
       } else {
         console.log(chalk.blue(`📊 Session Overview:`));
-        console.log(`   ${chalk.green('🟢 Active:')} ${sessions.active.length} sessions (last 7 days)`);
-        console.log(`   ${chalk.gray('⚪ Archived:')} ${sessions.archived.length} sessions (older)`);
+        console.log(`   ${chalk.green('🟢 Active:')} ${sessions.active.length} sessions (running processes)`);
+        console.log(`   ${chalk.gray('⚪ Archived:')} ${sessions.archived.length} sessions (process ended)`);
         console.log(`   ${chalk.cyan('📁 Total:')} ${totalSessions} sessions tracked`);
         console.log();
         
@@ -4280,6 +4555,149 @@ class HookControlPanel {
     }, 0);
     
     return this.formatBytes(totalBytes);
+  }
+
+  /**
+   * Check if a Claude Code process is actually running for this session
+   */
+  async isSessionProcessActive(sessionId) {
+    try {
+      const { execSync } = require('child_process');
+      
+      // Method 1: Check for processes with the session ID
+      try {
+        // Look for Claude Code processes that might contain this session ID
+        const psOutput = execSync('ps aux', { encoding: 'utf8', timeout: 5000 });
+        const lines = psOutput.split('\n');
+        
+        for (const line of lines) {
+          // Check if line contains both 'claude' and our session ID
+          if (line.toLowerCase().includes('claude') && line.includes(sessionId)) {
+            console.log(`[DEBUG] Found active process for session ${sessionId}: ${line.trim()}`);
+            return true;
+          }
+        }
+      } catch (error) {
+        // ps command failed, try alternative methods
+      }
+      
+      // Method 2: Check for lock files or session markers
+      const lockFile = path.join(os.tmpdir(), `claude-session-${sessionId}.lock`);
+      if (fs.existsSync(lockFile)) {
+        try {
+          // Check if the PID in the lock file is still running
+          const pidContent = fs.readFileSync(lockFile, 'utf8').trim();
+          const pid = parseInt(pidContent);
+          if (pid && !isNaN(pid)) {
+            process.kill(pid, 0); // Check if process exists (throws if not)
+            return true;
+          }
+        } catch (pidError) {
+          // PID doesn't exist, clean up stale lock file
+          try {
+            fs.unlinkSync(lockFile);
+          } catch (unlinkError) {
+            // Ignore cleanup errors
+          }
+        }
+      }
+      
+      // Method 3: Check for recent activity (fallback)
+      // If session had activity in the last 5 minutes, consider it possibly active
+      const sessionDir = this.findSessionDirectory(sessionId);
+      if (sessionDir) {
+        const recentFiles = fs.readdirSync(sessionDir)
+          .filter(file => file.endsWith('.json'))
+          .map(file => {
+            const filePath = path.join(sessionDir, file);
+            return { file, mtime: fs.statSync(filePath).mtime };
+          })
+          .sort((a, b) => b.mtime - a.mtime);
+          
+        if (recentFiles.length > 0) {
+          const lastActivity = recentFiles[0].mtime;
+          const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+          if (lastActivity > fiveMinutesAgo) {
+            console.log(`[DEBUG] Session ${sessionId} had recent activity: ${lastActivity}`);
+            return true; // Possibly still active
+          }
+        }
+      }
+      
+      return false; // No evidence of active process
+    } catch (error) {
+      console.warn(`[DEBUG] Error checking process status for session ${sessionId}:`, error.message);
+      return false;
+    }
+  }
+
+  /**
+   * Get detailed information about the running process for this session
+   */
+  async getSessionProcessInfo(sessionId) {
+    try {
+      const { execSync } = require('child_process');
+      
+      // Try to find the process details
+      const psOutput = execSync(`ps aux | grep -i claude | grep ${sessionId}`, { 
+        encoding: 'utf8', 
+        timeout: 5000 
+      });
+      
+      const lines = psOutput.split('\n').filter(line => 
+        line.trim() && !line.includes('grep') && line.includes(sessionId)
+      );
+      
+      if (lines.length > 0) {
+        const processLine = lines[0];
+        const parts = processLine.trim().split(/\s+/);
+        
+        return {
+          pid: parts[1] || 'unknown',
+          cpu: parts[2] || 'unknown',
+          memory: parts[3] || 'unknown',
+          startTime: parts[8] || 'unknown',
+          command: parts.slice(10).join(' ') || 'unknown'
+        };
+      }
+      
+      return {
+        pid: 'unknown',
+        cpu: '0.0',
+        memory: '0.0',
+        startTime: 'unknown',
+        command: 'Claude Code process'
+      };
+    } catch (error) {
+      return {
+        pid: 'unknown',
+        cpu: '0.0',
+        memory: '0.0', 
+        startTime: 'unknown',
+        command: 'Process details unavailable'
+      };
+    }
+  }
+
+  /**
+   * Find the session directory for a given session ID
+   */
+  findSessionDirectory(sessionId) {
+    try {
+      const conversationsDir = this.findConversationsDirectory();
+      if (!conversationsDir) return null;
+      
+      const shortId = sessionId.substring(0, 8);
+      const sessionDir = path.join(conversationsDir, `session-${shortId}`);
+      
+      if (fs.existsSync(sessionDir)) {
+        return sessionDir;
+      }
+      
+      return null;
+    } catch (error) {
+      return null;
+    }
   }
 }
 
