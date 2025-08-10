@@ -4151,7 +4151,8 @@ class HookControlPanel {
     if (debug) console.log(`DEBUG: enterSessionsSection called`);
     
     while (true) {
-      console.clear();
+      // Minimal clearing - preserve scroll history while creating visual separation
+      console.log('\n'.repeat(3));
       
       const sessions = this.enhancementStates.sessions;
       const totalSessions = sessions.active.length + sessions.archived.length;
@@ -4260,7 +4261,8 @@ class HookControlPanel {
    */
   async manageSessionsInteractive() {
     while (true) {
-      console.clear();
+      // Minimal clearing - preserve scroll history while creating visual separation
+      console.log('\n'.repeat(3));
       
       const sessions = this.enhancementStates.sessions;
       const allSessions = [...sessions.active, ...sessions.archived];
@@ -4348,7 +4350,8 @@ class HookControlPanel {
       return;
     }
 
-    console.clear();
+    // Minimal clearing - preserve scroll history while creating visual separation
+    console.log('\n'.repeat(3));
     console.log(chalk.cyan(`🎯 ${title}`));
     console.log(chalk.gray('━'.repeat(70)));
     console.log();
