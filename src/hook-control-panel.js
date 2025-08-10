@@ -4732,29 +4732,37 @@ class HookControlPanel {
    */
   async getSessionProcessInfo(sessionId) {
     try {
-      const { execSync } = require('child_process');
+      // Use the PID-based approach to find the matching process
+      const claudeProcesses = await this.getClaudeProcesses();
+      const sessionMatch = await this.matchSessionToProcess(sessionId, claudeProcesses);
       
-      // Try to find the process details
-      const psOutput = execSync(`ps aux | grep -i claude | grep ${sessionId}`, { 
-        encoding: 'utf8', 
-        timeout: 5000 
-      });
-      
-      const lines = psOutput.split('\n').filter(line => 
-        line.trim() && !line.includes('grep') && line.includes(sessionId)
-      );
-      
-      if (lines.length > 0) {
-        const processLine = lines[0];
-        const parts = processLine.trim().split(/\s+/);
-        
+      if (sessionMatch) {
         return {
-          pid: parts[1] || 'unknown',
-          cpu: parts[2] || 'unknown',
-          memory: parts[3] || 'unknown',
-          startTime: parts[8] || 'unknown',
-          command: parts.slice(10).join(' ') || 'unknown'
+          pid: sessionMatch.pid.toString(),
+          cpu: sessionMatch.cpu || '0.0',
+          memory: sessionMatch.mem || '0.0',
+          startTime: sessionMatch.startTime || 'unknown',
+          command: sessionMatch.cmdline || 'Claude Code process',
+          cwd: sessionMatch.cwd || 'unknown'
         };
+      }
+      
+      // Fallback: try to find any Claude process in the same directory
+      const sessionDir = this.findSessionDirectory(sessionId);
+      if (sessionDir) {
+        const projectDir = path.dirname(path.dirname(sessionDir));
+        const matchingProcess = claudeProcesses.find(proc => proc.cwd === projectDir);
+        
+        if (matchingProcess) {
+          return {
+            pid: matchingProcess.pid.toString(),
+            cpu: matchingProcess.cpu || '0.0',
+            memory: matchingProcess.mem || '0.0',
+            startTime: matchingProcess.startTime || 'unknown',
+            command: matchingProcess.cmdline || 'Claude Code process',
+            cwd: matchingProcess.cwd || 'unknown'
+          };
+        }
       }
       
       return {
@@ -4762,7 +4770,8 @@ class HookControlPanel {
         cpu: '0.0',
         memory: '0.0',
         startTime: 'unknown',
-        command: 'Claude Code process'
+        command: 'No matching Claude process found',
+        cwd: 'unknown'
       };
     } catch (error) {
       return {
@@ -4770,7 +4779,8 @@ class HookControlPanel {
         cpu: '0.0',
         memory: '0.0', 
         startTime: 'unknown',
-        command: 'Process details unavailable'
+        command: 'Process details unavailable',
+        cwd: 'unknown'
       };
     }
   }
