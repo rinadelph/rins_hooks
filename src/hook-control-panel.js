@@ -441,31 +441,23 @@ class HookControlPanel {
   }
 
   /**
-   * Display real-time status line information
+   * Display custom status line if configured
    */
-  async displayStatusLineOverview(icon) {
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString();
-    const dateStr = now.toLocaleDateString();
-    
-    // Get system information
-    const systemInfo = await this.getSystemInfo();
-    const projectInfo = await this.getProjectInfo();
-    const rapalaInfo = await this.getRapalaInfo();
-    
-    console.log(`${icon} ${chalk.bold.white('Status Line')} │ ${chalk.cyan('Live System Monitor')}`);
-    
-    // Time and system info line
-    const timeInfo = `${chalk.yellow(timeStr)} ${chalk.gray(dateStr)}`;
-    const systemStats = `${chalk.green('CPU:')} ${systemInfo.cpu}% ${chalk.gray('│')} ${chalk.blue('Memory:')} ${systemInfo.memory}% ${chalk.gray('│')} ${chalk.magenta('Load:')} ${systemInfo.load}`;
-    console.log(`${chalk.gray('Time:')} ${timeInfo} ${chalk.gray('│')} ${systemStats}`);
-    
-    // Project and git status line  
-    const projectStats = `${chalk.cyan('Project:')} ${projectInfo.name} ${chalk.gray('│')} ${chalk.yellow('Git:')} ${projectInfo.gitStatus} ${chalk.gray('│')} ${chalk.green('Hooks:')} ${rapalaInfo.activeHooks}`;
-    console.log(`${projectStats}`);
-    
-    console.log(chalk.dim(this.getSectionDescription('status-line')));
-    console.log();
+  async displayCustomStatusLine() {
+    try {
+      const statusLineConfig = await this.getStatusLineConfig();
+      if (!statusLineConfig) {
+        return; // No status line configured
+      }
+
+      const statusText = await this.executeStatusLineCommand(statusLineConfig);
+      if (statusText) {
+        console.log(statusText);
+        console.log();
+      }
+    } catch (error) {
+      // Silently fail if status line fails - don't interrupt UI
+    }
   }
 
   /**
