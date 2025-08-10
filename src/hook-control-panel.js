@@ -407,6 +407,13 @@ class HookControlPanel {
    */
   async displaySectionOverview(sectionType) {
     const icon = this.getCategoryIcon(sectionType);
+    
+    // Special handling for sessions section
+    if (sectionType === 'sessions') {
+      await this.displaySessionsOverview(icon);
+      return;
+    }
+    
     const sectionData = this.enhancementStates[sectionType];
     const totalInstalled = sectionData.user.length + sectionData.project.length + sectionData.local.length;
     const totalAvailable = sectionData.available.length;
@@ -441,6 +448,39 @@ class HookControlPanel {
     }
     
     console.log(chalk.dim(this.getSectionDescription(sectionType)));
+    console.log();
+  }
+
+  /**
+   * Display sessions overview
+   */
+  async displaySessionsOverview(icon) {
+    const sessions = this.enhancementStates.sessions;
+    const totalSessions = sessions.active.length + sessions.archived.length;
+    
+    if (totalSessions === 0) {
+      const stats = chalk.yellow('No sessions found') + chalk.gray(' │ Sessions auto-created during conversations');
+      console.log(`${icon} ${chalk.bold.white('Sessions')} │ ${stats}`);
+      console.log(chalk.dim('Conversation sessions with hook activity tracking'));
+    } else {
+      const stats = `${chalk.green(sessions.active.length + ' active')} ${chalk.gray('│')} ${chalk.gray(sessions.archived.length + ' archived')} ${chalk.cyan('│ ' + totalSessions + ' total')}`;
+      console.log(`${icon} ${chalk.bold.white('Sessions')} │ ${stats}`);
+      
+      // Show recent active sessions
+      if (sessions.active.length > 0) {
+        const preview = sessions.active.slice(0, 3);
+        const sessionList = preview.map(session => {
+          const timeAgo = this.getTimeAgo(session.lastActivity);
+          const hookCount = session.activeHooks.length;
+          const hookIndicator = hookCount > 0 ? chalk.cyan(`${hookCount}h`) : chalk.gray('0h');
+          return `${session.shortId}${hookIndicator}(${timeAgo})`;
+        }).join(chalk.gray(' │ '));
+        
+        console.log(chalk.gray('Recent: ') + sessionList + (sessions.active.length > 3 ? chalk.dim(' │ +' + (sessions.active.length - 3) + ' more') : ''));
+      }
+      
+      console.log(chalk.dim('Browse conversation sessions and their hook activity'));
+    }
     console.log();
   }
 
@@ -596,7 +636,8 @@ class HookControlPanel {
       tools: '🔧',
       resources: '📚',
       prompts: '💬',
-      mcps: '🤖'
+      mcps: '🤖',
+      sessions: '🎯'
     };
     return icons[category] || '🔗';
   }
@@ -610,7 +651,8 @@ class HookControlPanel {
       tools: 'Tools', 
       resources: 'Resources',
       prompts: 'Prompts',
-      mcps: 'MCPs'
+      mcps: 'MCPs',
+      sessions: 'Sessions'
     };
     return titles[sectionType] || sectionType;
   }
@@ -621,7 +663,8 @@ class HookControlPanel {
       tools: 'Permission controls and blockers',
       resources: 'Documentation, guides, and templates',
       prompts: 'Context injection and instruction templates',
-      mcps: 'Multi-agent collaboration components'
+      mcps: 'Multi-agent collaboration components',
+      sessions: 'Conversation sessions with hook activity tracking'
     };
     return descriptions[sectionType] || '';
   }
@@ -2993,6 +3036,770 @@ class HookControlPanel {
         project_dir: this.projectContext?.hasGit ? process.cwd() : process.cwd()
       }
     };
+  }
+
+  /**
+   * Load session data from conversations directory
+   */
+  async loadSessionData() {
+    try {
+      // Look for conversations directory in current project and parent directories
+      const conversationsDir = await this.findConversationsDirectory();
+      
+      if (!conversationsDir) {
+        this.enhancementStates.sessions = { active: [], archived: [], available: [] };
+        return;
+      }
+
+      const sessionDirs = fs.readdirSync(conversationsDir, { withFileTypes: true })
+        .filter(dirent => dirent.isDirectory() && dirent.name.startsWith('session-'))
+        .map(dirent => dirent.name);
+
+      const sessions = [];
+      for (const sessionDir of sessionDirs) {
+        const sessionPath = path.join(conversationsDir, sessionDir);
+        const sessionInfo = await this.getSessionInfo(sessionPath, sessionDir);
+        sessions.push(sessionInfo);
+      }
+
+      // Sort by last activity (most recent first)
+      sessions.sort((a, b) => new Date(b.lastActivity) - new Date(a.lastActivity));
+
+      // Categorize sessions
+      const cutoffDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // 7 days ago
+      const active = sessions.filter(s => new Date(s.lastActivity) > cutoffDate);
+      const archived = sessions.filter(s => new Date(s.lastActivity) <= cutoffDate);
+
+      this.enhancementStates.sessions = {
+        active: active,
+        archived: archived,
+        available: sessions // All sessions for searching/filtering
+      };
+
+    } catch (error) {
+      console.warn(chalk.yellow(`⚠️  Could not load session data: ${error.message}`));
+      this.enhancementStates.sessions = { active: [], archived: [], available: [] };
+    }
+  }
+
+  /**
+   * Find conversations directory in current project or parent directories
+   */
+  async findConversationsDirectory() {
+    let searchDir = this.currentDir;
+    while (searchDir !== path.dirname(searchDir)) {
+      const conversationsPath = path.join(searchDir, 'conversations');
+      if (fs.existsSync(conversationsPath)) {
+        return conversationsPath;
+      }
+      searchDir = path.dirname(searchDir);
+    }
+    return null;
+  }
+
+  /**
+   * Get detailed session information
+   */
+  async getSessionInfo(sessionPath, sessionDir) {
+    try {
+      const sessionId = sessionDir.replace('session-', '');
+      
+      // Read session info if available
+      const sessionInfoPath = path.join(sessionPath, 'session-info.md');
+      let sessionInfo = {};
+      if (fs.existsSync(sessionInfoPath)) {
+        const content = fs.readFileSync(sessionInfoPath, 'utf8');
+        const match = content.match(/Conversation started: (.+)/);
+        if (match) {
+          sessionInfo.startTime = match[1];
+        }
+      }
+
+      // Get all tool execution files
+      const files = fs.readdirSync(sessionPath)
+        .filter(file => file.endsWith('.json') && file !== 'session-info.json')
+        .map(file => {
+          const fullPath = path.join(sessionPath, file);
+          const stat = fs.statSync(fullPath);
+          const match = file.match(/^(\w+)-(\d+)\.json$/);
+          return {
+            name: file,
+            tool: match ? match[1] : 'unknown',
+            timestamp: match ? parseInt(match[2]) : stat.mtime.getTime(),
+            mtime: stat.mtime,
+            size: stat.size
+          };
+        })
+        .sort((a, b) => b.timestamp - a.timestamp);
+
+      // Get active hooks for this session by checking recent tool executions
+      const activeHooks = await this.getSessionActiveHooks(sessionPath, files);
+      
+      // Calculate session statistics
+      const toolCounts = {};
+      files.forEach(file => {
+        toolCounts[file.tool] = (toolCounts[file.tool] || 0) + 1;
+      });
+
+      return {
+        sessionId: sessionId,
+        shortId: sessionId.substring(0, 8),
+        fullPath: sessionPath,
+        startTime: sessionInfo.startTime || (files.length > 0 ? new Date(Math.min(...files.map(f => f.timestamp))).toISOString() : 'unknown'),
+        lastActivity: files.length > 0 ? new Date(Math.max(...files.map(f => f.timestamp))).toISOString() : sessionInfo.startTime || 'unknown',
+        toolExecutions: files.length,
+        recentTools: files.slice(0, 5).map(f => f.tool),
+        toolCounts: toolCounts,
+        activeHooks: activeHooks,
+        size: this.formatBytes(files.reduce((sum, f) => sum + f.size, 0))
+      };
+
+    } catch (error) {
+      console.warn(chalk.yellow(`⚠️  Could not read session ${sessionDir}: ${error.message}`));
+      return {
+        sessionId: sessionDir.replace('session-', ''),
+        shortId: sessionDir.replace('session-', '').substring(0, 8),
+        fullPath: sessionPath,
+        startTime: 'unknown',
+        lastActivity: 'unknown',
+        toolExecutions: 0,
+        recentTools: [],
+        toolCounts: {},
+        activeHooks: [],
+        size: '0 B',
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Get active hooks for a session by analyzing recent tool executions
+   */
+  async getSessionActiveHooks(sessionPath, files) {
+    try {
+      // Look at recent tool executions to see which hooks were involved
+      const recentFiles = files.slice(0, 10); // Last 10 tool executions
+      const hookActivity = new Set();
+
+      for (const file of recentFiles) {
+        try {
+          const filePath = path.join(sessionPath, file.name);
+          const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+          
+          // Check if this tool execution triggered hooks
+          // This is inferred based on tool patterns and available hooks
+          const toolName = data.tool_name;
+          const availableHooks = [
+            ...this.enhancementStates.hooks.user,
+            ...this.enhancementStates.hooks.project,
+            ...this.enhancementStates.hooks.local
+          ];
+
+          // Find hooks that would match this tool
+          availableHooks.forEach(hook => {
+            if (hook.events && hook.events.includes('PostToolUse')) {
+              if (!hook.matcher || hook.matcher === '' || 
+                  hook.matcher.split('|').includes(toolName)) {
+                hookActivity.add(hook.name);
+              }
+            }
+          });
+        } catch (error) {
+          // Skip files that can't be parsed
+          continue;
+        }
+      }
+
+      return Array.from(hookActivity);
+    } catch (error) {
+      return [];
+    }
+  }
+
+  /**
+   * Format bytes into human readable string
+   */
+  formatBytes(bytes, decimals = 2) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  }
+
+  /**
+   * Handle sessions section management
+   */
+  async manageSectionItems(sectionType) {
+    if (sectionType === 'sessions') {
+      await this.manageSessionsInteractive();
+      return;
+    }
+    
+    // Special handling for hooks with toggle functionality
+    if (sectionType === 'hooks') {
+      await this.manageHooksWithToggle();
+      return;
+    }
+    
+    // Regular section management for other types
+    const sectionData = this.enhancementStates[sectionType];
+    const allInstalled = [...sectionData.user, ...sectionData.project, ...sectionData.local];
+
+    if (allInstalled.length === 0) {
+      console.log(chalk.yellow(`No ${this.getSectionTitle(sectionType).toLowerCase()} installed to manage.`));
+      await this.waitForEnter(false);
+      return;
+    }
+
+    // Continue with existing logic for other sections...
+  }
+
+  /**
+   * Interactive session management
+   */
+  async manageSessionsInteractive() {
+    while (true) {
+      console.clear();
+      
+      const sessions = this.enhancementStates.sessions;
+      const allSessions = [...sessions.active, ...sessions.archived];
+      
+      if (allSessions.length === 0) {
+        console.log(chalk.yellow('📭 No conversation sessions found.'));
+        console.log(chalk.gray('Sessions are automatically created when using Claude Code with hooks enabled.'));
+        await this.waitForEnter(false);
+        return;
+      }
+
+      console.log(chalk.cyan('🎯 Session Management'));
+      console.log(chalk.gray('Browse and manage conversation sessions and their hook activity'));
+      console.log(chalk.gray('━'.repeat(70)));
+      console.log();
+
+      // Show session summary
+      console.log(chalk.blue(`📊 Session Overview:`));
+      console.log(`   ${chalk.green('🟢 Active:')} ${sessions.active.length} sessions (last 7 days)`);
+      console.log(`   ${chalk.gray('⚪ Archived:')} ${sessions.archived.length} sessions (older)`);
+      console.log(`   ${chalk.cyan('📁 Total:')} ${allSessions.length} sessions tracked`);
+      console.log();
+
+      // Create choices for session categories
+      const choices = [
+        {
+          name: `🟢 View Active Sessions (${sessions.active.length})`,
+          value: 'active',
+          disabled: sessions.active.length === 0
+        },
+        {
+          name: `⚪ View Archived Sessions (${sessions.archived.length})`,
+          value: 'archived', 
+          disabled: sessions.archived.length === 0
+        },
+        {
+          name: `🔍 Search All Sessions`,
+          value: 'search',
+          disabled: allSessions.length === 0
+        },
+        {
+          name: `🧹 Clean Up Old Sessions`,
+          value: 'cleanup'
+        },
+        new inquirer.Separator(),
+        {
+          name: `← Back to Main Menu`,
+          value: 'back'
+        }
+      ];
+
+      const action = await inquirer.prompt([{
+        type: 'list',
+        name: 'action',
+        message: 'Session Management Options:',
+        choices: choices
+      }]);
+
+      switch (action.action) {
+        case 'active':
+          await this.viewSessionList('Active Sessions', sessions.active);
+          break;
+        case 'archived':
+          await this.viewSessionList('Archived Sessions', sessions.archived);
+          break;
+        case 'search':
+          await this.searchSessions(allSessions);
+          break;
+        case 'cleanup':
+          await this.cleanupSessions(sessions.archived);
+          break;
+        case 'back':
+          return;
+      }
+    }
+  }
+
+  /**
+   * View a list of sessions with details
+   */
+  async viewSessionList(title, sessionList) {
+    if (sessionList.length === 0) {
+      console.log(chalk.yellow(`No sessions in ${title.toLowerCase()}.`));
+      await this.waitForEnter(false);
+      return;
+    }
+
+    console.clear();
+    console.log(chalk.cyan(`🎯 ${title}`));
+    console.log(chalk.gray('━'.repeat(70)));
+    console.log();
+
+    // Create session choices
+    const choices = sessionList.map(session => {
+      const timeAgo = this.getTimeAgo(session.lastActivity);
+      const toolSummary = Object.entries(session.toolCounts)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 3)
+        .map(([tool, count]) => `${tool}:${count}`)
+        .join(' ');
+      
+      const hookCount = session.activeHooks.length;
+      const hookSummary = hookCount > 0 ? chalk.cyan(`${hookCount} hooks`) : chalk.gray('no hooks');
+      
+      return {
+        name: `${chalk.bold(session.shortId)} ${chalk.gray('│')} ${timeAgo} ${chalk.gray('│')} ${session.toolExecutions} tools ${chalk.gray('│')} ${hookSummary} ${chalk.gray('│')} ${session.size}`,
+        value: session,
+        short: session.shortId
+      };
+    });
+
+    choices.push(
+      new inquirer.Separator(),
+      {
+        name: '← Back to Session Management',
+        value: 'back'
+      }
+    );
+
+    const selection = await inquirer.prompt([{
+      type: 'list',
+      name: 'session',
+      message: `Select session to view details:`,
+      choices: choices,
+      pageSize: 15
+    }]);
+
+    if (selection.session === 'back') {
+      return;
+    }
+
+    await this.viewSessionDetails(selection.session);
+  }
+
+  /**
+   * View detailed information about a specific session
+   */
+  async viewSessionDetails(session) {
+    while (true) {
+      console.clear();
+      console.log(chalk.cyan(`📋 Session Details: ${session.shortId}`));
+      console.log(chalk.gray('━'.repeat(70)));
+      console.log();
+
+      // Basic session info
+      console.log(chalk.blue('📊 Session Information:'));
+      console.log(`   ${chalk.gray('Session ID:')} ${session.sessionId}`);
+      console.log(`   ${chalk.gray('Short ID:')} ${session.shortId}`);
+      console.log(`   ${chalk.gray('Started:')} ${this.formatDateTime(session.startTime)}`);
+      console.log(`   ${chalk.gray('Last Activity:')} ${this.formatDateTime(session.lastActivity)} (${this.getTimeAgo(session.lastActivity)})`);
+      console.log(`   ${chalk.gray('Directory:')} ${session.fullPath}`);
+      console.log(`   ${chalk.gray('Size:')} ${session.size}`);
+      console.log();
+
+      // Tool execution summary
+      console.log(chalk.blue('🔧 Tool Executions:'));
+      console.log(`   ${chalk.gray('Total:')} ${session.toolExecutions} tool executions`);
+      if (Object.keys(session.toolCounts).length > 0) {
+        console.log(`   ${chalk.gray('Breakdown:')}`);
+        Object.entries(session.toolCounts)
+          .sort(([,a], [,b]) => b - a)
+          .forEach(([tool, count]) => {
+            console.log(`     ${chalk.cyan('•')} ${tool}: ${count} times`);
+          });
+      }
+      console.log();
+
+      // Active hooks
+      console.log(chalk.blue('🎣 Active Hooks:'));
+      if (session.activeHooks.length === 0) {
+        console.log(`   ${chalk.gray('No hooks detected for this session')}`);
+      } else {
+        session.activeHooks.forEach(hook => {
+          console.log(`   ${chalk.cyan('•')} ${hook}`);
+        });
+      }
+      console.log();
+
+      // Recent tools
+      if (session.recentTools.length > 0) {
+        console.log(chalk.blue('⚡ Recent Tools:'));
+        console.log(`   ${session.recentTools.slice(0, 10).join(' → ')}`);
+        console.log();
+      }
+
+      // Action choices
+      const choices = [
+        {
+          name: '📂 Open Session Directory',
+          value: 'open'
+        },
+        {
+          name: '📋 View Session Files',
+          value: 'files'
+        },
+        {
+          name: '🎣 View Hook Activity',
+          value: 'hooks'
+        },
+        {
+          name: '🗑️  Delete Session',
+          value: 'delete'
+        },
+        new inquirer.Separator(),
+        {
+          name: '← Back to Session List',
+          value: 'back'
+        }
+      ];
+
+      const action = await inquirer.prompt([{
+        type: 'list',
+        name: 'action',
+        message: 'Session Actions:',
+        choices: choices
+      }]);
+
+      switch (action.action) {
+        case 'open':
+          console.log(chalk.blue(`Opening: ${session.fullPath}`));
+          console.log(chalk.gray('Use your file manager or: cd "' + session.fullPath + '"'));
+          await this.waitForEnter(false);
+          break;
+        case 'files':
+          await this.viewSessionFiles(session);
+          break;
+        case 'hooks':
+          await this.viewSessionHooks(session);
+          break;
+        case 'delete':
+          const confirmed = await this.confirmSessionDeletion(session);
+          if (confirmed) {
+            await this.loadSessionData(); // Refresh session data
+            return; // Go back to list since session is deleted
+          }
+          break;
+        case 'back':
+          return;
+      }
+    }
+  }
+
+  /**
+   * View session files with details
+   */
+  async viewSessionFiles(session) {
+    console.clear();
+    console.log(chalk.cyan(`📂 Session Files: ${session.shortId}`));
+    console.log(chalk.gray('━'.repeat(70)));
+
+    try {
+      const files = fs.readdirSync(session.fullPath)
+        .map(file => {
+          const fullPath = path.join(session.fullPath, file);
+          const stat = fs.statSync(fullPath);
+          const match = file.match(/^(\w+)-(\d+)\.json$/);
+          return {
+            name: file,
+            tool: match ? match[1] : (file.endsWith('.json') ? 'data' : 'meta'),
+            timestamp: match ? parseInt(match[2]) : stat.mtime.getTime(),
+            mtime: stat.mtime,
+            size: this.formatBytes(stat.size),
+            isToolExecution: !!match
+          };
+        })
+        .sort((a, b) => b.timestamp - a.timestamp);
+
+      console.log(`\n${chalk.blue('📋 Files in session:')} (${files.length} files)\n`);
+
+      files.forEach(file => {
+        const icon = file.isToolExecution ? '🔧' : '📄';
+        const toolLabel = file.isToolExecution ? chalk.cyan(file.tool) : chalk.gray(file.tool);
+        const timeLabel = chalk.gray(new Date(file.mtime).toLocaleString());
+        
+        console.log(`${icon} ${file.name} ${chalk.gray('│')} ${toolLabel} ${chalk.gray('│')} ${file.size} ${chalk.gray('│')} ${timeLabel}`);
+      });
+
+    } catch (error) {
+      console.log(chalk.red(`❌ Error reading session files: ${error.message}`));
+    }
+
+    await this.waitForEnter(false);
+  }
+
+  /**
+   * View session hook activity
+   */
+  async viewSessionHooks(session) {
+    console.clear();
+    console.log(chalk.cyan(`🎣 Hook Activity: ${session.shortId}`));
+    console.log(chalk.gray('━'.repeat(70)));
+    console.log();
+
+    if (session.activeHooks.length === 0) {
+      console.log(chalk.yellow('No hook activity detected in this session.'));
+      console.log();
+      console.log(chalk.gray('This could mean:'));
+      console.log(chalk.gray('• No hooks were active during this session'));
+      console.log(chalk.gray('• Hook activity was not recorded in tool executions'));  
+      console.log(chalk.gray('• Session was created before hook tracking was implemented'));
+    } else {
+      console.log(chalk.blue('🎯 Active Hooks:'));
+      
+      // Get detailed hook information
+      const allHooks = [
+        ...this.enhancementStates.hooks.user,
+        ...this.enhancementStates.hooks.project,
+        ...this.enhancementStates.hooks.local
+      ];
+
+      session.activeHooks.forEach(hookName => {
+        const hookDetails = allHooks.find(h => h.name === hookName);
+        const typeIcon = hookDetails && hookDetails.hookType === 'rapala-generated' ? '🎣' : '🔧';
+        const status = hookDetails ? 
+          (hookDetails.disabled ? chalk.red('DISABLED') : chalk.green('ACTIVE')) : 
+          chalk.gray('UNKNOWN');
+        
+        console.log(`${typeIcon} ${chalk.bold(hookName)} - ${status}`);
+        
+        if (hookDetails) {
+          console.log(`   ${chalk.gray('Events:')} ${hookDetails.events ? hookDetails.events.join(', ') : 'unknown'}`);
+          console.log(`   ${chalk.gray('Matcher:')} ${hookDetails.matcher || 'all tools'}`);
+          console.log(`   ${chalk.gray('Description:')} ${hookDetails.description || 'No description'}`);
+        }
+        console.log();
+      });
+
+      console.log(chalk.blue('📊 Hook Statistics:'));
+      console.log(`   ${chalk.gray('Total active hooks:')} ${session.activeHooks.length}`);
+      console.log(`   ${chalk.gray('Tool executions:')} ${session.toolExecutions}`);
+      console.log(`   ${chalk.gray('Avg hooks per tool:')} ${(session.activeHooks.length / Math.max(session.toolExecutions, 1)).toFixed(2)}`);
+    }
+
+    await this.waitForEnter(false);
+  }
+
+  /**
+   * Search through sessions
+   */
+  async searchSessions(allSessions) {
+    console.clear();
+    console.log(chalk.cyan('🔍 Session Search'));
+    console.log(chalk.gray('━'.repeat(70)));
+    console.log();
+
+    const searchQuery = await inquirer.prompt([{
+      type: 'input',
+      name: 'query',
+      message: 'Enter search term (session ID, tool name, or hook name):',
+      validate: input => input.trim().length > 0 || 'Please enter a search term'
+    }]);
+
+    const query = searchQuery.query.toLowerCase();
+    const results = allSessions.filter(session => {
+      return (
+        session.sessionId.toLowerCase().includes(query) ||
+        session.shortId.toLowerCase().includes(query) ||
+        session.recentTools.some(tool => tool.toLowerCase().includes(query)) ||
+        session.activeHooks.some(hook => hook.toLowerCase().includes(query)) ||
+        Object.keys(session.toolCounts).some(tool => tool.toLowerCase().includes(query))
+      );
+    });
+
+    console.log(`\n${chalk.blue('🎯 Search Results:')} ${results.length} sessions found for "${query}"\n`);
+
+    if (results.length === 0) {
+      console.log(chalk.yellow('No sessions matched your search criteria.'));
+      await this.waitForEnter(false);
+      return;
+    }
+
+    await this.viewSessionList(`Search Results: "${query}"`, results);
+  }
+
+  /**
+   * Clean up old sessions
+   */
+  async cleanupSessions(archivedSessions) {
+    console.clear();
+    console.log(chalk.cyan('🧹 Session Cleanup'));
+    console.log(chalk.gray('━'.repeat(70)));
+    console.log();
+
+    if (archivedSessions.length === 0) {
+      console.log(chalk.yellow('No archived sessions to clean up.'));
+      await this.waitForEnter(false);
+      return;
+    }
+
+    console.log(chalk.blue(`📊 Cleanup Options:`));
+    console.log(`   ${chalk.gray('Archived sessions:')} ${archivedSessions.length}`);
+    console.log(`   ${chalk.gray('Total size:')} ${this.calculateTotalSize(archivedSessions)}`);
+    console.log();
+
+    const choices = [
+      {
+        name: `🗑️  Delete sessions older than 30 days`,
+        value: '30days'
+      },
+      {
+        name: `🗑️  Delete sessions older than 60 days`,
+        value: '60days'
+      },
+      {
+        name: `🗑️  Delete all archived sessions`,
+        value: 'all'
+      },
+      {
+        name: `← Cancel`,
+        value: 'cancel'
+      }
+    ];
+
+    const action = await inquirer.prompt([{
+      type: 'list',
+      name: 'action',
+      message: 'Select cleanup option:',
+      choices: choices
+    }]);
+
+    if (action.action === 'cancel') {
+      return;
+    }
+
+    const cutoffDays = action.action === '30days' ? 30 : action.action === '60days' ? 60 : 0;
+    const cutoffDate = cutoffDays > 0 ? new Date(Date.now() - cutoffDays * 24 * 60 * 60 * 1000) : new Date(0);
+    
+    const sessionsToDelete = archivedSessions.filter(s => new Date(s.lastActivity) < cutoffDate);
+
+    if (sessionsToDelete.length === 0) {
+      console.log(chalk.yellow(`No sessions found older than ${cutoffDays} days.`));
+      await this.waitForEnter(false);
+      return;
+    }
+
+    console.log(chalk.yellow(`⚠️  This will delete ${sessionsToDelete.length} sessions permanently.`));
+    const confirm = await inquirer.prompt([{
+      type: 'confirm',
+      name: 'confirmed',
+      message: 'Are you sure you want to proceed?',
+      default: false
+    }]);
+
+    if (!confirm.confirmed) {
+      return;
+    }
+
+    // Delete sessions
+    let deletedCount = 0;
+    for (const session of sessionsToDelete) {
+      try {
+        const { execSync } = require('child_process');
+        execSync(`rm -rf "${session.fullPath}"`);
+        deletedCount++;
+        console.log(chalk.gray(`✓ Deleted session ${session.shortId}`));
+      } catch (error) {
+        console.log(chalk.red(`❌ Failed to delete ${session.shortId}: ${error.message}`));
+      }
+    }
+
+    console.log(chalk.green(`\n✅ Cleanup complete! Deleted ${deletedCount} sessions.`));
+    await this.loadSessionData(); // Refresh session data
+    await this.waitForEnter(false);
+  }
+
+  /**
+   * Confirm session deletion
+   */
+  async confirmSessionDeletion(session) {
+    console.log(chalk.yellow(`⚠️  Delete session ${session.shortId}?`));
+    console.log(chalk.gray(`This will permanently delete all ${session.toolExecutions} tool executions and session data.`));
+    
+    const confirm = await inquirer.prompt([{
+      type: 'confirm',
+      name: 'confirmed',
+      message: 'Are you sure?',
+      default: false
+    }]);
+
+    if (confirm.confirmed) {
+      try {
+        const { execSync } = require('child_process');
+        execSync(`rm -rf "${session.fullPath}"`);
+        console.log(chalk.green(`✅ Session ${session.shortId} deleted successfully.`));
+        return true;
+      } catch (error) {
+        console.log(chalk.red(`❌ Failed to delete session: ${error.message}`));
+        await this.waitForEnter(false);
+        return false;
+      }
+    }
+    
+    return false;
+  }
+
+  /**
+   * Helper methods for session management
+   */
+  getTimeAgo(dateString) {
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffMins = Math.floor(diffMs / (1000 * 60));
+      
+      if (diffDays > 0) return `${diffDays}d ago`;
+      if (diffHours > 0) return `${diffHours}h ago`;
+      if (diffMins > 0) return `${diffMins}m ago`;
+      return 'just now';
+    } catch (error) {
+      return 'unknown';
+    }
+  }
+
+  formatDateTime(dateString) {
+    try {
+      return new Date(dateString).toLocaleString();
+    } catch (error) {
+      return dateString;
+    }
+  }
+
+  calculateTotalSize(sessions) {
+    const totalBytes = sessions.reduce((sum, session) => {
+      // Extract numeric value from size string like "1.2 KB"
+      const match = session.size.match(/^([\d.]+)\s*(\w+)$/);
+      if (match) {
+        const value = parseFloat(match[1]);
+        const unit = match[2];
+        const multipliers = { 'B': 1, 'KB': 1024, 'MB': 1024*1024, 'GB': 1024*1024*1024 };
+        return sum + (value * (multipliers[unit] || 1));
+      }
+      return sum;
+    }, 0);
+    
+    return this.formatBytes(totalBytes);
   }
 }
 
