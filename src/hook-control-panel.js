@@ -7,6 +7,7 @@ const { execSync } = require('child_process');
 const Installer = require('./installer');
 const ConfigManager = require('./config');
 const VersionCheck = require('./version-check');
+const RapalaAnimations = require('./utils/rapala-animations');
 
 /**
  * Hook Control Panel - 100% Self-Contained Management Interface
@@ -18,6 +19,7 @@ class HookControlPanel {
     this.configManager = new ConfigManager();
     this.versionCheck = new VersionCheck();
     this.currentDir = process.cwd();
+    this.animations = new RapalaAnimations();
     this.claudeDir = null;
     this.projectContext = null;
     this.enhancementStates = {};
@@ -326,9 +328,15 @@ class HookControlPanel {
       if (debug) console.log('DEBUG: Main navigation loop iteration starting');
       console.clear();
       
-      // Clean horizontal header
-      console.log(chalk.bold.magenta('🎣 Rapala Enhancement Center'));
-      console.log(chalk.gray('━'.repeat(50)));
+      // Animated header on first load
+      if (currentSection === 0 && !this.hasShownBanner) {
+        await this.animations.showBanner('RAPALA ENHANCEMENT CENTER', 50);
+        this.hasShownBanner = true;
+      } else {
+        // Clean horizontal header
+        console.log(chalk.bold.magenta('🎣 Rapala Enhancement Center'));
+        console.log(chalk.gray('━'.repeat(50)));
+      }
       
       // Horizontal navigation with smart colors
       const navBar = sections.map((section, index) => {
@@ -3826,7 +3834,7 @@ class HookControlPanel {
           const data = JSON.parse(content);
           
           // Detect hook signatures from tool execution data
-          const hookSignatures = this.detectHookSignatures(data);
+          const hookSignatures = await this.detectHookSignatures(data);
           
           for (const hookName of hookSignatures) {
             detectedHooks.add(hookName);
