@@ -181,6 +181,17 @@ class StatusLineManager {
         components: ['model', 'directory', 'git', 'docker', 'time'],
         separator: ' | ',
         colors: { model: 'magenta', directory: 'cyan', git: 'green', docker: 'blue', time: 'yellow' }
+      },
+      {
+        name: 'compact',
+        displayName: 'Compact',
+        description: 'Ultra-compact aesthetic design',
+        preview: 'S4 project 🌿main* 15:30',
+        components: ['model', 'directory', 'git', 'time'],
+        separator: ' ',
+        style: 'compact',
+        colors: { model: 'magenta', directory: 'cyan', git: 'green', time: 'yellow' },
+        script: '/home/alejandro/.claude/statusline-compact.sh'
       }
     ];
   }

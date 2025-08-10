@@ -4622,13 +4622,13 @@ class HookControlPanel {
   }
 
   /**
-   * Get all running Claude Code processes with their details
+   * Get all running Claude Code processes with their details and child processes
    */
   async getClaudeProcesses() {
     try {
       const { execSync } = require('child_process');
       
-      // Get Claude processes
+      // Get Claude main processes
       const psOutput = execSync('ps aux | grep -E "\\bclaude\\b" | grep -v grep', { 
         encoding: 'utf8', 
         timeout: 5000 
@@ -4667,6 +4667,9 @@ class HookControlPanel {
         
         // Only include actual Claude Code processes (not bash wrappers)
         if (cmdline.includes('claude') && !cmdline.includes('bash') && !cmdline.includes('sh')) {
+          // Get child processes for this Claude process
+          const children = await this.getProcessChildren(pid);
+          
           processes.push({
             pid,
             cwd,
@@ -4674,7 +4677,9 @@ class HookControlPanel {
             user: parts[0],
             cpu: parts[2],
             mem: parts[3],
-            startTime: parts[8]
+            startTime: parts[8],
+            children: children,
+            hasActiveChildren: children.length > 0
           });
         }
       }
@@ -4682,6 +4687,48 @@ class HookControlPanel {
       return processes;
     } catch (error) {
       console.warn(`[DEBUG] Error getting Claude processes:`, error.message);
+      return [];
+    }
+  }
+
+  /**
+   * Get child processes of a given PID (indicates active command execution)
+   */
+  async getProcessChildren(parentPid) {
+    try {
+      const { execSync } = require('child_process');
+      
+      // Get all processes and find children of parentPid
+      const psOutput = execSync(`ps --ppid ${parentPid} -o pid,ppid,cmd --no-headers`, { 
+        encoding: 'utf8', 
+        timeout: 3000 
+      });
+      
+      if (!psOutput.trim()) {
+        return [];
+      }
+      
+      const children = [];
+      const lines = psOutput.split('\n').filter(line => line.trim());
+      
+      for (const line of lines) {
+        const parts = line.trim().split(/\s+/);
+        if (parts.length >= 3) {
+          const childPid = parseInt(parts[0]);
+          const cmd = parts.slice(2).join(' ');
+          
+          if (!isNaN(childPid)) {
+            children.push({
+              pid: childPid,
+              command: cmd
+            });
+          }
+        }
+      }
+      
+      return children;
+    } catch (error) {
+      // No children or error getting them
       return [];
     }
   }
@@ -4696,10 +4743,42 @@ class HookControlPanel {
       
       const projectDir = path.dirname(path.dirname(sessionDir)); // Go up from conversations/session-xxx
       
-      // Method 1: Direct directory match
-      const directMatch = claudeProcesses.find(proc => proc.cwd === projectDir);
-      if (directMatch) {
-        // Check if this session has very recent activity to confirm it's the active one
+      // Get all processes in the same directory
+      const matchingDirProcesses = claudeProcesses.filter(proc => proc.cwd === projectDir);
+      if (matchingDirProcesses.length === 0) return null;
+      
+      // Method 1: Prioritize processes with active child processes (running commands)
+      const processesWithChildren = matchingDirProcesses.filter(proc => proc.hasActiveChildren);
+      
+      if (processesWithChildren.length > 0) {
+        // Check which has the most recent activity
+        for (const proc of processesWithChildren) {
+          const recentFiles = fs.readdirSync(sessionDir)
+            .filter(file => file.endsWith('.json'))
+            .map(file => {
+              const filePath = path.join(sessionDir, file);
+              return { file, mtime: fs.statSync(filePath).mtime };
+            })
+            .sort((a, b) => b.mtime - a.mtime);
+            
+          if (recentFiles.length > 0) {
+            const lastActivity = recentFiles[0].mtime;
+            const thirtySecondsAgo = new Date(Date.now() - 30 * 1000);
+            if (lastActivity > thirtySecondsAgo) {
+              console.log(`[DEBUG] Session ${sessionId} matched to process with active children: PID ${proc.pid} (children: ${proc.children.map(c => c.command).join(', ')})`);
+              return proc;
+            }
+          }
+        }
+        
+        // If no recent activity but has children, still consider it active
+        const procWithChildren = processesWithChildren[0];
+        console.log(`[DEBUG] Session ${sessionId} matched to process with children: PID ${procWithChildren.pid} (children: ${procWithChildren.children.map(c => c.command).join(', ')})`);
+        return procWithChildren;
+      }
+      
+      // Method 2: Fallback to any process in the directory with recent activity
+      for (const proc of matchingDirProcesses) {
         const recentFiles = fs.readdirSync(sessionDir)
           .filter(file => file.endsWith('.json'))
           .map(file => {
@@ -4710,15 +4789,12 @@ class HookControlPanel {
           
         if (recentFiles.length > 0) {
           const lastActivity = recentFiles[0].mtime;
-          const thirtySecondsAgo = new Date(Date.now() - 30 * 1000);
-          if (lastActivity > thirtySecondsAgo) {
-            return directMatch;
+          const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+          if (lastActivity > oneMinuteAgo) {
+            return proc;
           }
         }
       }
-      
-      // Method 2: Could add more sophisticated matching here
-      // (e.g., check environment variables, lock files, etc.)
       
       return null;
     } catch (error) {
