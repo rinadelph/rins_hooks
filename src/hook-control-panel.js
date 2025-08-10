@@ -2894,79 +2894,101 @@ class HookControlPanel {
   }
 
   /**
-   * Get system information for status line
+   * Get status line configuration from Claude settings
    */
-  async getSystemInfo() {
+  async getStatusLineConfig() {
     try {
-      const os = require('os');
-      
-      // Get CPU usage (simplified)
-      const cpus = os.cpus();
-      const cpu = cpus.length > 0 ? Math.round(Math.random() * 100) : 0; // Placeholder - real CPU usage is complex
-      
-      // Get memory usage
-      const totalMem = os.totalmem();
-      const freeMem = os.freemem();
-      const memory = Math.round(((totalMem - freeMem) / totalMem) * 100);
-      
-      // Get load average
-      const loadAvg = os.loadavg();
-      const load = loadAvg[0].toFixed(2);
-      
-      return { cpu, memory, load };
-    } catch (error) {
-      return { cpu: 0, memory: 0, load: '0.00' };
-    }
-  }
+      const settingsPaths = [
+        path.join(process.cwd(), '.claude', 'settings.json'),
+        path.join(process.cwd(), '.claude', 'settings.local.json'),
+        path.join(require('os').homedir(), '.claude', 'settings.json')
+      ];
 
-  /**
-   * Get project information for status line
-   */
-  async getProjectInfo() {
-    try {
-      const projectName = this.projectContext?.name || path.basename(process.cwd());
-      let gitStatus = 'N/A';
-      
-      if (this.projectContext?.hasGit) {
-        try {
-          const { execSync } = require('child_process');
-          const branch = execSync('git branch --show-current', { encoding: 'utf8' }).trim();
-          const status = execSync('git status --porcelain', { encoding: 'utf8' }).trim();
-          const changes = status.split('\n').filter(line => line.trim()).length;
-          
-          if (changes > 0) {
-            gitStatus = `${branch} (+${changes})`;
-          } else {
-            gitStatus = `${branch} (clean)`;
+      for (const settingsPath of settingsPaths) {
+        if (fs.existsSync(settingsPath)) {
+          const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+          if (settings.statusLine) {
+            return settings.statusLine;
           }
-        } catch (error) {
-          gitStatus = 'error';
         }
       }
-      
-      return { name: projectName, gitStatus };
+      return null;
     } catch (error) {
-      return { name: 'unknown', gitStatus: 'N/A' };
+      return null;
     }
   }
 
   /**
-   * Get Rapala-specific information for status line
+   * Execute status line command and return output
    */
-  async getRapalaInfo() {
+  async executeStatusLineCommand(config) {
     try {
-      const allHooks = [
-        ...this.enhancementStates.hooks.user,
-        ...this.enhancementStates.hooks.project,
-        ...this.enhancementStates.hooks.local
-      ];
-      
-      const activeHooks = allHooks.filter(hook => hook.enabled !== false).length;
-      
-      return { activeHooks };
+      if (config.type !== 'command' || !config.command) {
+        return null;
+      }
+
+      const { spawn } = require('child_process');
+      const inputData = this.generateStatusLineInputData();
+
+      return new Promise((resolve, reject) => {
+        const child = spawn('bash', ['-c', config.command], {
+          stdio: ['pipe', 'pipe', 'pipe']
+        });
+
+        let stdout = '';
+        let stderr = '';
+
+        child.stdout.on('data', (data) => {
+          stdout += data.toString();
+        });
+
+        child.stderr.on('data', (data) => {
+          stderr += data.toString();
+        });
+
+        child.on('close', (code) => {
+          if (code === 0) {
+            // Return first line of stdout as status line
+            const firstLine = stdout.split('\n')[0].trim();
+            resolve(firstLine || null);
+          } else {
+            reject(new Error(`Status line command failed: ${stderr}`));
+          }
+        });
+
+        child.on('error', (error) => {
+          reject(error);
+        });
+
+        // Send JSON input to stdin
+        child.stdin.write(JSON.stringify(inputData));
+        child.stdin.end();
+      });
     } catch (error) {
-      return { activeHooks: 0 };
+      return null;
     }
+  }
+
+  /**
+   * Generate input data for status line command
+   */
+  generateStatusLineInputData() {
+    const sessionId = require('crypto').randomUUID();
+    
+    return {
+      hook_event_name: "Status",
+      session_id: sessionId,
+      transcript_path: "/dev/null", // Not applicable in this context
+      cwd: process.cwd(),
+      model: {
+        id: "rapala-ui",
+        display_name: "Rapala"
+      },
+      workspace: {
+        current_dir: process.cwd(),
+        project_dir: this.projectContext?.hasGit ? process.cwd() : process.cwd()
+      }
+    };
   }
 }
 
