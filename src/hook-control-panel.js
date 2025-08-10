@@ -3626,6 +3626,117 @@ class HookControlPanel {
   }
 
   /**
+   * Enter Sessions section with custom menu
+   */
+  async enterSessionsSection(debug = false) {
+    if (debug) console.log(`DEBUG: enterSessionsSection called`);
+    
+    while (true) {
+      console.clear();
+      
+      const sessions = this.enhancementStates.sessions;
+      const totalSessions = sessions.active.length + sessions.archived.length;
+      
+      // Header
+      console.log(chalk.bold.magenta(`🎯 Sessions Management`));
+      console.log(chalk.gray('━'.repeat(50)));
+      console.log();
+      
+      // Sessions overview
+      if (totalSessions === 0) {
+        console.log(chalk.yellow('📭 No conversation sessions found.'));
+        console.log(chalk.gray('Sessions are automatically created when using Claude Code with hooks enabled.'));
+        console.log();
+      } else {
+        console.log(chalk.blue(`📊 Session Overview:`));
+        console.log(`   ${chalk.green('🟢 Active:')} ${sessions.active.length} sessions (last 7 days)`);
+        console.log(`   ${chalk.gray('⚪ Archived:')} ${sessions.archived.length} sessions (older)`);
+        console.log(`   ${chalk.cyan('📁 Total:')} ${totalSessions} sessions tracked`);
+        console.log();
+        
+        // Show sample of recent active sessions
+        if (sessions.active.length > 0) {
+          const preview = sessions.active.slice(0, 3);
+          const sessionSummary = preview.map(session => {
+            const timeAgo = this.getTimeAgo(session.lastActivity);
+            const hookCount = session.activeHooks.length;
+            return `${session.shortId}(${hookCount}h,${timeAgo})`;
+          }).join(chalk.gray(' │ '));
+          
+          console.log(chalk.gray('Recent: ') + sessionSummary + 
+            (sessions.active.length > 3 ? chalk.dim(' │ +' + (sessions.active.length - 3) + ' more') : ''));
+          console.log();
+        }
+      }
+      
+      // Action bar
+      console.log(chalk.gray('━'.repeat(50)));
+      console.log(chalk.yellow('🎯') + chalk.gray(' Browse │ ') + chalk.cyan('🔍') + chalk.gray(' Search │ ') + 
+                  chalk.red('🧹') + chalk.gray(' Clean │ ') + chalk.magenta('←') + chalk.gray(' Back │ ') + 
+                  chalk.red('Q') + chalk.gray(' Quit'));
+      
+      // Session management menu (not the generic install/manage menu)
+      const action = await inquirer.prompt([{
+        type: 'list',
+        name: 'choice',
+        message: chalk.cyan('Session Management:'),
+        choices: [
+          { 
+            name: chalk.green('🟢 Browse Active Sessions'), 
+            value: 'browse_active',
+            disabled: sessions.active.length === 0 ? 'No active sessions' : false
+          },
+          { 
+            name: chalk.gray('⚪ Browse Archived Sessions'), 
+            value: 'browse_archived',
+            disabled: sessions.archived.length === 0 ? 'No archived sessions' : false
+          },
+          { 
+            name: chalk.cyan('🔍 Search All Sessions'), 
+            value: 'search',
+            disabled: totalSessions === 0 ? 'No sessions to search' : false
+          },
+          { 
+            name: chalk.red('🧹 Clean Up Old Sessions'), 
+            value: 'cleanup'
+          },
+          new inquirer.Separator('────────────────────────────'),
+          { name: chalk.gray('← Back to sections'), value: 'back' },
+          { name: chalk.red('Q Quit Rapala'), value: 'quit' }
+        ],
+        pageSize: 10,
+        loop: false
+      }]);
+      
+      if (debug) console.log(`DEBUG: Session action selected: ${action.choice}`);
+      
+      switch (action.choice) {
+        case 'browse_active':
+          await this.viewSessionList('Active Sessions', sessions.active);
+          break;
+        case 'browse_archived':  
+          await this.viewSessionList('Archived Sessions', sessions.archived);
+          break;
+        case 'search':
+          await this.searchSessions(sessions.available);
+          break;
+        case 'cleanup':
+          await this.cleanupSessions(sessions.archived);
+          break;
+        case 'back':
+          if (debug) console.log('DEBUG: User selected back from sessions, returning false');
+          return false;
+        case 'quit':
+          if (debug) console.log('DEBUG: User selected quit from sessions, returning true');
+          return true;
+        default:
+          if (debug) console.log(`DEBUG: Unknown session action: ${action.choice}`);
+          break;
+      }
+    }
+  }
+
+  /**
    * Interactive session management
    */
   async manageSessionsInteractive() {
