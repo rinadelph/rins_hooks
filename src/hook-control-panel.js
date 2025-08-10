@@ -116,6 +116,7 @@ class HookControlPanel {
       prompts: { user: [], project: [], local: [], available: [] },
       mcps: { user: [], project: [], local: [], available: [] },
       sessions: { active: [], archived: [], available: [] },
+      'statusline-editor': { user: [], project: [], local: [], available: [], themes: [], components: [] },
       updates: [],
       autoUpdate: false
     };
@@ -314,8 +315,8 @@ class HookControlPanel {
     await this.initialize();
 
     let currentSection = 0;
-    const sections = ['hooks', 'tools', 'resources', 'prompts', 'mcps', 'sessions'];
-    const sectionNames = ['Hooks', 'Tools', 'Resources', 'Prompts', 'MCPs', 'Sessions'];
+    const sections = ['hooks', 'tools', 'resources', 'prompts', 'mcps', 'sessions', 'statusline-editor'];
+    const sectionNames = ['Hooks', 'Tools', 'Resources', 'Prompts', 'MCPs', 'Sessions', 'Status Line'];
     
     if (debug) console.log('DEBUG: Starting showInteractiveStatus');
 
@@ -414,14 +415,32 @@ class HookControlPanel {
       return;
     }
     
+    // Special handling for statusline-editor section
+    if (sectionType === 'statusline-editor') {
+      await this.displayStatusLineEditorOverview(icon);
+      return;
+    }
+    
     const sectionData = this.enhancementStates[sectionType];
-    const totalInstalled = sectionData.user.length + sectionData.project.length + sectionData.local.length;
-    const totalAvailable = sectionData.available.length;
+    if (!sectionData) {
+      console.log(`${icon} ${chalk.bold.white(this.getSectionTitle(sectionType))} │ ${chalk.red('Section not available')}`);
+      console.log();
+      return;
+    }
+    
+    const totalInstalled = (sectionData.user ? sectionData.user.length : 0) + 
+                          (sectionData.project ? sectionData.project.length : 0) + 
+                          (sectionData.local ? sectionData.local.length : 0);
+    const totalAvailable = sectionData.available ? sectionData.available.length : 0;
     
     // For hooks section, show breakdown by type
     let stats;
     if (sectionType === 'hooks' && totalInstalled > 0) {
-      const allInstalled = [...sectionData.user, ...sectionData.project, ...sectionData.local];
+      const allInstalled = [
+        ...(sectionData.user || []),
+        ...(sectionData.project || []),
+        ...(sectionData.local || [])
+      ];
       const claudeCodeHooks = allInstalled.filter(item => item.hookType === 'claude-code');
       const rapalaHooks = allInstalled.filter(item => item.hookType === 'rapala-generated');
       
@@ -436,7 +455,11 @@ class HookControlPanel {
     
     // Show recent items horizontally if any installed
     if (totalInstalled > 0) {
-      const allInstalled = [...sectionData.user, ...sectionData.project, ...sectionData.local];
+      const allInstalled = [
+        ...(sectionData.user || []),
+        ...(sectionData.project || []),
+        ...(sectionData.local || [])
+      ];
       const preview = allInstalled.slice(0, 3);
       const itemList = preview.map(item => {
         const scopeIcon = this.getScopeIcon(item, sectionData);
@@ -481,6 +504,37 @@ class HookControlPanel {
       
       console.log(chalk.dim('Browse conversation sessions and their hook activity'));
     }
+    console.log();
+  }
+
+  /**
+   * Display status line editor overview
+   */
+  async displayStatusLineEditorOverview(icon) {
+    // Get current status line configuration
+    const statusLineConfig = await this.getStatusLineConfig();
+    const isConfigured = statusLineConfig !== null;
+    
+    if (!isConfigured) {
+      const stats = chalk.yellow('No status line configured') + chalk.cyan(' │ Customize your command line');
+      console.log(`${icon} ${chalk.bold.white('Status Line')} │ ${stats}`);
+    } else {
+      // Show current configuration
+      const stats = chalk.green('Status line active') + chalk.gray(' │ ') + chalk.blue('Live preview available');
+      console.log(`${icon} ${chalk.bold.white('Status Line')} │ ${stats}`);
+      
+      // Show preview of current status line
+      try {
+        const previewText = await this.executeStatusLineCommand(statusLineConfig);
+        if (previewText) {
+          console.log(chalk.gray('Current: ') + previewText);
+        }
+      } catch (error) {
+        console.log(chalk.gray('Current: ') + chalk.red('Error executing status line'));
+      }
+    }
+    
+    console.log(chalk.dim(this.getSectionDescription('statusline-editor')));
     console.log();
   }
 
@@ -637,7 +691,8 @@ class HookControlPanel {
       resources: '📚',
       prompts: '💬',
       mcps: '🤖',
-      sessions: '🎯'
+      sessions: '🎯',
+      'statusline-editor': '📊'
     };
     return icons[category] || '🔗';
   }
@@ -652,7 +707,8 @@ class HookControlPanel {
       resources: 'Resources',
       prompts: 'Prompts',
       mcps: 'MCPs',
-      sessions: 'Sessions'
+      sessions: 'Sessions',
+      'statusline-editor': 'Status Line'
     };
     return titles[sectionType] || sectionType;
   }
@@ -664,7 +720,8 @@ class HookControlPanel {
       resources: 'Documentation, guides, and templates',
       prompts: 'Context injection and instruction templates',
       mcps: 'Multi-agent collaboration components',
-      sessions: 'Conversation sessions with hook activity tracking'
+      sessions: 'Conversation sessions with hook activity tracking',
+      'statusline-editor': 'Customize your command line status line appearance and components'
     };
     return descriptions[sectionType] || '';
   }
@@ -680,6 +737,12 @@ class HookControlPanel {
    * Display detailed section content
    */
   async displayDetailedSection(sectionType) {
+    // Special handling for statusline-editor section
+    if (sectionType === 'statusline-editor') {
+      await this.displayStatusLineEditorDetails();
+      return;
+    }
+    
     const sectionData = this.enhancementStates[sectionType];
     const allInstalled = [...sectionData.user, ...sectionData.project, ...sectionData.local];
     const available = sectionData.available.filter(item => 
@@ -3039,6 +3102,59 @@ class HookControlPanel {
   }
 
   /**
+   * Display detailed status line editor interface
+   */
+  async displayStatusLineEditorDetails() {
+    const statusLineConfig = await this.getStatusLineConfig();
+    const isConfigured = statusLineConfig !== null;
+    
+    console.log(`  ${chalk.bold.magenta('📊 Status Line Editor')}`);
+    console.log(chalk.magenta('  ─────────────────────────────'));
+    console.log();
+    
+    if (isConfigured) {
+      console.log(`  ${chalk.green('✅ Status line is configured')}`);
+      
+      // Show current preview
+      try {
+        const previewText = await this.executeStatusLineCommand(statusLineConfig);
+        if (previewText) {
+          console.log(`  ${chalk.blue('Current:')} ${previewText}`);
+        }
+      } catch (error) {
+        console.log(`  ${chalk.blue('Current:')} ${chalk.red('Error - check your script')}`);
+      }
+      
+      console.log(`  ${chalk.gray('Command:')} ${statusLineConfig.command}`);
+      console.log(`  ${chalk.gray('Type:')} ${statusLineConfig.type}`);
+      if (statusLineConfig.padding !== undefined) {
+        console.log(`  ${chalk.gray('Padding:')} ${statusLineConfig.padding}`);
+      }
+      console.log();
+      
+      console.log(`  ${chalk.bold.cyan('Available Actions:')}`);
+      console.log(`  • ${chalk.green('Edit')} - Modify current configuration`);
+      console.log(`  • ${chalk.blue('Test')} - Preview with different inputs`);
+      console.log(`  • ${chalk.yellow('Templates')} - Choose from pre-built themes`);
+      console.log(`  • ${chalk.magenta('Components')} - Add/remove status components`);
+      console.log(`  • ${chalk.red('Remove')} - Disable status line`);
+      
+    } else {
+      console.log(`  ${chalk.yellow('ℹ️  No status line configured')}`);
+      console.log(`  ${chalk.gray('A status line shows contextual information in Claude Code')}`);
+      console.log();
+      
+      console.log(`  ${chalk.bold.cyan('Quick Setup Options:')}`);
+      console.log(`  • ${chalk.green('Auto-detect')} - Convert your shell PS1 prompt`);
+      console.log(`  • ${chalk.blue('Templates')} - Choose from pre-built themes`);
+      console.log(`  • ${chalk.magenta('Custom')} - Create your own script`);
+      console.log(`  • ${chalk.yellow('Examples')} - View example configurations`);
+    }
+    
+    console.log();
+  }
+
+  /**
    * Load session data from conversations directory
    */
   async loadSessionData() {
@@ -3177,43 +3293,40 @@ class HookControlPanel {
    */
   async getSessionActiveHooks(sessionPath, files) {
     try {
-      // Look at recent tool executions to see which hooks were involved
-      const recentFiles = files.slice(0, 10); // Last 10 tool executions
-      const hookActivity = new Set();
+      // Get all currently installed and enabled hooks
+      const availableHooks = [
+        ...(this.enhancementStates.hooks.user || []),
+        ...(this.enhancementStates.hooks.project || []),
+        ...(this.enhancementStates.hooks.local || [])
+      ];
 
-      for (const file of recentFiles) {
-        try {
-          const filePath = path.join(sessionPath, file.name);
-          const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-          
-          // Check if this tool execution triggered hooks
-          // This is inferred based on tool patterns and available hooks
-          const toolName = data.tool_name;
-          const availableHooks = [
-            ...this.enhancementStates.hooks.user,
-            ...this.enhancementStates.hooks.project,
-            ...this.enhancementStates.hooks.local
-          ];
-
-          // Find hooks that would match this tool
-          availableHooks.forEach(hook => {
-            if (hook.events && hook.events.includes('PostToolUse')) {
-              if (!hook.matcher || hook.matcher === '' || 
-                  hook.matcher.split('|').includes(toolName)) {
-                hookActivity.add(hook.name);
-              }
-            }
-          });
-        } catch (error) {
-          // Skip files that can't be parsed
-          continue;
-        }
-      }
-
-      return Array.from(hookActivity);
+      // Filter to only enabled hooks and return detailed information
+      const activeHooks = availableHooks
+        .filter(hook => !hook.disabled)
+        .map(hook => ({
+          name: hook.name,
+          type: hook.hookType || 'claude-code',
+          events: hook.events || [],
+          matcher: hook.matcher || '',
+          description: hook.description || 'No description',
+          enabled: !hook.disabled,
+          scope: this.getHookScope(hook)
+        }));
+      
+      return activeHooks;
     } catch (error) {
       return [];
     }
+  }
+
+  /**
+   * Get the scope of a hook (user, project, local)
+   */
+  getHookScope(hook) {
+    if ((this.enhancementStates.hooks.user || []).includes(hook)) return 'user';
+    if ((this.enhancementStates.hooks.project || []).includes(hook)) return 'project';  
+    if ((this.enhancementStates.hooks.local || []).includes(hook)) return 'local';
+    return 'unknown';
   }
 
   /**
