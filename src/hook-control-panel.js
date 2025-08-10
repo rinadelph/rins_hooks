@@ -586,7 +586,8 @@ class HookControlPanel {
       tools: 'Tools', 
       resources: 'Resources',
       prompts: 'Prompts',
-      mcps: 'MCPs'
+      mcps: 'MCPs',
+      'status-line': 'Status Line'
     };
     return titles[sectionType] || sectionType;
   }
