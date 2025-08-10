@@ -97,6 +97,58 @@ class StatusLineManager {
         defaultConfig: { showChanges: true, showAhead: true, color: 'green' }
       },
       {
+        name: 'animated-model',
+        displayName: 'Animated Model',
+        description: 'Model name with pulsing and color animations',
+        icon: '🤖',
+        configurable: true,
+        animated: true,
+        defaultConfig: { 
+          animationStyle: 'pulse',
+          speed: 'medium',
+          enabled: true
+        }
+      },
+      {
+        name: 'animated-directory',
+        displayName: 'Animated Directory',
+        description: 'Directory path with icon animations',
+        icon: '📁',
+        configurable: true,
+        animated: true,
+        defaultConfig: { 
+          animationStyle: 'icon-pulse',
+          speed: 'slow',
+          enabled: true
+        }
+      },
+      {
+        name: 'animated-git',
+        displayName: 'Animated Git',
+        description: 'Git status with rotating icons',
+        icon: '🌿',
+        configurable: true,
+        animated: true,
+        defaultConfig: { 
+          animationStyle: 'icon-rotation',
+          speed: 'medium',
+          enabled: true
+        }
+      },
+      {
+        name: 'animated-time',
+        displayName: 'Animated Time',
+        description: 'Time with blinking separators',
+        icon: '⏰',
+        configurable: true,
+        animated: true,
+        defaultConfig: { 
+          animationStyle: 'separator-blink',
+          speed: 'medium',
+          enabled: true
+        }
+      },
+      {
         name: 'time',
         displayName: 'Time',
         description: 'Shows current time',
