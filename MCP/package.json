@@ -1,0 +1,17 @@
+{
+  "name": "mcp",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Initialized by Claude Code Session Archiver",
+  "main": "example-mcp-server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.2",
+    "zod": "^3.25.76"
+  }
+}
