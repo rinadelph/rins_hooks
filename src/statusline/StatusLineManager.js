@@ -28,18 +28,32 @@ class StatusLineManager {
     try {
       if (fs.existsSync(this.componentsDir)) {
         const files = fs.readdirSync(this.componentsDir).filter(f => f.endsWith('.js'));
-        this.availableComponents = files.map(f => {
-          const name = f.replace('.js', '');
-          const component = require(path.join(this.componentsDir, f));
-          return { name, ...component };
+        const loadedComponents = [];
+        
+        files.forEach(f => {
+          try {
+            const filePath = path.join(this.componentsDir, f);
+            const component = require(filePath);
+            
+            // Check if it's a valid component metadata object
+            if (component && typeof component === 'object' && component.name && component.displayName) {
+              loadedComponents.push(component);
+            }
+          } catch (fileError) {
+            // Skip files that can't be loaded as components
+            console.warn(`Could not load component file ${f}:`, fileError.message);
+          }
         });
-      }
-      
-      // Add built-in components if directory doesn't exist
-      if (this.availableComponents.length === 0) {
+        
+        // Merge loaded components with built-in components
+        const builtIn = this.getBuiltInComponents();
+        this.availableComponents = [...builtIn, ...loadedComponents];
+      } else {
+        // Use only built-in components if directory doesn't exist
         this.availableComponents = this.getBuiltInComponents();
       }
     } catch (error) {
+      // Fallback to built-in components on any error
       this.availableComponents = this.getBuiltInComponents();
     }
   }
