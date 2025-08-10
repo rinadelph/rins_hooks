@@ -3664,7 +3664,7 @@ class HookControlPanel {
   async loadSessionData() {
     try {
       // Look for conversations directory in current project and parent directories
-      const conversationsDir = await this.findConversationsDirectory();
+      const conversationsDir = this.findConversationsDirectory();
       
       if (!conversationsDir) {
         this.enhancementStates.sessions = { active: [], archived: [], available: [] };
@@ -3717,7 +3717,7 @@ class HookControlPanel {
   /**
    * Find conversations directory in current project or parent directories
    */
-  async findConversationsDirectory() {
+  findConversationsDirectory() {
     let searchDir = this.currentDir;
     while (searchDir !== path.dirname(searchDir)) {
       const conversationsPath = path.join(searchDir, 'conversations');
@@ -4717,6 +4717,7 @@ class HookControlPanel {
       
       return null;
     } catch (error) {
+      console.warn(`[DEBUG] Error in findSessionDirectory for ${sessionId}:`, error.message);
       return null;
     }
   }
