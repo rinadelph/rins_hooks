@@ -563,6 +563,12 @@ class HookControlPanel {
    */
   async enterSection(sectionType, debug = false) {
     if (debug) console.log(`DEBUG: enterSection called with ${sectionType}`);
+    
+    // Special handling for statusline-editor section
+    if (sectionType === 'statusline-editor') {
+      return await this.enterStatusLineEditor(debug);
+    }
+    
     while (true) {
       if (debug) console.log(`DEBUG: enterSection loop iteration for ${sectionType}`);
       console.clear();
@@ -919,49 +925,6 @@ class HookControlPanel {
     await this.waitForEnter(false);
   }
 
-  async manageSectionItems(sectionType) {
-    // Special handling for hooks with toggle functionality
-    if (sectionType === 'hooks') {
-      await this.manageHooksWithToggle();
-      return;
-    }
-
-    const sectionData = this.enhancementStates[sectionType];
-    const allInstalled = [...sectionData.user, ...sectionData.project, ...sectionData.local];
-
-    if (allInstalled.length === 0) {
-      console.log(chalk.yellow(`No ${this.getSectionTitle(sectionType).toLowerCase()} installed to manage.`));
-      await this.waitForEnter(false);
-      return;
-    }
-
-    const choices = allInstalled.map(item => {
-      const scope = this.getScopeIcon(item, sectionData);
-      // Add hook type differentiation to the display
-      let typeIcon = '';
-      if (sectionType === 'hooks') {
-        typeIcon = item.hookType === 'rapala-generated' ? '🎣 ' : '🔧 ';
-      }
-      return {
-        name: `${typeIcon}${item.name} ${scope} - ${item.description || 'No description'}`,
-        value: item,
-        short: item.name
-      };
-    });
-
-    const selection = await inquirer.prompt([{
-      type: 'list',
-      name: 'item',
-      message: `Select ${this.getSectionTitle(sectionType).toLowerCase().slice(0, -1)} to manage:`,
-      choices,
-      pageSize: 10,
-      // Enable arrow key navigation and prevent infinite scroll
-      loop: false
-    }]);
-
-    // Individual item management (reuse existing logic)
-    await this.manageIndividualItem(selection.item);
-  }
 
   /**
    * Enhanced hook management with toggle functionality
@@ -3152,6 +3115,185 @@ class HookControlPanel {
     }
     
     console.log();
+  }
+
+  /**
+   * Enter Status Line Editor with custom menu
+   */
+  async enterStatusLineEditor(debug = false) {
+    while (true) {
+      console.clear();
+      
+      const icon = this.getCategoryIcon('statusline-editor');
+      console.log(chalk.bold.magenta(`${icon} ${this.getSectionTitle('statusline-editor')} Editor`));
+      console.log(chalk.gray('━'.repeat(50)));
+      console.log();
+
+      // Show detailed status line editor content
+      await this.displayStatusLineEditorDetails();
+
+      // Custom action bar for status line editor
+      console.log(chalk.gray('━'.repeat(50)));
+      console.log(chalk.green('E') + chalk.gray(' Edit │ ') + chalk.blue('T') + chalk.gray(' Test │ ') + chalk.yellow('H') + chalk.gray(' Templates │ ') + chalk.magenta('C') + chalk.gray(' Components │ ') + chalk.red('R') + chalk.gray(' Remove │ ') + chalk.cyan('←') + chalk.gray(' Back │ ') + chalk.red('Q') + chalk.gray(' Quit'));
+
+      const key = await this.waitForDirectKeypress();
+      if (debug) console.log(`DEBUG: StatusLine Editor key pressed: ${key}`);
+
+      switch (key) {
+        case 'e':
+          await this.editStatusLine();
+          break;
+        case 't':
+          await this.testStatusLine();
+          break;
+        case 'h':
+          await this.showStatusLineTemplates();
+          break;
+        case 'c':
+          await this.editStatusLineComponents();
+          break;
+        case 'r':
+          await this.removeStatusLine();
+          break;
+        case 'left':
+        case 'back':
+          return false; // Go back to main sections
+        case 'q':
+          return true; // Quit entirely
+        default:
+          // Stay in editor
+          break;
+      }
+    }
+  }
+
+  /**
+   * Edit current status line configuration
+   */
+  async editStatusLine() {
+    console.clear();
+    console.log(chalk.bold.blue('📝 Edit Status Line Configuration'));
+    console.log(chalk.gray('━'.repeat(50)));
+    console.log();
+
+    const statusLineConfig = await this.getStatusLineConfig();
+    
+    if (!statusLineConfig) {
+      console.log(chalk.yellow('⚠️  No status line currently configured.'));
+      console.log(chalk.cyan('💡 Use Templates or Components to create one first.'));
+    } else {
+      console.log(chalk.green('Current Configuration:'));
+      console.log(`Command: ${chalk.cyan(statusLineConfig.command)}`);
+      console.log(`Type: ${chalk.cyan(statusLineConfig.type)}`);
+      console.log(`Padding: ${chalk.cyan(statusLineConfig.padding || 0)}`);
+      console.log();
+      console.log(chalk.blue('🚧 Interactive editing coming soon!'));
+      console.log(chalk.gray('For now, manually edit: ~/.claude/settings.json'));
+    }
+
+    console.log();
+    await this.waitForEnter(false);
+  }
+
+  /**
+   * Test status line with different inputs
+   */
+  async testStatusLine() {
+    console.clear();
+    console.log(chalk.bold.blue('🧪 Test Status Line'));
+    console.log(chalk.gray('━'.repeat(50)));
+    console.log();
+
+    const statusLineConfig = await this.getStatusLineConfig();
+    
+    if (!statusLineConfig) {
+      console.log(chalk.yellow('⚠️  No status line configured to test.'));
+    } else {
+      console.log(chalk.green('Testing current status line...'));
+      console.log();
+      
+      try {
+        const result = await this.executeStatusLineCommand(statusLineConfig);
+        if (result) {
+          console.log(chalk.blue('Preview: ') + result);
+        } else {
+          console.log(chalk.red('❌ No output from status line command'));
+        }
+      } catch (error) {
+        console.log(chalk.red(`❌ Error: ${error.message}`));
+      }
+    }
+
+    console.log();
+    await this.waitForEnter(false);
+  }
+
+  /**
+   * Show status line templates
+   */
+  async showStatusLineTemplates() {
+    console.clear();
+    console.log(chalk.bold.yellow('📄 Status Line Templates'));
+    console.log(chalk.gray('━'.repeat(50)));
+    console.log();
+
+    console.log(chalk.blue('🚧 Template gallery coming soon!'));
+    console.log();
+    console.log('Available templates will include:');
+    console.log(`• ${chalk.green('Minimal')} - Just model and directory`);
+    console.log(`• ${chalk.cyan('Developer')} - Git, time, system info`);
+    console.log(`• ${chalk.magenta('Powerline')} - Rich symbols and colors`);
+    console.log(`• ${chalk.yellow('Custom')} - Build your own`);
+
+    console.log();
+    await this.waitForEnter(false);
+  }
+
+  /**
+   * Edit status line components
+   */
+  async editStatusLineComponents() {
+    console.clear();
+    console.log(chalk.bold.magenta('🔧 Status Line Components'));
+    console.log(chalk.gray('━'.repeat(50)));
+    console.log();
+
+    console.log(chalk.blue('🚧 Component builder coming soon!'));
+    console.log();
+    console.log('Available components will include:');
+    console.log(`• ${chalk.green('Model Name')} - Current Claude model`);
+    console.log(`• ${chalk.cyan('Directory')} - Current working directory`);
+    console.log(`• ${chalk.yellow('Git Status')} - Branch and changes`);
+    console.log(`• ${chalk.magenta('Time')} - Current time`);
+    console.log(`• ${chalk.blue('System Load')} - CPU, memory usage`);
+    console.log(`• ${chalk.red('Custom Text')} - Your own text/commands`);
+
+    console.log();
+    await this.waitForEnter(false);
+  }
+
+  /**
+   * Remove status line configuration
+   */
+  async removeStatusLine() {
+    console.clear();
+    console.log(chalk.bold.red('🗑️  Remove Status Line'));
+    console.log(chalk.gray('━'.repeat(50)));
+    console.log();
+
+    const statusLineConfig = await this.getStatusLineConfig();
+    
+    if (!statusLineConfig) {
+      console.log(chalk.yellow('⚠️  No status line configured to remove.'));
+    } else {
+      console.log(chalk.red('🚧 Status line removal coming soon!'));
+      console.log();
+      console.log('This will remove the statusLine configuration from your settings.json');
+      console.log(chalk.gray('For now, manually remove from: ~/.claude/settings.json'));
+    }
+
+    console.log();
+    await this.waitForEnter(false);
   }
 
   /**
