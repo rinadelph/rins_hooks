@@ -626,8 +626,7 @@ class HookControlPanel {
       tools: 'Permission controls and blockers',
       resources: 'Documentation, guides, and templates',
       prompts: 'Context injection and instruction templates',
-      mcps: 'Multi-agent collaboration components',
-      'status-line': 'Real-time system monitoring and information display'
+      mcps: 'Multi-agent collaboration components'
     };
     return descriptions[sectionType] || '';
   }
