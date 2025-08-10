@@ -280,6 +280,17 @@ class StatusLineManager {
         style: 'advanced-animated',
         colors: { model: 'pulse', directory: 'icon-pulse', git: 'rotation', time: 'blink' },
         script: '/home/alejandro/.claude/statusline-advanced-animated.sh'
+      },
+      {
+        name: 'subtle-animated',
+        displayName: 'Subtle Animated',
+        description: 'Practical daily-use animations',
+        preview: '[S4] 📁project 🌱main 16:50',
+        components: ['animated-model', 'directory', 'animated-git', 'animated-time'],
+        separator: ' ',
+        style: 'subtle-animated',
+        colors: { model: 'pulse', directory: 'cyan', git: 'rotation', time: 'blink' },
+        script: '/home/alejandro/.claude/statusline-advanced-animated.sh'
       }
     ];
   }
