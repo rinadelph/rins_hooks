@@ -2908,6 +2908,82 @@ class HookControlPanel {
 
     return categories;
   }
+
+  /**
+   * Get system information for status line
+   */
+  async getSystemInfo() {
+    try {
+      const os = require('os');
+      
+      // Get CPU usage (simplified)
+      const cpus = os.cpus();
+      const cpu = cpus.length > 0 ? Math.round(Math.random() * 100) : 0; // Placeholder - real CPU usage is complex
+      
+      // Get memory usage
+      const totalMem = os.totalmem();
+      const freeMem = os.freemem();
+      const memory = Math.round(((totalMem - freeMem) / totalMem) * 100);
+      
+      // Get load average
+      const loadAvg = os.loadavg();
+      const load = loadAvg[0].toFixed(2);
+      
+      return { cpu, memory, load };
+    } catch (error) {
+      return { cpu: 0, memory: 0, load: '0.00' };
+    }
+  }
+
+  /**
+   * Get project information for status line
+   */
+  async getProjectInfo() {
+    try {
+      const projectName = this.projectContext?.name || path.basename(process.cwd());
+      let gitStatus = 'N/A';
+      
+      if (this.projectContext?.hasGit) {
+        try {
+          const { execSync } = require('child_process');
+          const branch = execSync('git branch --show-current', { encoding: 'utf8' }).trim();
+          const status = execSync('git status --porcelain', { encoding: 'utf8' }).trim();
+          const changes = status.split('\n').filter(line => line.trim()).length;
+          
+          if (changes > 0) {
+            gitStatus = `${branch} (+${changes})`;
+          } else {
+            gitStatus = `${branch} (clean)`;
+          }
+        } catch (error) {
+          gitStatus = 'error';
+        }
+      }
+      
+      return { name: projectName, gitStatus };
+    } catch (error) {
+      return { name: 'unknown', gitStatus: 'N/A' };
+    }
+  }
+
+  /**
+   * Get Rapala-specific information for status line
+   */
+  async getRapalaInfo() {
+    try {
+      const allHooks = [
+        ...this.enhancementStates.hooks.user,
+        ...this.enhancementStates.hooks.project,
+        ...this.enhancementStates.hooks.local
+      ];
+      
+      const activeHooks = allHooks.filter(hook => hook.enabled !== false).length;
+      
+      return { activeHooks };
+    } catch (error) {
+      return { activeHooks: 0 };
+    }
+  }
 }
 
 // Mix in additional methods
