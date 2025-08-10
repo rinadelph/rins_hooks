@@ -403,13 +403,6 @@ class HookControlPanel {
    */
   async displaySectionOverview(sectionType) {
     const icon = this.getCategoryIcon(sectionType);
-    
-    // Special handling for status-line section
-    if (sectionType === 'status-line') {
-      await this.displayStatusLineOverview(icon);
-      return;
-    }
-    
     const sectionData = this.enhancementStates[sectionType];
     const totalInstalled = sectionData.user.length + sectionData.project.length + sectionData.local.length;
     const totalAvailable = sectionData.available.length;
