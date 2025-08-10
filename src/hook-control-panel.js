@@ -340,6 +340,9 @@ class HookControlPanel {
       // Show current section overview
       await this.displaySectionOverview(sections[currentSection]);
       
+      // Show custom status line if configured
+      await this.displayCustomStatusLine();
+      
       // Clean instruction bar with smart colors
       console.log(chalk.gray('━'.repeat(50)));
       console.log(chalk.yellow('← →') + chalk.gray(' Navigate │ ') + chalk.green('↵') + chalk.gray(' Enter │ ') + chalk.cyan('I') + chalk.gray(' Install │ ') + chalk.blue('M') + chalk.gray(' Manage │ ') + chalk.red('Q') + chalk.gray(' Quit'));
