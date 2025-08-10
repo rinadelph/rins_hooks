@@ -4566,46 +4566,8 @@ class HookControlPanel {
     try {
       const { execSync } = require('child_process');
       
-      // Method 1: Check for processes with the session ID
-      try {
-        // Look for Claude Code processes that might contain this session ID
-        const psOutput = execSync('ps aux', { encoding: 'utf8', timeout: 5000 });
-        const lines = psOutput.split('\n');
-        
-        for (const line of lines) {
-          // Check if line contains both 'claude' and our session ID
-          if (line.toLowerCase().includes('claude') && line.includes(sessionId)) {
-            console.log(`[DEBUG] Found active process for session ${sessionId}: ${line.trim()}`);
-            return true;
-          }
-        }
-      } catch (error) {
-        // ps command failed, try alternative methods
-      }
-      
-      // Method 2: Check for lock files or session markers
-      const lockFile = path.join(os.tmpdir(), `claude-session-${sessionId}.lock`);
-      if (fs.existsSync(lockFile)) {
-        try {
-          // Check if the PID in the lock file is still running
-          const pidContent = fs.readFileSync(lockFile, 'utf8').trim();
-          const pid = parseInt(pidContent);
-          if (pid && !isNaN(pid)) {
-            process.kill(pid, 0); // Check if process exists (throws if not)
-            return true;
-          }
-        } catch (pidError) {
-          // PID doesn't exist, clean up stale lock file
-          try {
-            fs.unlinkSync(lockFile);
-          } catch (unlinkError) {
-            // Ignore cleanup errors
-          }
-        }
-      }
-      
-      // Method 3: Check for recent activity (fallback)
-      // If session had activity in the last 5 minutes, consider it possibly active
+      // Method 1: Check for recent activity (primary indicator)
+      // If session had activity in the last 2 minutes, likely still active
       const sessionDir = this.findSessionDirectory(sessionId);
       if (sessionDir) {
         const recentFiles = fs.readdirSync(sessionDir)
@@ -4618,10 +4580,67 @@ class HookControlPanel {
           
         if (recentFiles.length > 0) {
           const lastActivity = recentFiles[0].mtime;
-          const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-          if (lastActivity > fiveMinutesAgo) {
-            console.log(`[DEBUG] Session ${sessionId} had recent activity: ${lastActivity}`);
-            return true; // Possibly still active
+          const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
+          if (lastActivity > twoMinutesAgo) {
+            console.log(`[DEBUG] Session ${sessionId} has recent activity (${lastActivity}) - likely active`);
+            return true; 
+          }
+        }
+      }
+      
+      // Method 2: Check if any Claude processes are running
+      // If Claude processes exist and session had recent activity, assume connection
+      try {
+        const psOutput = execSync('ps aux | grep -E "\\bclaude\\b" | grep -v grep', { 
+          encoding: 'utf8', 
+          timeout: 5000 
+        });
+        
+        if (psOutput.trim()) {
+          const claudeProcesses = psOutput.split('\n').filter(line => line.trim());
+          
+          // If there are Claude processes and this session had activity in the last 10 minutes,
+          // it's possibly active
+          if (sessionDir && claudeProcesses.length > 0) {
+            const recentFiles = fs.readdirSync(sessionDir)
+              .filter(file => file.endsWith('.json'))
+              .map(file => {
+                const filePath = path.join(sessionDir, file);
+                return { file, mtime: fs.statSync(filePath).mtime };
+              })
+              .sort((a, b) => b.mtime - a.mtime);
+              
+            if (recentFiles.length > 0) {
+              const lastActivity = recentFiles[0].mtime;
+              const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+              if (lastActivity > tenMinutesAgo) {
+                console.log(`[DEBUG] Session ${sessionId} potentially active - Claude processes running and recent activity`);
+                return true;
+              }
+            }
+          }
+        }
+      } catch (error) {
+        // ps command failed, continue with other methods
+      }
+      
+      // Method 3: Check for session lock files
+      const lockFile = path.join(os.tmpdir(), `claude-session-${sessionId}.lock`);
+      if (fs.existsSync(lockFile)) {
+        try {
+          const pidContent = fs.readFileSync(lockFile, 'utf8').trim();
+          const pid = parseInt(pidContent);
+          if (pid && !isNaN(pid)) {
+            process.kill(pid, 0); // Check if process exists (throws if not)
+            console.log(`[DEBUG] Session ${sessionId} has active lock file with PID ${pid}`);
+            return true;
+          }
+        } catch (pidError) {
+          // PID doesn't exist, clean up stale lock file
+          try {
+            fs.unlinkSync(lockFile);
+          } catch (unlinkError) {
+            // Ignore cleanup errors
           }
         }
       }
