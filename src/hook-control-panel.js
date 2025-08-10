@@ -4566,42 +4566,31 @@ class HookControlPanel {
     try {
       const { execSync } = require('child_process');
       
-      // Method 1: Check for recent activity (primary indicator)
-      // If session had activity in the last 2 minutes, likely still active
-      const sessionDir = this.findSessionDirectory(sessionId);
-      if (sessionDir) {
-        const recentFiles = fs.readdirSync(sessionDir)
-          .filter(file => file.endsWith('.json'))
-          .map(file => {
-            const filePath = path.join(sessionDir, file);
-            return { file, mtime: fs.statSync(filePath).mtime };
-          })
-          .sort((a, b) => b.mtime - a.mtime);
-          
-        if (recentFiles.length > 0) {
-          const lastActivity = recentFiles[0].mtime;
-          const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
-          if (lastActivity > twoMinutesAgo) {
-            console.log(`[DEBUG] Session ${sessionId} has recent activity (${lastActivity}) - likely active`);
-            return true; 
-          }
-        }
-      }
-      
-      // Method 2: Check if any Claude processes are running
-      // If Claude processes exist and session had recent activity, assume connection
+      // PID-based approach: Find Claude processes and correlate with sessions
       try {
-        const psOutput = execSync('ps aux | grep -E "\\bclaude\\b" | grep -v grep', { 
-          encoding: 'utf8', 
-          timeout: 5000 
-        });
+        // Get all Claude processes with their PIDs and working directories
+        const claudeProcesses = await this.getClaudeProcesses();
         
-        if (psOutput.trim()) {
-          const claudeProcesses = psOutput.split('\n').filter(line => line.trim());
+        if (claudeProcesses.length === 0) {
+          // No Claude processes running at all
+          return false;
+        }
+        
+        // Check if any Claude process is associated with this session
+        const sessionMatch = await this.matchSessionToProcess(sessionId, claudeProcesses);
+        if (sessionMatch) {
+          console.log(`[DEBUG] Session ${sessionId} matched to active PID ${sessionMatch.pid} in ${sessionMatch.cwd}`);
+          return true;
+        }
+        
+        // Fallback: If Claude processes exist in the same directory as the session,
+        // and the session has very recent activity (within 1 minute), consider it active
+        const sessionDir = this.findSessionDirectory(sessionId);
+        if (sessionDir) {
+          const projectDir = path.dirname(path.dirname(sessionDir)); // Go up from conversations/session-xxx to project root
+          const matchingDirProcesses = claudeProcesses.filter(proc => proc.cwd === projectDir);
           
-          // If there are Claude processes and this session had activity in the last 10 minutes,
-          // it's possibly active
-          if (sessionDir && claudeProcesses.length > 0) {
+          if (matchingDirProcesses.length > 0) {
             const recentFiles = fs.readdirSync(sessionDir)
               .filter(file => file.endsWith('.json'))
               .map(file => {
@@ -4612,43 +4601,129 @@ class HookControlPanel {
               
             if (recentFiles.length > 0) {
               const lastActivity = recentFiles[0].mtime;
-              const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
-              if (lastActivity > tenMinutesAgo) {
-                console.log(`[DEBUG] Session ${sessionId} potentially active - Claude processes running and recent activity`);
+              const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+              if (lastActivity > oneMinuteAgo) {
+                console.log(`[DEBUG] Session ${sessionId} likely active - Claude process in same dir (PID ${matchingDirProcesses[0].pid}) with recent activity`);
                 return true;
               }
             }
           }
         }
+        
+        return false;
       } catch (error) {
-        // ps command failed, continue with other methods
+        console.warn(`[DEBUG] Error in PID-based detection for session ${sessionId}:`, error.message);
+        return false;
+      }
+    } catch (error) {
+      console.warn(`[DEBUG] Error checking process status for session ${sessionId}:`, error.message);
+      return false;
+    }
+  }
+
+  /**
+   * Get all running Claude Code processes with their details
+   */
+  async getClaudeProcesses() {
+    try {
+      const { execSync } = require('child_process');
+      
+      // Get Claude processes
+      const psOutput = execSync('ps aux | grep -E "\\bclaude\\b" | grep -v grep', { 
+        encoding: 'utf8', 
+        timeout: 5000 
+      });
+      
+      if (!psOutput.trim()) {
+        return [];
       }
       
-      // Method 3: Check for session lock files
-      const lockFile = path.join(os.tmpdir(), `claude-session-${sessionId}.lock`);
-      if (fs.existsSync(lockFile)) {
+      const processes = [];
+      const lines = psOutput.split('\n').filter(line => line.trim());
+      
+      for (const line of lines) {
+        const parts = line.trim().split(/\s+/);
+        if (parts.length < 2) continue;
+        
+        const pid = parseInt(parts[1]);
+        if (isNaN(pid)) continue;
+        
+        // Get working directory
+        let cwd = 'unknown';
         try {
-          const pidContent = fs.readFileSync(lockFile, 'utf8').trim();
-          const pid = parseInt(pidContent);
-          if (pid && !isNaN(pid)) {
-            process.kill(pid, 0); // Check if process exists (throws if not)
-            console.log(`[DEBUG] Session ${sessionId} has active lock file with PID ${pid}`);
-            return true;
-          }
-        } catch (pidError) {
-          // PID doesn't exist, clean up stale lock file
-          try {
-            fs.unlinkSync(lockFile);
-          } catch (unlinkError) {
-            // Ignore cleanup errors
+          cwd = fs.readlinkSync(`/proc/${pid}/cwd`);
+        } catch (error) {
+          // Process might have died or no permission
+          continue;
+        }
+        
+        // Get command line
+        let cmdline = 'unknown';
+        try {
+          cmdline = fs.readFileSync(`/proc/${pid}/cmdline`, 'utf8').replace(/\0/g, ' ').trim();
+        } catch (error) {
+          cmdline = parts.slice(10).join(' '); // Fallback to ps output
+        }
+        
+        // Only include actual Claude Code processes (not bash wrappers)
+        if (cmdline.includes('claude') && !cmdline.includes('bash') && !cmdline.includes('sh')) {
+          processes.push({
+            pid,
+            cwd,
+            cmdline,
+            user: parts[0],
+            cpu: parts[2],
+            mem: parts[3],
+            startTime: parts[8]
+          });
+        }
+      }
+      
+      return processes;
+    } catch (error) {
+      console.warn(`[DEBUG] Error getting Claude processes:`, error.message);
+      return [];
+    }
+  }
+
+  /**
+   * Try to match a session ID to a running process
+   */
+  async matchSessionToProcess(sessionId, claudeProcesses) {
+    try {
+      const sessionDir = this.findSessionDirectory(sessionId);
+      if (!sessionDir) return null;
+      
+      const projectDir = path.dirname(path.dirname(sessionDir)); // Go up from conversations/session-xxx
+      
+      // Method 1: Direct directory match
+      const directMatch = claudeProcesses.find(proc => proc.cwd === projectDir);
+      if (directMatch) {
+        // Check if this session has very recent activity to confirm it's the active one
+        const recentFiles = fs.readdirSync(sessionDir)
+          .filter(file => file.endsWith('.json'))
+          .map(file => {
+            const filePath = path.join(sessionDir, file);
+            return { file, mtime: fs.statSync(filePath).mtime };
+          })
+          .sort((a, b) => b.mtime - a.mtime);
+          
+        if (recentFiles.length > 0) {
+          const lastActivity = recentFiles[0].mtime;
+          const thirtySecondsAgo = new Date(Date.now() - 30 * 1000);
+          if (lastActivity > thirtySecondsAgo) {
+            return directMatch;
           }
         }
       }
       
-      return false; // No evidence of active process
+      // Method 2: Could add more sophisticated matching here
+      // (e.g., check environment variables, lock files, etc.)
+      
+      return null;
     } catch (error) {
-      console.warn(`[DEBUG] Error checking process status for session ${sessionId}:`, error.message);
-      return false;
+      console.warn(`[DEBUG] Error matching session ${sessionId} to process:`, error.message);
+      return null;
     }
   }
 
