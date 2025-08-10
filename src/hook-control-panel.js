@@ -3166,6 +3166,7 @@ class HookControlPanel {
     // Advanced menu with full feature set
     const inquirer = require('inquirer');
     const choices = [
+      { name: '⚡ Apply Compact Template', value: 'apply-compact' },
       { name: '🎨 Visual Editor (Advanced)', value: 'visual' },
       { name: '📄 Template Gallery', value: 'templates' },
       { name: '🧩 Component Manager', value: 'components' },
@@ -3194,6 +3195,9 @@ class HookControlPanel {
       switch (answer.action) {
         case 'visual':
           await this.startVisualEditor();
+          break;
+        case 'apply-compact':
+          await this.applyCompactStatusLine();
           break;
         case 'templates':
           await this.showTemplateGallery();
@@ -3809,30 +3813,266 @@ class HookControlPanel {
    */
   async getSessionActiveHooks(sessionPath, files) {
     try {
-      // Get all currently installed and enabled hooks
-      const availableHooks = [
-        ...(this.enhancementStates.hooks.user || []),
-        ...(this.enhancementStates.hooks.project || []),
-        ...(this.enhancementStates.hooks.local || [])
-      ];
-
-      // Filter to only enabled hooks and return detailed information
-      const activeHooks = availableHooks
-        .filter(hook => !hook.disabled)
-        .map(hook => ({
-          name: hook.name,
-          type: hook.hookType || 'claude-code',
-          events: hook.events || [],
-          matcher: hook.matcher || '',
-          description: hook.description || 'No description',
-          enabled: !hook.disabled,
-          scope: this.getHookScope(hook)
-        }));
+      const hookActivity = {};
+      const detectedHooks = new Set();
+      
+      // Sample recent files to detect actual hook activity
+      const sampleFiles = files.slice(0, Math.min(15, files.length));
+      
+      for (const file of sampleFiles) {
+        try {
+          const filePath = path.join(sessionPath, file.name);
+          const content = fs.readFileSync(filePath, 'utf8');
+          const data = JSON.parse(content);
+          
+          // Detect hook signatures from tool execution data
+          const hookSignatures = this.detectHookSignatures(data);
+          
+          for (const hookName of hookSignatures) {
+            detectedHooks.add(hookName);
+            
+            if (!hookActivity[hookName]) {
+              hookActivity[hookName] = { 
+                name: hookName,
+                executions: 0, 
+                lastSeen: file.mtime, 
+                tools: new Set(),
+                events: new Set(),
+                recentActivity: []
+              };
+            }
+            
+            hookActivity[hookName].executions++;
+            hookActivity[hookName].tools.add(data.tool_name || file.tool);
+            hookActivity[hookName].events.add(data.hook_event_name || 'PostToolUse');
+            
+            if (file.mtime > hookActivity[hookName].lastSeen) {
+              hookActivity[hookName].lastSeen = file.mtime;
+            }
+            
+            // Track recent activity
+            if (hookActivity[hookName].recentActivity.length < 3) {
+              hookActivity[hookName].recentActivity.push({
+                timestamp: file.mtime,
+                tool: data.tool_name || file.tool,
+                file: file.name
+              });
+            }
+          }
+          
+        } catch (error) {
+          // Skip invalid JSON files
+          continue;
+        }
+      }
+      
+      // Convert to array format and clean up
+      const activeHooks = [];
+      for (const hookName of Array.from(detectedHooks)) {
+        const activity = hookActivity[hookName];
+        const description = await this.getHookDescription(hookName);
+        
+        activeHooks.push({
+          name: hookName,
+          executions: activity.executions,
+          lastSeen: activity.lastSeen,
+          tools: Array.from(activity.tools),
+          events: Array.from(activity.events),
+          recentActivity: activity.recentActivity,
+          description: description,
+          status: 'detected'
+        });
+      }
+      
+      activeHooks.sort((a, b) => b.lastSeen - a.lastSeen);
       
       return activeHooks;
     } catch (error) {
+      console.warn(`[DEBUG] Error analyzing hooks for session: ${error.message}`);
       return [];
     }
+  }
+
+  /**
+   * Dynamically discover all available hooks and their configurations
+   */
+  async discoverAvailableHooks() {
+    const hooks = {};
+    
+    try {
+      const hooksDir = path.join(this.currentDir, 'hooks');
+      if (!fs.existsSync(hooksDir)) return hooks;
+      
+      const hookDirs = fs.readdirSync(hooksDir, { withFileTypes: true })
+        .filter(dirent => dirent.isDirectory())
+        .map(dirent => dirent.name);
+      
+      for (const hookDir of hookDirs) {
+        const hookPath = path.join(hooksDir, hookDir);
+        const configPath = path.join(hookPath, 'config.json');
+        
+        if (fs.existsSync(configPath)) {
+          try {
+            const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+            hooks[hookDir] = {
+              name: hookDir,
+              path: hookPath,
+              config: config,
+              description: config.description || config.name || 'No description available',
+              events: config.events || [],
+              matchers: config.matchers || config.matcher || [],
+              triggers: this.extractTriggerPatterns(config)
+            };
+          } catch (error) {
+            // Skip hooks with invalid config
+            continue;
+          }
+        }
+      }
+      
+      return hooks;
+    } catch (error) {
+      console.warn(`[DEBUG] Error discovering hooks: ${error.message}`);
+      return {};
+    }
+  }
+
+  /**
+   * Extract trigger patterns from hook configuration
+   */
+  extractTriggerPatterns(config) {
+    const patterns = {};
+    
+    // Extract tool patterns
+    if (config.tools) {
+      patterns.tools = Array.isArray(config.tools) ? config.tools : [config.tools];
+    }
+    
+    // Extract file patterns
+    if (config.filePatterns) {
+      patterns.files = Array.isArray(config.filePatterns) ? config.filePatterns : [config.filePatterns];
+    }
+    
+    // Extract command patterns
+    if (config.commandPatterns) {
+      patterns.commands = Array.isArray(config.commandPatterns) ? config.commandPatterns : [config.commandPatterns];
+    }
+    
+    // Extract event patterns
+    if (config.events) {
+      patterns.events = Array.isArray(config.events) ? config.events : [config.events];
+    }
+    
+    return patterns;
+  }
+
+  /**
+   * Dynamically detect hook signatures from tool execution data
+   */
+  async detectHookSignatures(data) {
+    const signatures = [];
+    
+    // Get all available hooks dynamically
+    const availableHooks = await this.discoverAvailableHooks();
+    
+    for (const [hookName, hookInfo] of Object.entries(availableHooks)) {
+      if (this.matchesHookPattern(data, hookInfo)) {
+        signatures.push(hookName);
+      }
+    }
+    
+    // Always include rapala-router if we have hook event data (it's the dispatcher)
+    if (data.hook_event_name && !signatures.includes('rapala-router')) {
+      signatures.push('rapala-router');
+    }
+    
+    return signatures;
+  }
+
+  /**
+   * Check if tool execution data matches a hook's patterns
+   */
+  matchesHookPattern(data, hookInfo) {
+    const { triggers, config } = hookInfo;
+    
+    // Check tool name patterns
+    if (triggers.tools) {
+      for (const tool of triggers.tools) {
+        if (data.tool_name && data.tool_name.toLowerCase().includes(tool.toLowerCase())) {
+          return true;
+        }
+      }
+    }
+    
+    // Check file path patterns
+    if (triggers.files && data.tool_input && data.tool_input.file_path) {
+      for (const pattern of triggers.files) {
+        if (data.tool_input.file_path.includes(pattern)) {
+          return true;
+        }
+      }
+    }
+    
+    // Check command patterns
+    if (triggers.commands && data.tool_input && data.tool_input.command) {
+      for (const pattern of triggers.commands) {
+        if (data.tool_input.command.includes(pattern)) {
+          return true;
+        }
+      }
+    }
+    
+    // Check event patterns
+    if (triggers.events) {
+      for (const event of triggers.events) {
+        if (data.hook_event_name && data.hook_event_name === event) {
+          return true;
+        }
+      }
+    }
+    
+    // Generic pattern matching based on hook name
+    const hookNameLower = hookInfo.name.toLowerCase();
+    
+    // Check if hook name appears in commands
+    if (data.tool_input && data.tool_input.command) {
+      if (data.tool_input.command.toLowerCase().includes(hookNameLower)) {
+        return true;
+      }
+    }
+    
+    // Check if hook name or keywords appear in file paths
+    if (data.tool_input && data.tool_input.file_path) {
+      if (data.tool_input.file_path.toLowerCase().includes(hookNameLower)) {
+        return true;
+      }
+    }
+    
+    // Check tool response for hook-specific markers
+    if (data.tool_response && typeof data.tool_response === 'string') {
+      if (data.tool_response.toLowerCase().includes(hookNameLower)) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+
+  /**
+   * Get dynamic hook description from configuration
+   */
+  async getHookDescription(hookName) {
+    const availableHooks = await this.discoverAvailableHooks();
+    const hookInfo = availableHooks[hookName];
+    
+    if (hookInfo) {
+      return hookInfo.description;
+    }
+    
+    // Fallback: generate description from hook name
+    return hookName.split('-').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ') + ' functionality';
   }
 
   /**
@@ -4881,6 +5121,40 @@ class HookControlPanel {
       console.warn(`[DEBUG] Error in findSessionDirectory for ${sessionId}:`, error.message);
       return null;
     }
+  }
+
+  /**
+   * Apply compact status line template
+   */
+  async applyCompactStatusLine() {
+    console.clear();
+    console.log(chalk.bold.cyan('⚡ Applying Compact Status Line'));
+    console.log(chalk.gray('━'.repeat(60)));
+    console.log();
+
+    try {
+      const StatusLineManager = require('./statusline/StatusLineManager');
+      const manager = new StatusLineManager();
+      
+      console.log(chalk.yellow('📦 Applying compact template...'));
+      await manager.applyCompactTemplate();
+      
+      console.log();
+      console.log(chalk.green('✅ Compact status line applied successfully!'));
+      console.log(chalk.cyan('💡 Preview: ') + chalk.white('S4 project 🌿main* 15:30'));
+      console.log();
+      console.log(chalk.bold.yellow('⚠️  Important: ') + chalk.white('Please restart Claude Code to see changes'));
+      console.log(chalk.gray('   Status line configuration is loaded at session start'));
+      
+    } catch (error) {
+      console.log();
+      console.log(chalk.red('❌ Failed to apply compact template'));
+      console.log(chalk.red(`Error: ${error.message}`));
+    }
+
+    console.log();
+    console.log(chalk.gray('━'.repeat(60)));
+    await this.waitForEnter(false);
   }
 }
 
