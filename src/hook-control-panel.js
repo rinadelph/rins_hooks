@@ -2,6 +2,7 @@ const chalk = require('chalk');
 const inquirer = require('inquirer');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const { execSync } = require('child_process');
 const Installer = require('./installer');
 const ConfigManager = require('./config');
@@ -19,6 +20,7 @@ class HookControlPanel {
     this.currentDir = process.cwd();
     this.claudeDir = null;
     this.projectContext = null;
+    this.enhancementStates = {};
   }
 
   /**
