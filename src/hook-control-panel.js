@@ -20,6 +20,7 @@ class HookControlPanel {
     this.versionCheck = new VersionCheck();
     this.currentDir = process.cwd();
     this.animations = new RapalaAnimations();
+    this.hasShownBanner = false;
     this.claudeDir = null;
     this.projectContext = null;
     this.enhancementStates = {};
@@ -929,21 +930,37 @@ class HookControlPanel {
     
     console.log();
     console.log(chalk.gray('━'.repeat(50)));
-    console.log(`${chalk.blue('🚀')} ${chalk.bold(`Installing ${selection.items.length} ${this.getSectionTitle(sectionType).toLowerCase()}...`)}`);
-    console.log();
     
+    // Animated installation process
+    await this.animations.showProgress(`Installing ${selection.items.length} ${this.getSectionTitle(sectionType).toLowerCase()}`, selection.items.length);
+    
+    let successCount = 0;
     for (const itemName of selection.items) {
       try {
-        console.log(chalk.blue(`Installing ${itemName}...`));
+        // Show loading animation for each item
+        const loadingPromise = this.animations.showLoading(`Installing ${itemName}`, 2000);
+        
+        // Perform installation
         await this.installer.installHooks([itemName], { [scope]: true });
+        
+        // Stop loading animation
+        this.animations.stop();
+        await loadingPromise;
+        
         console.log(chalk.green(`✓ ${itemName} installed successfully`));
+        successCount++;
       } catch (error) {
+        this.animations.stop();
         console.log(chalk.red(`✗ ${itemName} failed: ${error.message}`));
         console.error('Full error:', error);
       }
     }
 
-    console.log(chalk.green('Installation complete!'));
+    // Success summary with animation
+    if (successCount > 0) {
+      await this.animations.pulseText(`✨ ${successCount} items installed successfully! ✨`, 2);
+    }
+    
     await this.loadCurrentEnhancementStates(); // Refresh
     await this.waitForEnter(false);
   }
@@ -5132,11 +5149,22 @@ class HookControlPanel {
   }
 
   /**
+   * Show animated section transition
+   */
+  async animateSectionTransition(fromSection, toSection, sectionNames) {
+    const fromName = sectionNames[fromSection];
+    const toName = sectionNames[toSection];
+    
+    // Brief transition animation
+    await this.animations.transitionMenu(fromName, toName);
+  }
+
+  /**
    * Apply compact status line template
    */
   async applyCompactStatusLine() {
     console.clear();
-    console.log(chalk.bold.cyan('⚡ Applying Compact Status Line'));
+    await this.animations.slideText('⚡ Applying Compact Status Line', { color: chalk.bold.cyan });
     console.log(chalk.gray('━'.repeat(60)));
     console.log();
 
@@ -5144,19 +5172,37 @@ class HookControlPanel {
       const StatusLineManager = require('./statusline/StatusLineManager');
       const manager = new StatusLineManager();
       
-      console.log(chalk.yellow('📦 Applying compact template...'));
+      // Animated loading for template application
+      const loadingPromise = this.animations.showLoading('Applying compact template', 1500);
       await manager.applyCompactTemplate();
+      this.animations.stop();
+      await loadingPromise;
       
       console.log();
-      console.log(chalk.green('✅ Compact status line applied successfully!'));
-      console.log(chalk.cyan('💡 Preview: ') + chalk.white('S4 project 🌿main* 15:30'));
+      
+      // Animated success message
+      await this.animations.typewriter('✅ Compact status line applied successfully!', { 
+        color: chalk.green,
+        speed: 60
+      });
+      
+      // Preview with reveal animation
+      console.log(chalk.cyan('💡 Preview: '));
+      await this.animations.revealText('S4 project 🌿main* 15:30', { iterations: 6, speed: 40 });
+      
       console.log();
-      console.log(chalk.bold.yellow('⚠️  Important: ') + chalk.white('Please restart Claude Code to see changes'));
+      await this.animations.pulseText('⚠️  Important: Please restart Claude Code to see changes', 1);
       console.log(chalk.gray('   Status line configuration is loaded at session start'));
       
     } catch (error) {
+      this.animations.stop();
       console.log();
-      console.log(chalk.red('❌ Failed to apply compact template'));
+      
+      // Animated error message
+      await this.animations.typewriter('❌ Failed to apply compact template', { 
+        color: chalk.red,
+        speed: 40
+      });
       console.log(chalk.red(`Error: ${error.message}`));
     }
 

@@ -192,6 +192,17 @@ class StatusLineManager {
         style: 'compact',
         colors: { model: 'magenta', directory: 'cyan', git: 'green', time: 'yellow' },
         script: '/home/alejandro/.claude/statusline-compact.sh'
+      },
+      {
+        name: 'animated',
+        displayName: 'Animated',
+        description: 'Status line with subtle animations',
+        preview: 'S4 project 🌱main* 15:30..',
+        components: ['model', 'directory', 'git', 'time'],
+        separator: ' ',
+        style: 'animated',
+        colors: { model: 'magenta', directory: 'cyan', git: 'green', time: 'yellow' },
+        script: '/home/alejandro/.claude/statusline-animated.sh'
       }
     ];
   }
