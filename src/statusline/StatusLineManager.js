@@ -451,6 +451,27 @@ class StatusLineManager {
     }
     return false;
   }
+
+  /**
+   * Apply compact template directly
+   */
+  async applyCompactTemplate() {
+    const compactTemplate = this.availableTemplates.find(t => t.name === 'compact');
+    if (!compactTemplate) {
+      throw new Error('Compact template not found');
+    }
+
+    const config = {
+      type: 'command',
+      command: compactTemplate.script,
+      padding: 0
+    };
+
+    await this.saveConfig(config, 'user');
+    console.log(chalk.green('✓ Compact status line applied successfully!'));
+    console.log(chalk.cyan('Please restart Claude Code to see the changes.'));
+    return config;
+  }
 }
 
 module.exports = StatusLineManager;
