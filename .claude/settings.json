@@ -1,7 +1,7 @@
 {
   "statusLine": {
     "type": "command",
-    "command": "~/.claude/statusline.sh",
+    "command": "/home/alejandro/Code/MCP/Hooks/Git/rins_hooks/.claude/statusline.sh",
     "padding": 0
   },
   "hooks": {
