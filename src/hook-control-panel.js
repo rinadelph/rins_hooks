@@ -310,8 +310,8 @@ class HookControlPanel {
     await this.initialize();
 
     let currentSection = 0;
-    const sections = ['hooks', 'tools', 'resources', 'prompts', 'mcps'];
-    const sectionNames = ['Hooks', 'Tools', 'Resources', 'Prompts', 'MCPs'];
+    const sections = ['hooks', 'tools', 'resources', 'prompts', 'mcps', 'sessions'];
+    const sectionNames = ['Hooks', 'Tools', 'Resources', 'Prompts', 'MCPs', 'Sessions'];
     
     if (debug) console.log('DEBUG: Starting showInteractiveStatus');
 
