@@ -43,7 +43,7 @@ class AnimatedDirectoryComponent {
     const icons = ['📁', '📂', '📁', '📂'];
     const icon = icons[frame % icons.length];
     
-    return `\033[36m${icon}${dirName}\033[0m`;
+    return `\x1b[36m${icon}${dirName}\x1b[0m`;
   }
 
   /**
@@ -53,7 +53,7 @@ class AnimatedDirectoryComponent {
     const dirName = this.formatDirectory(fullPath);
     
     if (dirName.length <= this.maxLength) {
-      return `\033[36m📁${dirName}\033[0m`;
+      return `\x1b[36m📁${dirName}\x1b[0m`;
     }
 
     // Create scrolling effect
@@ -67,7 +67,7 @@ class AnimatedDirectoryComponent {
       displayText += scrollText[charIndex];
     }
     
-    return `\033[36m📁${displayText}\033[0m`;
+    return `\x1b[36m📁${displayText}\x1b[0m`;
   }
 
   /**
@@ -85,10 +85,10 @@ class AnimatedDirectoryComponent {
     
     // Add subtle glow when "opening"
     if (frame % states.length === 1 || frame % states.length === 2) {
-      return `\033[1;36m${icon}${dirName}\033[0m`;
+      return `\x1b[1;36m${icon}${dirName}\x1b[0m`;
     }
     
-    return `\033[36m${icon}${dirName}\033[0m`;
+    return `\x1b[36m${icon}${dirName}\x1b[0m`;
   }
 
   /**
@@ -98,7 +98,7 @@ class AnimatedDirectoryComponent {
     const pathParts = fullPath.split('/').filter(p => p.length > 0);
     
     if (pathParts.length <= 2) {
-      return `\033[36m📁${this.formatDirectory(fullPath)}\033[0m`;
+      return `\x1b[36m📁${this.formatDirectory(fullPath)}\x1b[0m`;
     }
 
     // Show different levels of the path
@@ -114,7 +114,7 @@ class AnimatedDirectoryComponent {
     
     visibleParts.forEach((part, index) => {
       if (index === highlightIndex) {
-        breadcrumb += `\033[1;36m${part}\033[0;36m`;
+        breadcrumb += `\x1b[1;36m${part}\x1b[0;36m`;
       } else {
         breadcrumb += part;
       }
@@ -124,7 +124,7 @@ class AnimatedDirectoryComponent {
       }
     });
     
-    return `\033[36m${breadcrumb}\033[0m`;
+    return `\x1b[36m${breadcrumb}\x1b[0m`;
   }
 
   /**

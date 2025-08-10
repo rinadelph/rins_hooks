@@ -494,6 +494,27 @@ class StatusLineManager {
     console.log(chalk.cyan('Please restart Claude Code to see the changes.'));
     return config;
   }
+
+  /**
+   * Apply animated template directly
+   */
+  async applyAnimatedTemplate(templateName = 'animated') {
+    const template = this.availableTemplates.find(t => t.name === templateName);
+    if (!template) {
+      throw new Error(`${templateName} template not found`);
+    }
+
+    const config = {
+      type: 'command',
+      command: template.script,
+      padding: 0
+    };
+
+    await this.saveConfig(config, 'user');
+    console.log(chalk.green(`✓ ${template.displayName} status line applied successfully!`));
+    console.log(chalk.cyan('Please restart Claude Code to see the animations.'));
+    return config;
+  }
 }
 
 module.exports = StatusLineManager;

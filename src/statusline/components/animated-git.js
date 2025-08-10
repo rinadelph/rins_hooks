@@ -46,7 +46,7 @@ class AnimatedGitComponent {
     const icon = icons[frame % icons.length];
     const dirtyMarker = isDirty ? '*' : '';
     
-    return `\033[32m${icon}${branch}${dirtyMarker}\033[0m`;
+    return `\x1b[32m${icon}${branch}${dirtyMarker}\x1b[0m`;
   }
 
   /**
@@ -55,15 +55,15 @@ class AnimatedGitComponent {
   generateStatusPulse(branch, isDirty, frame) {
     if (isDirty) {
       const pulseStates = [
-        '\033[31m',     // red
-        '\033[1;31m',   // bright red
-        '\033[91m',     // light red
-        '\033[1;31m'    // bright red
+        '\x1b[31m',     // red
+        '\x1b[1;31m',   // bright red
+        '\x1b[91m',     // light red
+        '\x1b[1;31m'    // bright red
       ];
       const colorCode = pulseStates[frame % pulseStates.length];
-      return `\033[32m🌿${colorCode}${branch}*\033[0m`;
+      return `\x1b[32m🌿${colorCode}${branch}*\x1b[0m`;
     } else {
-      return `\033[32m🌿${branch}\033[0m`;
+      return `\x1b[32m🌿${branch}\x1b[0m`;
     }
   }
 
@@ -72,16 +72,16 @@ class AnimatedGitComponent {
    */
   generateBranchGlow(branch, isDirty, frame) {
     const glowStates = [
-      '\033[32m',      // normal green
-      '\033[1;32m',    // bright green
-      '\033[42;30m',   // green background
-      '\033[1;32m'     // bright green
+      '\x1b[32m',      // normal green
+      '\x1b[1;32m',    // bright green
+      '\x1b[42;30m',   // green background
+      '\x1b[1;32m'     // bright green
     ];
     
     const colorCode = glowStates[frame % glowStates.length];
-    const dirtyMarker = isDirty ? '\033[31m*\033[0m' : '';
+    const dirtyMarker = isDirty ? '\x1b[31m*\x1b[0m' : '';
     
-    return `🌿${colorCode}${branch}\033[0m${dirtyMarker}`;
+    return `🌿${colorCode}${branch}\x1b[0m${dirtyMarker}`;
   }
 
   /**
@@ -89,13 +89,13 @@ class AnimatedGitComponent {
    */
   generateActivityIndicator(branch, isDirty, frame) {
     if (!isDirty) {
-      return `\033[32m🌿${branch}\033[0m`;
+      return `\x1b[32m🌿${branch}\x1b[0m`;
     }
 
     const activityStates = ['', '.', '..', '...'];
     const dots = activityStates[frame % activityStates.length];
     
-    return `\033[32m🌿${branch}\033[33m*${dots}\033[0m`;
+    return `\x1b[32m🌿${branch}\x1b[33m*${dots}\x1b[0m`;
   }
 
   /**

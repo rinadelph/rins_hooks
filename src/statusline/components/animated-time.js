@@ -44,7 +44,7 @@ class AnimatedTimeComponent {
     const separator = frame % 2 === 0 ? ':' : '·';
     const animatedTime = time.replace(/:/g, separator);
     
-    return `\033[33m${animatedTime}\033[0m`;
+    return `\x1b[33m${animatedTime}\x1b[0m`;
   }
 
   /**
@@ -58,23 +58,23 @@ class AnimatedTimeComponent {
     let colorCode;
     if (hour >= 6 && hour < 12) {
       // Morning - yellow/orange cycle
-      const colors = ['\033[33m', '\033[93m', '\033[31m', '\033[93m'];
+      const colors = ['\x1b[33m', '\x1b[93m', '\x1b[31m', '\x1b[93m'];
       colorCode = colors[frame % colors.length];
     } else if (hour >= 12 && hour < 18) {
       // Afternoon - bright colors
-      const colors = ['\033[33m', '\033[32m', '\033[36m', '\033[32m'];
+      const colors = ['\x1b[33m', '\x1b[32m', '\x1b[36m', '\x1b[32m'];
       colorCode = colors[frame % colors.length];
     } else if (hour >= 18 && hour < 22) {
       // Evening - warm colors
-      const colors = ['\033[33m', '\033[35m', '\033[31m', '\033[35m'];
+      const colors = ['\x1b[33m', '\x1b[35m', '\x1b[31m', '\x1b[35m'];
       colorCode = colors[frame % colors.length];
     } else {
       // Night - cool colors
-      const colors = ['\033[34m', '\033[36m', '\033[35m', '\033[36m'];
+      const colors = ['\x1b[34m', '\x1b[36m', '\x1b[35m', '\x1b[36m'];
       colorCode = colors[frame % colors.length];
     }
     
-    return `${colorCode}${time}\033[0m`;
+    return `${colorCode}${time}\x1b[0m`;
   }
 
   /**
@@ -83,19 +83,19 @@ class AnimatedTimeComponent {
   generateDigitalClock(now, frame) {
     const time = this.formatTime(now);
     const glowStates = [
-      '\033[33m',      // normal yellow
-      '\033[1;33m',    // bright yellow
-      '\033[43;30m',   // yellow background
-      '\033[1;33m'     // bright yellow
+      '\x1b[33m',      // normal yellow
+      '\x1b[1;33m',    // bright yellow
+      '\x1b[43;30m',   // yellow background
+      '\x1b[1;33m'     // bright yellow
     ];
     
     // Only glow every few seconds
     if (now.getSeconds() % 10 === 0) {
       const colorCode = glowStates[frame % glowStates.length];
-      return `${colorCode}${time}\033[0m`;
+      return `${colorCode}${time}\x1b[0m`;
     }
     
-    return `\033[33m${time}\033[0m`;
+    return `\x1b[33m${time}\x1b[0m`;
   }
 
   /**
@@ -111,10 +111,10 @@ class AnimatedTimeComponent {
       const showDots = frame % 4;
       const dots = '.'.repeat(showDots);
       
-      return `\033[33m${baseTime}:${secondsStr}${dots}\033[0m`;
+      return `\x1b[33m${baseTime}:${secondsStr}${dots}\x1b[0m`;
     }
     
-    return `\033[33m${baseTime}\033[0m`;
+    return `\x1b[33m${baseTime}\x1b[0m`;
   }
 
   /**

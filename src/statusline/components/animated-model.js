@@ -55,14 +55,14 @@ class AnimatedModelComponent {
    */
   generateColorCycle(modelName, frame) {
     const colorCodes = [
-      '\033[35m', // magenta
-      '\033[34m', // blue
-      '\033[36m', // cyan
-      '\033[32m'  // green
+      '\x1b[35m', // magenta
+      '\x1b[34m', // blue
+      '\x1b[36m', // cyan
+      '\x1b[32m'  // green
     ];
     
     const colorCode = colorCodes[frame % colorCodes.length];
-    return `${colorCode}[${modelName}]\033[0m`;
+    return `${colorCode}[${modelName}]\x1b[0m`;
   }
 
   /**
@@ -70,16 +70,16 @@ class AnimatedModelComponent {
    */
   generateGlow(modelName, frame) {
     const glowStates = [
-      '\033[35m[',     // normal brackets
-      '\033[1;35m[',   // bright brackets
-      '\033[1;45;35m[', // background glow
-      '\033[1;35m['    // bright brackets
+      '\x1b[35m[',     // normal brackets
+      '\x1b[1;35m[',   // bright brackets
+      '\x1b[1;45;35m[', // background glow
+      '\x1b[1;35m['    // bright brackets
     ];
     
     const openBracket = glowStates[frame % glowStates.length];
     const closeBracket = openBracket.replace('[', ']');
     
-    return `${openBracket}\033[1;37m${modelName}${closeBracket}\033[0m`;
+    return `${openBracket}\x1b[1;37m${modelName}${closeBracket}\x1b[0m`;
   }
 
   /**
@@ -89,9 +89,9 @@ class AnimatedModelComponent {
     if (frame < modelName.length) {
       const partial = modelName.substring(0, frame + 1);
       const cursor = frame % 2 === 0 ? '_' : ' ';
-      return `\033[35m[${partial}${cursor}]\033[0m`;
+      return `\x1b[35m[${partial}${cursor}]\x1b[0m`;
     }
-    return `\033[35m[${modelName}]\033[0m`;
+    return `\x1b[35m[${modelName}]\x1b[0m`;
   }
 
   /**
