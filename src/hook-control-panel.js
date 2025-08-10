@@ -564,6 +564,11 @@ class HookControlPanel {
   async enterSection(sectionType, debug = false) {
     if (debug) console.log(`DEBUG: enterSection called with ${sectionType}`);
     
+    // Special handling for sessions section
+    if (sectionType === 'sessions') {
+      return await this.enterSessionsSection(debug);
+    }
+    
     // Special handling for statusline-editor section
     if (sectionType === 'statusline-editor') {
       return await this.enterStatusLineEditor(debug);

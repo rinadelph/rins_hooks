@@ -21,7 +21,7 @@
   ],
   "matcher": "",
   "installationType": "generated",
-  "disabled": true,
+  "disabled": false,
   "originalLocation": "user",
   "syncedAt": "2025-08-05T00:41:17.322Z",
   "timeout": 10,
