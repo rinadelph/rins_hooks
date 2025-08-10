@@ -572,7 +572,8 @@ class HookControlPanel {
       tools: '🔧',
       resources: '📚',
       prompts: '💬',
-      mcps: '🤖'
+      mcps: '🤖',
+      'status-line': '📊'
     };
     return icons[category] || '🔗';
   }
