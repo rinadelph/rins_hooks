@@ -115,6 +115,7 @@ class HookControlPanel {
       resources: { user: [], project: [], local: [], available: [] },
       prompts: { user: [], project: [], local: [], available: [] },
       mcps: { user: [], project: [], local: [], available: [] },
+      'status-line': { user: [], project: [], local: [], available: [] },
       updates: [],
       autoUpdate: false
     };
