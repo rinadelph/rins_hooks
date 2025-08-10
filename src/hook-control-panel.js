@@ -160,6 +160,9 @@ class HookControlPanel {
         autoUpdate: false
       };
 
+      // Load session data
+      await this.loadSessionData();
+
       // Check for updates
       if (fs.existsSync(path.join(__dirname, '..', 'hooks', 'version-checker', 'index.js'))) {
         const VersionCheckerHook = require('../hooks/version-checker/index.js');
