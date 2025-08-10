@@ -733,9 +733,9 @@ class HookControlPanel {
   }
 
   getScopeIcon(item, sectionData) {
-    if (sectionData.user.includes(item)) return '👤';
-    if (sectionData.project.includes(item)) return '📁';
-    if (sectionData.local.includes(item)) return '🔒';
+    if (sectionData && sectionData.user && sectionData.user.includes(item)) return '👤';
+    if (sectionData && sectionData.project && sectionData.project.includes(item)) return '📁';
+    if (sectionData && sectionData.local && sectionData.local.includes(item)) return '🔒';
     return '';
   }
 
@@ -750,8 +750,12 @@ class HookControlPanel {
     }
     
     const sectionData = this.enhancementStates[sectionType];
-    const allInstalled = [...sectionData.user, ...sectionData.project, ...sectionData.local];
-    const available = sectionData.available.filter(item => 
+    const allInstalled = [
+      ...(sectionData.user || []),
+      ...(sectionData.project || []),
+      ...(sectionData.local || [])
+    ];
+    const available = (sectionData.available || []).filter(item => 
       !allInstalled.find(installed => installed.name === item.name)
     );
 
@@ -864,8 +868,12 @@ class HookControlPanel {
     console.log();
 
     const sectionData = this.enhancementStates[sectionType];
-    const allInstalled = [...sectionData.user, ...sectionData.project, ...sectionData.local];
-    const available = sectionData.available.filter(item => 
+    const allInstalled = [
+      ...(sectionData.user || []),
+      ...(sectionData.project || []),
+      ...(sectionData.local || [])
+    ];
+    const available = (sectionData.available || []).filter(item => 
       !allInstalled.find(installed => installed.name === item.name)
     );
 
@@ -1122,7 +1130,11 @@ class HookControlPanel {
 
   async updateSectionItems(sectionType) {
     const sectionData = this.enhancementStates[sectionType];
-    const allInstalled = [...sectionData.user, ...sectionData.project, ...sectionData.local];
+    const allInstalled = [
+      ...(sectionData.user || []),
+      ...(sectionData.project || []),
+      ...(sectionData.local || [])
+    ];
 
     if (allInstalled.length === 0) {
       console.log(chalk.yellow(`No ${this.getSectionTitle(sectionType).toLowerCase()} installed to update.`));
@@ -3118,106 +3130,95 @@ class HookControlPanel {
   }
 
   /**
-   * Enter Status Line Editor with custom menu
+   * Enter Status Line Editor - Simple and Working
    */
   async enterStatusLineEditor(debug = false) {
-    while (true) {
-      console.clear();
-      
-      const icon = this.getCategoryIcon('statusline-editor');
-      console.log(chalk.bold.magenta(`${icon} ${this.getSectionTitle('statusline-editor')} Editor`));
-      console.log(chalk.gray('━'.repeat(50)));
-      console.log();
+    console.clear();
+    console.log(chalk.bold.magenta('📊 Status Line Editor'));
+    console.log(chalk.gray('━'.repeat(50)));
+    console.log();
 
-      // Show detailed status line editor content
-      await this.displayStatusLineEditorDetails();
+    // Show current status
+    const statusLineConfig = await this.getStatusLineConfig();
+    if (statusLineConfig) {
+      console.log(chalk.green('✅ Status line is configured'));
+      try {
+        const preview = await this.executeStatusLineCommand(statusLineConfig);
+        if (preview) {
+          console.log(chalk.blue('Preview: ') + preview);
+        }
+      } catch (error) {
+        console.log(chalk.red('❌ Status line has errors'));
+      }
+      console.log(chalk.gray('Command: ') + statusLineConfig.command);
+    } else {
+      console.log(chalk.yellow('ℹ️  No status line configured'));
+    }
+    console.log();
 
-      // Custom action bar for status line editor
-      console.log(chalk.gray('━'.repeat(50)));
-      console.log(chalk.green('E') + chalk.gray(' Edit │ ') + chalk.blue('T') + chalk.gray(' Test │ ') + chalk.yellow('H') + chalk.gray(' Templates │ ') + chalk.magenta('C') + chalk.gray(' Components │ ') + chalk.red('R') + chalk.gray(' Remove │ ') + chalk.cyan('←') + chalk.gray(' Back │ ') + chalk.red('Q') + chalk.gray(' Quit'));
+    // Simple menu
+    const inquirer = require('inquirer');
+    const choices = [
+      { name: '🧪 Test Status Line', value: 'test' },
+      { name: '📄 Show Current Config', value: 'config' },
+      { name: '📝 Edit Script File', value: 'edit' },
+      { name: '🗑️  Remove Status Line', value: 'remove', disabled: !statusLineConfig }
+    ];
 
-      const key = await this.waitForDirectKeypress();
-      if (debug) console.log(`DEBUG: StatusLine Editor key pressed: ${key}`);
+    try {
+      const answer = await inquirer.prompt([{
+        type: 'list',
+        name: 'action', 
+        message: 'Choose an action:',
+        choices: choices
+      }]);
 
-      switch (key) {
-        case 'e':
-          await this.editStatusLine();
+      switch (answer.action) {
+        case 'test':
+          await this.quickTestStatusLine();
           break;
-        case 't':
-          await this.testStatusLine();
+        case 'config':
+          await this.showStatusLineConfig();
           break;
-        case 'h':
-          await this.showStatusLineTemplates();
+        case 'edit':
+          await this.quickEditStatusLine();
           break;
-        case 'c':
-          await this.editStatusLineComponents();
-          break;
-        case 'r':
-          await this.removeStatusLine();
-          break;
-        case 'left':
-        case 'back':
-          return false; // Go back to main sections
-        case 'q':
-          return true; // Quit entirely
-        default:
-          // Stay in editor
+        case 'remove':
+          await this.quickRemoveStatusLine();
           break;
       }
+    } catch (error) {
+      console.log(chalk.red('Error: ' + error.message));
     }
+
+    return false; // Go back to sections
   }
 
   /**
-   * Edit current status line configuration
+   * Quick test status line
    */
-  async editStatusLine() {
+  async quickTestStatusLine() {
     console.clear();
-    console.log(chalk.bold.blue('📝 Edit Status Line Configuration'));
+    console.log(chalk.bold.blue('🧪 Testing Status Line'));
     console.log(chalk.gray('━'.repeat(50)));
     console.log();
 
     const statusLineConfig = await this.getStatusLineConfig();
     
     if (!statusLineConfig) {
-      console.log(chalk.yellow('⚠️  No status line currently configured.'));
-      console.log(chalk.cyan('💡 Use Templates or Components to create one first.'));
+      console.log(chalk.yellow('⚠️  No status line configured to test'));
     } else {
-      console.log(chalk.green('Current Configuration:'));
-      console.log(`Command: ${chalk.cyan(statusLineConfig.command)}`);
-      console.log(`Type: ${chalk.cyan(statusLineConfig.type)}`);
-      console.log(`Padding: ${chalk.cyan(statusLineConfig.padding || 0)}`);
-      console.log();
-      console.log(chalk.blue('🚧 Interactive editing coming soon!'));
-      console.log(chalk.gray('For now, manually edit: ~/.claude/settings.json'));
-    }
-
-    console.log();
-    await this.waitForEnter(false);
-  }
-
-  /**
-   * Test status line with different inputs
-   */
-  async testStatusLine() {
-    console.clear();
-    console.log(chalk.bold.blue('🧪 Test Status Line'));
-    console.log(chalk.gray('━'.repeat(50)));
-    console.log();
-
-    const statusLineConfig = await this.getStatusLineConfig();
-    
-    if (!statusLineConfig) {
-      console.log(chalk.yellow('⚠️  No status line configured to test.'));
-    } else {
-      console.log(chalk.green('Testing current status line...'));
+      console.log(chalk.green('Running status line command...'));
       console.log();
       
       try {
         const result = await this.executeStatusLineCommand(statusLineConfig);
         if (result) {
-          console.log(chalk.blue('Preview: ') + result);
+          console.log(chalk.blue('Output: ') + result);
+          console.log();
+          console.log(chalk.green('✅ Status line is working!'));
         } else {
-          console.log(chalk.red('❌ No output from status line command'));
+          console.log(chalk.red('❌ No output from command'));
         }
       } catch (error) {
         console.log(chalk.red(`❌ Error: ${error.message}`));
@@ -3229,44 +3230,135 @@ class HookControlPanel {
   }
 
   /**
-   * Show status line templates
+   * Show status line configuration
    */
-  async showStatusLineTemplates() {
+  async showStatusLineConfig() {
     console.clear();
-    console.log(chalk.bold.yellow('📄 Status Line Templates'));
+    console.log(chalk.bold.green('📄 Status Line Configuration'));
     console.log(chalk.gray('━'.repeat(50)));
     console.log();
 
-    console.log(chalk.blue('🚧 Template gallery coming soon!'));
-    console.log();
-    console.log('Available templates will include:');
-    console.log(`• ${chalk.green('Minimal')} - Just model and directory`);
-    console.log(`• ${chalk.cyan('Developer')} - Git, time, system info`);
-    console.log(`• ${chalk.magenta('Powerline')} - Rich symbols and colors`);
-    console.log(`• ${chalk.yellow('Custom')} - Build your own`);
+    const statusLineConfig = await this.getStatusLineConfig();
+    
+    if (!statusLineConfig) {
+      console.log(chalk.yellow('⚠️  No status line configured'));
+      console.log();
+      console.log(chalk.cyan('To create a status line, add to your settings.json:'));
+      console.log(chalk.gray(`{
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline.sh",
+    "padding": 0
+  }
+}`));
+    } else {
+      console.log(chalk.green('Current Configuration:'));
+      console.log(`${chalk.blue('Command:')} ${statusLineConfig.command}`);
+      console.log(`${chalk.blue('Type:')} ${statusLineConfig.type}`);
+      console.log(`${chalk.blue('Padding:')} ${statusLineConfig.padding || 0}`);
+      console.log();
+      
+      // Show which settings file it's in
+      const settingsPaths = [
+        { path: path.join(process.cwd(), '.claude', 'settings.json'), name: 'Project' },
+        { path: path.join(require('os').homedir(), '.claude', 'settings.json'), name: 'Global' }
+      ];
+      
+      for (const settings of settingsPaths) {
+        if (fs.existsSync(settings.path)) {
+          try {
+            const config = JSON.parse(fs.readFileSync(settings.path, 'utf8'));
+            if (config.statusLine) {
+              console.log(`${chalk.gray('Location:')} ${settings.name} (${settings.path})`);
+              break;
+            }
+          } catch (e) {}
+        }
+      }
+    }
 
     console.log();
     await this.waitForEnter(false);
   }
 
   /**
-   * Edit status line components
+   * Quick edit status line script
    */
-  async editStatusLineComponents() {
+  async quickEditStatusLine() {
     console.clear();
-    console.log(chalk.bold.magenta('🔧 Status Line Components'));
+    console.log(chalk.bold.blue('📝 Edit Status Line Script'));
     console.log(chalk.gray('━'.repeat(50)));
     console.log();
 
-    console.log(chalk.blue('🚧 Component builder coming soon!'));
+    const statusLineConfig = await this.getStatusLineConfig();
+    
+    if (!statusLineConfig) {
+      console.log(chalk.yellow('⚠️  No status line configured'));
+      console.log(chalk.cyan('Create one first by adding to settings.json'));
+    } else {
+      console.log(chalk.green('Status line script location:'));
+      console.log(chalk.cyan(statusLineConfig.command));
+      console.log();
+      
+      if (statusLineConfig.command.startsWith('~')) {
+        const expandedPath = statusLineConfig.command.replace('~', require('os').homedir());
+        console.log(chalk.blue('Expanded path:'));
+        console.log(chalk.gray(expandedPath));
+        console.log();
+        
+        if (fs.existsSync(expandedPath)) {
+          console.log(chalk.green('✅ Script file exists'));
+          console.log(chalk.gray('You can edit it with your favorite editor:'));
+          console.log(chalk.cyan(`nano ${expandedPath}`));
+          console.log(chalk.cyan(`code ${expandedPath}`));
+        } else {
+          console.log(chalk.red('❌ Script file does not exist'));
+          console.log(chalk.yellow('Create it first or check the path'));
+        }
+      } else {
+        console.log(chalk.gray('Edit the script at the specified location'));
+      }
+    }
+
     console.log();
-    console.log('Available components will include:');
-    console.log(`• ${chalk.green('Model Name')} - Current Claude model`);
-    console.log(`• ${chalk.cyan('Directory')} - Current working directory`);
-    console.log(`• ${chalk.yellow('Git Status')} - Branch and changes`);
-    console.log(`• ${chalk.magenta('Time')} - Current time`);
-    console.log(`• ${chalk.blue('System Load')} - CPU, memory usage`);
-    console.log(`• ${chalk.red('Custom Text')} - Your own text/commands`);
+    await this.waitForEnter(false);
+  }
+
+  /**
+   * Quick remove status line
+   */
+  async quickRemoveStatusLine() {
+    console.clear();
+    console.log(chalk.bold.red('🗑️  Remove Status Line'));
+    console.log(chalk.gray('━'.repeat(50)));
+    console.log();
+
+    const statusLineConfig = await this.getStatusLineConfig();
+    
+    if (!statusLineConfig) {
+      console.log(chalk.yellow('⚠️  No status line configured to remove'));
+    } else {
+      console.log(chalk.red('This will remove your status line configuration'));
+      console.log(chalk.gray('Command: ') + statusLineConfig.command);
+      console.log();
+      
+      const inquirer = require('inquirer');
+      const answer = await inquirer.prompt([{
+        type: 'confirm',
+        name: 'confirm',
+        message: 'Are you sure you want to remove the status line?',
+        default: false
+      }]);
+      
+      if (answer.confirm) {
+        console.log(chalk.blue('🚧 Automatic removal coming soon!'));
+        console.log();
+        console.log(chalk.gray('For now, manually remove the "statusLine" section from:'));
+        console.log(chalk.cyan('~/.claude/settings.json'));
+      } else {
+        console.log(chalk.green('✅ Status line kept'));
+      }
+    }
 
     console.log();
     await this.waitForEnter(false);
@@ -3487,20 +3579,37 @@ class HookControlPanel {
    * Handle sessions section management
    */
   async manageSectionItems(sectionType) {
+    console.log(chalk.gray(`[DEBUG] manageSectionItems called with sectionType: ${sectionType}`));
+    
     if (sectionType === 'sessions') {
+      console.log(chalk.gray(`[DEBUG] Routing to sessions management`));
       await this.manageSessionsInteractive();
       return;
     }
     
     // Special handling for hooks with toggle functionality
     if (sectionType === 'hooks') {
+      console.log(chalk.gray(`[DEBUG] Routing to hooks management`));
       await this.manageHooksWithToggle();
       return;
     }
     
     // Regular section management for other types
+    console.log(chalk.gray(`[DEBUG] Regular section management for: ${sectionType}`));
     const sectionData = this.enhancementStates[sectionType];
-    const allInstalled = [...sectionData.user, ...sectionData.project, ...sectionData.local];
+    
+    if (!sectionData) {
+      console.log(chalk.red(`[ERROR] No section data found for: ${sectionType}`));
+      return;
+    }
+    
+    console.log(chalk.gray(`[DEBUG] Section data structure:`, Object.keys(sectionData)));
+    
+    const allInstalled = [
+      ...(sectionData.user || []),
+      ...(sectionData.project || []),
+      ...(sectionData.local || [])
+    ];
 
     if (allInstalled.length === 0) {
       console.log(chalk.yellow(`No ${this.getSectionTitle(sectionType).toLowerCase()} installed to manage.`));
