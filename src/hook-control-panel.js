@@ -24,6 +24,14 @@ class HookControlPanel {
     this.claudeDir = null;
     this.projectContext = null;
     this.enhancementStates = {};
+    
+    // Performance caching
+    this.hooksCache = {
+      data: null,
+      timestamp: 0,
+      ttl: 30000 // 30 second cache
+    };
+    this.sessionCache = new Map();
   }
 
   /**
@@ -3913,15 +3921,21 @@ class HookControlPanel {
       
       return activeHooks;
     } catch (error) {
-      console.warn(`[DEBUG] Error analyzing hooks for session: ${error.message}`);
+      // Error analyzing hooks - continue with empty hooks
       return [];
     }
   }
 
   /**
-   * Dynamically discover all available hooks and their configurations
+   * Dynamically discover all available hooks and their configurations (with caching)
    */
   async discoverAvailableHooks() {
+    // Check cache first
+    const now = Date.now();
+    if (this.hooksCache.data && (now - this.hooksCache.timestamp) < this.hooksCache.ttl) {
+      return this.hooksCache.data;
+    }
+    
     const hooks = {};
     
     try {
@@ -3957,7 +3971,7 @@ class HookControlPanel {
       
       return hooks;
     } catch (error) {
-      console.warn(`[DEBUG] Error discovering hooks: ${error.message}`);
+      // Error discovering hooks - return empty object
       return {};
     }
   }
@@ -4126,23 +4140,23 @@ class HookControlPanel {
    * Handle sessions section management
    */
   async manageSectionItems(sectionType) {
-    console.log(chalk.gray(`[DEBUG] manageSectionItems called with sectionType: ${sectionType}`));
+    // Handle special section management
     
     if (sectionType === 'sessions') {
-      console.log(chalk.gray(`[DEBUG] Routing to sessions management`));
+      // Route to sessions management
       await this.manageSessionsInteractive();
       return;
     }
     
     // Special handling for hooks with toggle functionality
     if (sectionType === 'hooks') {
-      console.log(chalk.gray(`[DEBUG] Routing to hooks management`));
+      // Route to hooks management
       await this.manageHooksWithToggle();
       return;
     }
     
     // Regular section management for other types
-    console.log(chalk.gray(`[DEBUG] Regular section management for: ${sectionType}`));
+    // Regular section management
     const sectionData = this.enhancementStates[sectionType];
     
     if (!sectionData) {
@@ -4150,7 +4164,7 @@ class HookControlPanel {
       return;
     }
     
-    console.log(chalk.gray(`[DEBUG] Section data structure:`, Object.keys(sectionData)));
+    // Process section data
     
     const allInstalled = [
       ...(sectionData.user || []),
@@ -4451,13 +4465,27 @@ class HookControlPanel {
       }
       console.log();
 
-      // Active hooks
-      console.log(chalk.blue('🎣 Active Hooks:'));
+      // Active hooks with management interface
+      console.log(chalk.blue('🎣 Active Session Hooks:'));
       if (session.activeHooks.length === 0) {
         console.log(`   ${chalk.gray('No hooks detected for this session')}`);
       } else {
-        session.activeHooks.forEach(hook => {
-          console.log(`   ${chalk.cyan('•')} ${hook}`);
+        // Group hooks by category for better UX
+        const hookCategories = this.groupHooksByCategory(session.activeHooks);
+        
+        Object.entries(hookCategories).forEach(([category, hooks]) => {
+          console.log(`\n   ${chalk.yellow(category.toUpperCase())} (${hooks.length})`);
+          hooks.slice(0, 3).forEach(hook => {
+            const status = hook.enabled !== false ? chalk.green('🟢') : chalk.red('🔴');
+            const execCount = hook.executions ? chalk.gray(`(${hook.executions}x)`) : '';
+            console.log(`     ${status} ${chalk.cyan(hook.name || hook)} ${execCount}`);
+            if (hook.description && hook.description.length < 60) {
+              console.log(`       ${chalk.gray(hook.description)}`);
+            }
+          });
+          if (hooks.length > 3) {
+            console.log(`     ${chalk.gray(`... and ${hooks.length - 3} more`)}`);
+          }
         });
       }
       console.log();
@@ -4480,8 +4508,12 @@ class HookControlPanel {
           value: 'files'
         },
         {
-          name: '🎣 View Hook Activity',
+          name: '🎣 Manage Session Hooks',
           value: 'hooks'
+        },
+        {
+          name: '⚙️  Configure Hook Settings',
+          value: 'configure'
         },
         {
           name: '🗑️  Delete Session',
@@ -4511,7 +4543,10 @@ class HookControlPanel {
           await this.viewSessionFiles(session);
           break;
         case 'hooks':
-          await this.viewSessionHooks(session);
+          await this.manageSessionHooks(session);
+          break;
+        case 'configure':
+          await this.showHookConfiguration(session);
           break;
         case 'delete':
           const confirmed = await this.confirmSessionDeletion(session);
@@ -4844,7 +4879,7 @@ class HookControlPanel {
         // Check if any Claude process is associated with this session
         const sessionMatch = await this.matchSessionToProcess(sessionId, claudeProcesses);
         if (sessionMatch) {
-          console.log(`[DEBUG] Session ${sessionId} matched to active PID ${sessionMatch.pid} in ${sessionMatch.cwd}`);
+          // Session matched to active process
           return true;
         }
         
@@ -4868,7 +4903,7 @@ class HookControlPanel {
               const lastActivity = recentFiles[0].mtime;
               const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
               if (lastActivity > oneMinuteAgo) {
-                console.log(`[DEBUG] Session ${sessionId} likely active - Claude process in same dir (PID ${matchingDirProcesses[0].pid}) with recent activity`);
+                // Session likely active based on directory and recent activity
                 return true;
               }
             }
@@ -4877,11 +4912,11 @@ class HookControlPanel {
         
         return false;
       } catch (error) {
-        console.warn(`[DEBUG] Error in PID-based detection for session ${sessionId}:`, error.message);
+        // Error in PID-based detection
         return false;
       }
     } catch (error) {
-      console.warn(`[DEBUG] Error checking process status for session ${sessionId}:`, error.message);
+      // Error checking process status
       return false;
     }
   }
@@ -4951,7 +4986,7 @@ class HookControlPanel {
       
       return processes;
     } catch (error) {
-      console.warn(`[DEBUG] Error getting Claude processes:`, error.message);
+      // Error getting Claude processes
       return [];
     }
   }
@@ -5030,7 +5065,7 @@ class HookControlPanel {
             const lastActivity = recentFiles[0].mtime;
             const thirtySecondsAgo = new Date(Date.now() - 30 * 1000);
             if (lastActivity > thirtySecondsAgo) {
-              console.log(`[DEBUG] Session ${sessionId} matched to process with active children: PID ${proc.pid} (children: ${proc.children.map(c => c.command).join(', ')})`);
+              // Session matched to process with active children
               return proc;
             }
           }
@@ -5038,7 +5073,7 @@ class HookControlPanel {
         
         // If no recent activity but has children, still consider it active
         const procWithChildren = processesWithChildren[0];
-        console.log(`[DEBUG] Session ${sessionId} matched to process with children: PID ${procWithChildren.pid} (children: ${procWithChildren.children.map(c => c.command).join(', ')})`);
+        // Session matched to process with children
         return procWithChildren;
       }
       
@@ -5063,7 +5098,7 @@ class HookControlPanel {
       
       return null;
     } catch (error) {
-      console.warn(`[DEBUG] Error matching session ${sessionId} to process:`, error.message);
+      // Error matching session to process
       return null;
     }
   }
@@ -5127,6 +5162,331 @@ class HookControlPanel {
   }
 
   /**
+   * Group hooks by category for better UX
+   */
+  groupHooksByCategory(hooks) {
+    const categories = {
+      'Core System': [],
+      'Git & Version Control': [],
+      'Code & Formatting': [], 
+      'AI & Analysis': [],
+      'Session & Data': [],
+      'Other': []
+    };
+    
+    hooks.forEach(hook => {
+      const name = (hook.name || hook).toLowerCase();
+      if (name.includes('rapala') || name.includes('router') || name.includes('command')) {
+        categories['Core System'].push(hook);
+      } else if (name.includes('git') || name.includes('commit') || name.includes('version')) {
+        categories['Git & Version Control'].push(hook);
+      } else if (name.includes('format') || name.includes('python') || name.includes('code')) {
+        categories['Code & Formatting'].push(hook);
+      } else if (name.includes('thinking') || name.includes('agent') || name.includes('test')) {
+        categories['AI & Analysis'].push(hook);
+      } else if (name.includes('conversation') || name.includes('session') || name.includes('archiv')) {
+        categories['Session & Data'].push(hook);
+      } else {
+        categories['Other'].push(hook);
+      }
+    });
+    
+    // Only return non-empty categories
+    return Object.fromEntries(
+      Object.entries(categories).filter(([_, hooks]) => hooks.length > 0)
+    );
+  }
+
+  /**
+   * Manage hooks for a specific session
+   */
+  async manageSessionHooks(session) {
+    while (true) {
+      console.clear();
+      console.log(chalk.cyan(`🎣 Hook Management: Session ${session.shortId}`));
+      console.log(chalk.gray('━'.repeat(70)));
+      
+      if (session.activeHooks.length === 0) {
+        console.log(chalk.yellow('No active hooks detected in this session.'));
+        console.log(chalk.gray('This might mean hooks are not properly configured or the session has no tool activity.'));
+        console.log();
+        
+        const choices = [
+          { name: '🔍 Refresh Hook Detection', value: 'refresh' },
+          { name: '← Back to Session Details', value: 'back' }
+        ];
+        
+        const { action } = await inquirer.prompt([{
+          type: 'list',
+          name: 'action',
+          message: 'What would you like to do?',
+          choices
+        }]);
+        
+        if (action === 'refresh') {
+          console.log(chalk.yellow('🔄 Refreshing hook detection...'));
+          const sessionInfo = await this.getSessionInfo(session.fullPath, `session-${session.shortId}`);
+          session.activeHooks = sessionInfo.activeHooks;
+          continue;
+        } else {
+          break;
+        }
+      }
+      
+      console.log(`Found ${chalk.cyan(session.activeHooks.length)} active hooks in this session:\n`);
+      
+      // Display hooks with management options
+      const hookChoices = session.activeHooks.map(hook => {
+        const name = hook.name || hook;
+        const status = hook.enabled !== false ? '🟢' : '🔴';
+        const execCount = hook.executions ? `(${hook.executions}x)` : '';
+        const desc = hook.description ? ` - ${hook.description.substring(0, 50)}${hook.description.length > 50 ? '...' : ''}` : '';
+        
+        return {
+          name: `${status} ${name} ${chalk.gray(execCount)}${chalk.gray(desc)}`,
+          value: hook
+        };
+      });
+      
+      hookChoices.push(
+        new inquirer.Separator(),
+        { name: '🔄 Refresh Hook Detection', value: 'refresh' },
+        { name: '📊 View Hook Statistics', value: 'stats' },
+        { name: '← Back to Session Details', value: 'back' }
+      );
+      
+      const { selectedHook } = await inquirer.prompt([{
+        type: 'list',
+        name: 'selectedHook',
+        message: 'Select a hook to manage or choose an action:',
+        choices: hookChoices,
+        pageSize: 15
+      }]);
+      
+      if (selectedHook === 'back') {
+        break;
+      } else if (selectedHook === 'refresh') {
+        console.log(chalk.yellow('🔄 Refreshing hook detection...'));
+        const sessionInfo = await this.getSessionInfo(session.fullPath, `session-${session.shortId}`);
+        session.activeHooks = sessionInfo.activeHooks;
+        continue;
+      } else if (selectedHook === 'stats') {
+        await this.showHookStatistics(session);
+        continue;
+      } else {
+        await this.manageIndividualHook(selectedHook, session);
+      }
+    }
+  }
+
+  /**
+   * Show detailed hook statistics
+   */
+  async showHookStatistics(session) {
+    console.clear();
+    console.log(chalk.cyan(`📊 Hook Statistics: Session ${session.shortId}`));
+    console.log(chalk.gray('━'.repeat(70)));
+    console.log();
+    
+    const categories = this.groupHooksByCategory(session.activeHooks);
+    let totalExecutions = 0;
+    
+    console.log(chalk.blue('📈 Hook Activity Summary:'));
+    Object.entries(categories).forEach(([category, hooks]) => {
+      const categoryExecs = hooks.reduce((sum, hook) => sum + (hook.executions || 0), 0);
+      totalExecutions += categoryExecs;
+      
+      console.log(`\n  ${chalk.yellow(category)}:`);
+      console.log(`    ${chalk.gray('Hooks:')} ${hooks.length}`);
+      console.log(`    ${chalk.gray('Total Executions:')} ${categoryExecs}`);
+      
+      // Show top hooks in this category
+      const topHooks = hooks
+        .filter(hook => hook.executions > 0)
+        .sort((a, b) => (b.executions || 0) - (a.executions || 0))
+        .slice(0, 3);
+        
+      if (topHooks.length > 0) {
+        console.log(`    ${chalk.gray('Most Active:')}`);
+        topHooks.forEach(hook => {
+          console.log(`      • ${hook.name || hook}: ${hook.executions || 0}x`);
+        });
+      }
+    });
+    
+    console.log(`\n${chalk.green('📊 Total Hook Executions:')} ${totalExecutions}`);
+    console.log(`${chalk.green('🎣 Unique Hooks Active:')} ${session.activeHooks.length}`);
+    
+    console.log();
+    await this.waitForEnter(false);
+  }
+
+  /**
+   * Manage an individual hook
+   */
+  async manageIndividualHook(hook, session) {
+    while (true) {
+      console.clear();
+      console.log(chalk.cyan(`⚙️ Hook: ${hook.name || hook}`));
+      console.log(chalk.gray('━'.repeat(70)));
+      console.log();
+      
+      // Hook details
+      console.log(chalk.blue('📋 Hook Information:'));
+      console.log(`   ${chalk.gray('Name:')} ${hook.name || hook}`);
+      console.log(`   ${chalk.gray('Status:')} ${hook.enabled !== false ? chalk.green('🟢 Enabled') : chalk.red('🔴 Disabled')}`);
+      console.log(`   ${chalk.gray('Executions:')} ${hook.executions || 0}`);
+      if (hook.description) {
+        console.log(`   ${chalk.gray('Description:')} ${hook.description}`);
+      }
+      if (hook.events && hook.events.size > 0) {
+        console.log(`   ${chalk.gray('Events:')} ${Array.from(hook.events).join(', ')}`);
+      }
+      if (hook.tools && hook.tools.size > 0) {
+        console.log(`   ${chalk.gray('Tools:')} ${Array.from(hook.tools).join(', ')}`);
+      }
+      console.log();
+      
+      const choices = [
+        { name: '📋 View Hook Details', value: 'details' },
+        { name: '📊 View Hook Activity', value: 'activity' },
+        { name: '← Back to Hook List', value: 'back' }
+      ];
+      
+      // Note: Actual enable/disable would require deeper Claude Code integration
+      console.log(chalk.yellow('💡 Note: Hook enable/disable requires Claude Code restart to take effect.'));
+      console.log();
+      
+      const { action } = await inquirer.prompt([{
+        type: 'list',
+        name: 'action',
+        message: 'What would you like to do?',
+        choices
+      }]);
+      
+      if (action === 'back') {
+        break;
+      } else if (action === 'details') {
+        await this.showDetailedHookInfo(hook);
+      } else if (action === 'activity') {
+        await this.showHookActivity(hook, session);
+      }
+    }
+  }
+
+  /**
+   * Show detailed hook information
+   */
+  async showDetailedHookInfo(hook) {
+    console.clear();
+    console.log(chalk.cyan(`🔍 Detailed Hook Information`));
+    console.log(chalk.gray('━'.repeat(70)));
+    console.log();
+    
+    const hookName = hook.name || hook;
+    
+    try {
+      const availableHooks = await this.discoverAvailableHooks();
+      const hookConfig = availableHooks[hookName];
+      
+      if (hookConfig) {
+        console.log(chalk.blue('⚙️ Hook Configuration:'));
+        console.log(`   ${chalk.gray('Name:')} ${hookName}`);
+        console.log(`   ${chalk.gray('Description:')} ${hookConfig.description || 'No description'}`);
+        console.log(`   ${chalk.gray('Events:')} ${hookConfig.events ? hookConfig.events.join(', ') : 'Not specified'}`);
+        console.log(`   ${chalk.gray('Triggers:')} ${hookConfig.triggers ? hookConfig.triggers.join(', ') : 'Not specified'}`);
+        
+        if (hookConfig.configPath) {
+          console.log(`   ${chalk.gray('Config File:')} ${hookConfig.configPath}`);
+        }
+        console.log();
+      }
+      
+      console.log(chalk.blue('📊 Runtime Information:'));
+      console.log(`   ${chalk.gray('Executions in Session:')} ${hook.executions || 0}`);
+      console.log(`   ${chalk.gray('Last Seen:')} ${hook.lastSeen ? this.formatDateTime(hook.lastSeen) : 'Unknown'}`);
+      console.log(`   ${chalk.gray('Tools Used:')} ${hook.tools ? Array.from(hook.tools).join(', ') : 'None recorded'}`);
+      console.log(`   ${chalk.gray('Events Handled:')} ${hook.events ? Array.from(hook.events).join(', ') : 'None recorded'}`);
+      
+    } catch (error) {
+      console.log(chalk.red(`❌ Error loading hook details: ${error.message}`));
+    }
+    
+    console.log();
+    await this.waitForEnter(false);
+  }
+
+  /**
+   * Show hook activity timeline
+   */
+  async showHookActivity(hook, session) {
+    console.clear();
+    console.log(chalk.cyan(`📈 Hook Activity: ${hook.name || hook}`));
+    console.log(chalk.gray('━'.repeat(70)));
+    console.log();
+    
+    if (hook.recentActivity && hook.recentActivity.length > 0) {
+      console.log(chalk.blue('⏰ Recent Activity:'));
+      hook.recentActivity.forEach((activity, index) => {
+        const timeStr = this.formatDateTime(activity.timestamp);
+        const timeAgo = this.getTimeAgo(activity.timestamp);
+        console.log(`   ${index + 1}. ${chalk.cyan(activity.tool)} - ${chalk.gray(timeStr)} (${timeAgo})`);
+        if (activity.file) {
+          console.log(`      ${chalk.gray('File:')} ${activity.file}`);
+        }
+      });
+    } else {
+      console.log(chalk.gray('No detailed activity information available.'));
+      console.log(chalk.gray('This hook has been detected but specific execution details are not recorded.'));
+    }
+    
+    console.log();
+    await this.waitForEnter(false);
+  }
+
+  /**
+   * Show hook configuration for the session
+   */
+  async showHookConfiguration(session) {
+    console.clear();
+    console.log(chalk.cyan(`⚙️ Hook Configuration: Session ${session.shortId}`));
+    console.log(chalk.gray('━'.repeat(70)));
+    console.log();
+    
+    console.log(chalk.blue('🎣 Session Hook Overview:'));
+    console.log(`   ${chalk.gray('Active Hooks:')} ${session.activeHooks.length}`);
+    
+    if (session.activeHooks.length > 0) {
+      const categories = this.groupHooksByCategory(session.activeHooks);
+      
+      Object.entries(categories).forEach(([category, hooks]) => {
+        console.log(`\n   ${chalk.yellow(category)} (${hooks.length} hooks):`);
+        hooks.forEach(hook => {
+          const status = hook.enabled !== false ? chalk.green('🟢') : chalk.red('🔴');
+          console.log(`     ${status} ${hook.name || hook}`);
+        });
+      });
+      
+      console.log();
+      console.log(chalk.blue('💡 Configuration Notes:'));
+      console.log(chalk.gray('   • Hooks are configured globally in Claude Code settings'));
+      console.log(chalk.gray('   • Session-level hook detection shows which hooks are active'));
+      console.log(chalk.gray('   • Hook execution depends on tool usage and event triggers'));
+      console.log(chalk.gray('   • Use "Manage Session Hooks" for detailed hook information'));
+      
+    } else {
+      console.log(chalk.yellow('   No active hooks detected in this session.'));
+      console.log(chalk.gray('   This could mean:'));
+      console.log(chalk.gray('   • No hooks are configured'));
+      console.log(chalk.gray('   • Session has no tool activity'));
+      console.log(chalk.gray('   • Hook detection needs to be refreshed'));
+    }
+    
+    console.log();
+    await this.waitForEnter(false);
+  }
+
+  /**
    * Find the session directory for a given session ID
    */
   findSessionDirectory(sessionId) {
@@ -5143,7 +5503,7 @@ class HookControlPanel {
       
       return null;
     } catch (error) {
-      console.warn(`[DEBUG] Error in findSessionDirectory for ${sessionId}:`, error.message);
+      // Error finding session directory
       return null;
     }
   }
