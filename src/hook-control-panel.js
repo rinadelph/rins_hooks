@@ -400,12 +400,17 @@ class HookControlPanel {
    * Display enhanced overview for a specific section
    */
   async displaySectionOverview(sectionType) {
+    const icon = this.getCategoryIcon(sectionType);
+    
+    // Special handling for status-line section
+    if (sectionType === 'status-line') {
+      await this.displayStatusLineOverview(icon);
+      return;
+    }
+    
     const sectionData = this.enhancementStates[sectionType];
     const totalInstalled = sectionData.user.length + sectionData.project.length + sectionData.local.length;
     const totalAvailable = sectionData.available.length;
-
-    // Section header with icon - horizontal layout
-    const icon = this.getCategoryIcon(sectionType);
     
     // For hooks section, show breakdown by type
     let stats;
