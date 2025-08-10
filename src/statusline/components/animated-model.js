@@ -40,14 +40,14 @@ class AnimatedModelComponent {
    */
   generatePulse(modelName, frame) {
     const pulseStates = [
-      '\\033[2;35m', // dim magenta
-      '\\033[35m',   // normal magenta  
-      '\\033[1;35m', // bright magenta
-      '\\033[35m'    // normal magenta
+      '\x1b[2;35m', // dim magenta
+      '\x1b[35m',   // normal magenta  
+      '\x1b[1;35m', // bright magenta
+      '\x1b[35m'    // normal magenta
     ];
     
     const colorCode = pulseStates[frame % pulseStates.length];
-    return `${colorCode}[${modelName}]\\033[0m`;
+    return `${colorCode}[${modelName}]\x1b[0m`;
   }
 
   /**
