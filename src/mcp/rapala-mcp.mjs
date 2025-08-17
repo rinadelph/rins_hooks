@@ -462,9 +462,8 @@ async function main() {
   await server.connect(transport);
   console.error("🚀 Rapala MCP Server v2.0.0 started successfully");
   console.error("📡 Connected via stdio transport");
-  console.error(
-    "🛠️  Available tools: rapala-test, rapala-hook-list, rapala-hook-enable, rapala-hook-disable, rapala-status"
-  );
+  console.error("🛠️  Rapala tools: rapala-test, rapala-hook-list, rapala-hook-enable, rapala-hook-disable, rapala-status");
+  console.error("🤖 Agent-MCP tools: agent-mcp-start, agent-mcp-stop, agent-mcp-status, agent-mcp-info");
 }
 
 // Start the server
