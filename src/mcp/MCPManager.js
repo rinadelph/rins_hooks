@@ -660,7 +660,8 @@ class MCPManager {
    * Get available MCP servers (for CLI)
    */
   async getAvailableServers() {
-    const mcps = await this.discoverMCPs();
+    // Get from registry
+    const mcps = this.registry.getAllMCPs();
     return mcps.map(mcp => ({
       name: mcp.name,
       description: mcp.description || 'No description',
