@@ -20,7 +20,7 @@
     "claude-code",
     "rapala",
     "hooks",
-    "tools", 
+    "tools",
     "resources",
     "prompts",
     "mcp",
@@ -37,6 +37,7 @@
     "node": ">=16.0.0"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.3",
     "chalk": "^4.1.2",
     "commander": "^11.0.0",
     "cross-spawn": "^7.0.3",
