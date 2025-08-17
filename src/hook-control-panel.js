@@ -4509,7 +4509,8 @@ class HookControlPanel {
    * View session files with details
    */
   async viewSessionFiles(session) {
-    console.clear();
+    // Minimal clearing - preserve scroll history while creating visual separation
+    console.log('\n'.repeat(3));
     console.log(chalk.cyan(`📂 Session Files: ${session.shortId}`));
     console.log(chalk.gray('━'.repeat(70)));
 
@@ -4551,7 +4552,8 @@ class HookControlPanel {
    * View session hook activity
    */
   async viewSessionHooks(session) {
-    console.clear();
+    // Minimal clearing - preserve scroll history while creating visual separation
+    console.log('\n'.repeat(3));
     console.log(chalk.cyan(`🎣 Hook Activity: ${session.shortId}`));
     console.log(chalk.gray('━'.repeat(70)));
     console.log();
@@ -4603,7 +4605,8 @@ class HookControlPanel {
    * Search through sessions
    */
   async searchSessions(allSessions) {
-    console.clear();
+    // Minimal clearing - preserve scroll history while creating visual separation
+    console.log('\n'.repeat(3));
     console.log(chalk.cyan('🔍 Session Search'));
     console.log(chalk.gray('━'.repeat(70)));
     console.log();
@@ -4641,7 +4644,8 @@ class HookControlPanel {
    * Clean up old sessions
    */
   async cleanupSessions(archivedSessions) {
-    console.clear();
+    // Minimal clearing - preserve scroll history while creating visual separation
+    console.log('\n'.repeat(3));
     console.log(chalk.cyan('🧹 Session Cleanup'));
     console.log(chalk.gray('━'.repeat(70)));
     console.log();
