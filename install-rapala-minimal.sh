@@ -58,24 +58,24 @@ echo ""
 echo -e "${CYAN}Enabling essential hooks:${NC}"
 
 # Enable router hook
-if [ -f "hooks/claude-router/config.json" ]; then
+if [ -f "hooks/rapala-router/config.json" ]; then
     node -e "
     const fs = require('fs-extra');
-    const config = fs.readJsonSync('hooks/claude-router/config.json');
+    const config = fs.readJsonSync('hooks/rapala-router/config.json');
     config.disabled = false;
-    fs.writeJsonSync('hooks/claude-router/config.json', config, {spaces: 2});
-    console.log('  ✅ Enabled: claude-router');
+    fs.writeJsonSync('hooks/rapala-router/config.json', config, {spaces: 2});
+    console.log('  ✅ Enabled: rapala-router');
     " 2>/dev/null
 fi
 
 # Enable command hook
-if [ -f "hooks/claude-command/config.json" ]; then
+if [ -f "hooks/rapala-command/config.json" ]; then
     node -e "
     const fs = require('fs-extra');
-    const config = fs.readJsonSync('hooks/claude-command/config.json');
+    const config = fs.readJsonSync('hooks/rapala-command/config.json');
     config.disabled = false;
-    fs.writeJsonSync('hooks/claude-command/config.json', config, {spaces: 2});
-    console.log('  ✅ Enabled: claude-command');
+    fs.writeJsonSync('hooks/rapala-command/config.json', config, {spaces: 2});
+    console.log('  ✅ Enabled: rapala-command');
     " 2>/dev/null
 fi
 
