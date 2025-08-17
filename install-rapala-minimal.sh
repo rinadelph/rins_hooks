@@ -83,7 +83,7 @@ echo ""
 echo -e "${GREEN}Step 4: Setting up Claude integration...${NC}"
 
 # Create claude alias that uses local rapala
-CLAUDE_ALIAS="alias claude='$RAPALA_DIR/rapala claude'"
+CLAUDE_ALIAS="alias claude='$RAPALA_DIR/bin/rapala claude'"
 
 # Add to appropriate shell config
 if [ -n "$ZSH_VERSION" ]; then
