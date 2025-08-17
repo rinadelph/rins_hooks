@@ -8,6 +8,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import os from "os";
+import { spawn, exec } from "child_process";
+import { promisify } from "util";
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
