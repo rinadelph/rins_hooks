@@ -662,7 +662,8 @@ class MCPManager {
   async getAvailableServers() {
     // Get from registry
     const mcps = this.registry.getAllMCPs();
-    return mcps.map(mcp => ({
+    const mcpArray = Object.values(mcps || {});
+    return mcpArray.map(mcp => ({
       name: mcp.name,
       description: mcp.description || 'No description',
       installed: true  // Simplified for now
