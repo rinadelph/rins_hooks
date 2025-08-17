@@ -15,6 +15,13 @@ import { promisify } from "util";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Promisify exec for async/await
+const execAsync = promisify(exec);
+
+// Store agent-mcp process reference
+let agentMcpProcess = null;
+let agentMcpPort = 3001;
+
 // Create server instance
 const server = new McpServer(
   {
