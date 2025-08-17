@@ -641,6 +641,158 @@ class MCPManager {
       arguments: args
     });
   }
+
+  /**
+   * Get running MCP servers (for CLI)
+   */
+  async getRunningServers() {
+    const statuses = this.processManager.getAllStatuses();
+    return Object.entries(statuses)
+      .filter(([_, status]) => status.status === 'running')
+      .map(([name, status]) => ({
+        name,
+        transport: status.transport || 'stdio',
+        pid: status.pid
+      }));
+  }
+
+  /**
+   * Get available MCP servers (for CLI)
+   */
+  async getAvailableServers() {
+    const mcps = await this.discoverMCPs();
+    return mcps.map(mcp => ({
+      name: mcp.name,
+      description: mcp.description || 'No description',
+      installed: true  // Simplified for now
+    }));
+  }
+
+  /**
+   * Start an MCP server (for CLI)
+   */
+  async startServer(name) {
+    try {
+      const mcp = this.registry.getMCP(name);
+      if (!mcp) {
+        return { success: false, message: `MCP server "${name}" not found` };
+      }
+      
+      await this.start(name);
+      return { success: true, message: `MCP server "${name}" started successfully` };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
+  }
+
+  /**
+   * Stop an MCP server (for CLI)
+   */
+  async stopServer(name) {
+    try {
+      await this.stop(name);
+      return { success: true, message: `MCP server "${name}" stopped successfully` };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
+  }
+
+  /**
+   * Quick add preset MCP (for CLI)
+   */
+  async quickAddPreset(preset) {
+    const presets = {
+      'filesystem': { command: 'npx', args: ['-y', '@modelcontextprotocol/server-filesystem', '/'] },
+      'github': { command: 'npx', args: ['-y', '@modelcontextprotocol/server-github'] },
+      'memory': { command: 'npx', args: ['-y', '@modelcontextprotocol/server-memory'] },
+      'sqlite': { command: 'npx', args: ['-y', '@modelcontextprotocol/server-sqlite', 'db.sqlite'] }
+    };
+    
+    const config = presets[preset];
+    if (!config) {
+      return { success: false, message: `Unknown preset: ${preset}` };
+    }
+    
+    try {
+      // Add to registry
+      this.registry.registerMCP({
+        name: preset,
+        transport: 'stdio',
+        ...config
+      });
+      
+      // Add to Claude settings
+      await this.addToClaudeSettings(preset, config);
+      
+      return { success: true, message: `MCP preset "${preset}" added successfully` };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
+  }
+
+  /**
+   * Remove MCP from Claude (for CLI)
+   */
+  async removeFromClaude(name) {
+    try {
+      const settingsPath = path.join(require('os').homedir(), '.claude', 'settings.json');
+      const settings = await fs.readJson(settingsPath);
+      
+      if (settings.mcpServers && settings.mcpServers[name]) {
+        delete settings.mcpServers[name];
+        await fs.writeJson(settingsPath, settings, { spaces: 2 });
+        return { success: true, message: `MCP "${name}" removed from Claude settings` };
+      } else {
+        return { success: false, message: `MCP "${name}" not found in Claude settings` };
+      }
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
+  }
+
+  /**
+   * Get system status (for CLI)
+   */
+  async getSystemStatus() {
+    const running = await this.getRunningServers();
+    const available = await this.getAvailableServers();
+    
+    let claudeConfigured = false;
+    try {
+      const settingsPath = path.join(require('os').homedir(), '.claude', 'settings.json');
+      const settings = await fs.readJson(settingsPath);
+      claudeConfigured = !!(settings.mcpServers && Object.keys(settings.mcpServers).length > 0);
+    } catch (e) {
+      // Ignore
+    }
+    
+    return {
+      runningCount: running.length,
+      availableCount: available.length,
+      claudeConfigured,
+      rapalaMCPStatus: claudeConfigured ? 'Connected' : 'Not configured'
+    };
+  }
+
+  /**
+   * Add MCP to Claude settings
+   */
+  async addToClaudeSettings(name, config) {
+    const settingsPath = path.join(require('os').homedir(), '.claude', 'settings.json');
+    const settings = await fs.readJson(settingsPath);
+    
+    if (!settings.mcpServers) {
+      settings.mcpServers = {};
+    }
+    
+    settings.mcpServers[name] = {
+      command: config.command,
+      args: config.args || [],
+      env: config.env || {}
+    };
+    
+    await fs.writeJson(settingsPath, settings, { spaces: 2 });
+  }
 }
 
 module.exports = MCPManager;
