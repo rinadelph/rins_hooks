@@ -1,0 +1,420 @@
+#!/usr/bin/env node
+
+const chalk = require('chalk');
+const inquirer = require('inquirer');
+const { Command } = require('commander');
+const path = require('path');
+const fs = require('fs-extra');
+const MCPManager = require('../src/mcp/MCPManager');
+const MCPLauncher = require('../src/mcp/MCPLauncher');
+
+const program = new Command();
+const manager = new MCPManager();
+
+program
+  .name('rapala-mcp')
+  .description('Rapala MCP Management - Launch and manage MCP servers')
+  .version('1.0.0');
+
+// List MCPs
+program
+  .command('list')
+  .description('List all available MCP servers')
+  .option('-c, --category <category>', 'Filter by category')
+  .option('-s, --status', 'Show status')
+  .action(async (options) => {
+    try {
+      await manager.initialize();
+      const list = await manager.list();
+      
+      console.log(chalk.cyan('\n📡 Available MCP Servers:\n'));
+      
+      const filtered = options.category 
+        ? list.filter(m => m.category === options.category)
+        : list;
+      
+      filtered.forEach(mcp => {
+        const statusIcon = mcp.status === 'running' ? '🟢' : 
+                          mcp.status === 'error' ? '🔴' : '⚪';
+        const officialBadge = mcp.official ? chalk.blue('[Official]') : '';
+        const autoStartBadge = mcp.autoStart ? chalk.green('[Auto]') : '';
+        
+        console.log(`${statusIcon} ${chalk.bold(mcp.name)} - ${mcp.displayName} ${officialBadge} ${autoStartBadge}`);
+        console.log(`   ${chalk.gray(mcp.category)} | ${chalk.gray(mcp.transport)}`);
+        
+        if (options.status) {
+          console.log(`   Status: ${mcp.status}`);
+        }
+      });
+      
+      console.log(chalk.gray(`\nTotal: ${filtered.length} servers`));
+    } catch (error) {
+      console.error(chalk.red('Error:'), error.message);
+      process.exit(1);
+    }
+  });
+
+// Start MCP
+program
+  .command('start <name>')
+  .description('Start an MCP server')
+  .action(async (name) => {
+    try {
+      await manager.initialize();
+      await manager.start(name);
+      console.log(chalk.green(`✅ Started MCP: ${name}`));
+    } catch (error) {
+      console.error(chalk.red('Error:'), error.message);
+      process.exit(1);
+    }
+  });
+
+// Stop MCP
+program
+  .command('stop <name>')
+  .description('Stop an MCP server')
+  .action(async (name) => {
+    try {
+      await manager.initialize();
+      await manager.stop(name);
+      console.log(chalk.green(`✅ Stopped MCP: ${name}`));
+    } catch (error) {
+      console.error(chalk.red('Error:'), error.message);
+      process.exit(1);
+    }
+  });
+
+// Restart MCP
+program
+  .command('restart <name>')
+  .description('Restart an MCP server')
+  .action(async (name) => {
+    try {
+      await manager.initialize();
+      await manager.restart(name);
+      console.log(chalk.green(`✅ Restarted MCP: ${name}`));
+    } catch (error) {
+      console.error(chalk.red('Error:'), error.message);
+      process.exit(1);
+    }
+  });
+
+// Status
+program
+  .command('status [name]')
+  .description('Get status of MCP server(s)')
+  .action(async (name) => {
+    try {
+      await manager.initialize();
+      
+      if (name) {
+        const status = await manager.status(name);
+        console.log(chalk.cyan(`\n📡 MCP Status: ${name}\n`));
+        console.log(`Status: ${status.status}`);
+        if (status.uptime) {
+          console.log(`Uptime: ${Math.floor(status.uptime / 1000)}s`);
+        }
+        if (status.connectionStatus) {
+          console.log(`Connection: ${status.connectionStatus.type}`);
+          console.log(`Requests: ${status.connectionStatus.metrics?.requests || 0}`);
+          console.log(`Responses: ${status.connectionStatus.metrics?.responses || 0}`);
+        }
+      } else {
+        const statuses = manager.processManager.getAllStatuses();
+        console.log(chalk.cyan('\n📡 All MCP Statuses:\n'));
+        
+        for (const [mcpName, status] of Object.entries(statuses)) {
+          const icon = status.status === 'running' ? '🟢' : 
+                      status.status === 'error' ? '🔴' : '⚪';
+          console.log(`${icon} ${mcpName}: ${status.status}`);
+        }
+      }
+    } catch (error) {
+      console.error(chalk.red('Error:'), error.message);
+      process.exit(1);
+    }
+  });
+
+// Install MCP
+program
+  .command('install')
+  .description('Install a new MCP server')
+  .action(async () => {
+    try {
+      await manager.initialize();
+      await manager.interactiveInstall();
+    } catch (error) {
+      console.error(chalk.red('Error:'), error.message);
+      process.exit(1);
+    }
+  });
+
+// Configure MCP
+program
+  .command('configure <name>')
+  .description('Configure an MCP server')
+  .action(async (name) => {
+    try {
+      await manager.initialize();
+      
+      const mcp = manager.registry.getMCP(name);
+      if (!mcp) {
+        throw new Error(`MCP not found: ${name}`);
+      }
+      
+      console.log(chalk.cyan(`\nConfiguring ${mcp.displayName}...\n`));
+      
+      if (!mcp.configurable) {
+        console.log(chalk.yellow('This MCP has no configurable options'));
+        return;
+      }
+      
+      const config = {};
+      
+      for (const [key, fieldConfig] of Object.entries(mcp.configurable)) {
+        const { value } = await inquirer.prompt([
+          {
+            type: fieldConfig.type === 'array' ? 'input' : 
+                  fieldConfig.secure ? 'password' : 'input',
+            name: 'value',
+            message: `${fieldConfig.description}:`,
+            default: fieldConfig.default,
+            validate: fieldConfig.required ? 
+              (input) => input ? true : 'This field is required' : undefined
+          }
+        ]);
+        
+        if (fieldConfig.type === 'array' && typeof value === 'string') {
+          config[key] = value.split(',').map(v => v.trim());
+        } else {
+          config[key] = value;
+        }
+      }
+      
+      await manager.configure(name, config);
+      console.log(chalk.green(`✅ Configured MCP: ${name}`));
+    } catch (error) {
+      console.error(chalk.red('Error:'), error.message);
+      process.exit(1);
+    }
+  });
+
+// Launch (for Claude)
+program
+  .command('launch')
+  .description('Launch MCP servers (for Claude integration)')
+  .option('-c, --config <path>', 'Configuration file path')
+  .action(async (options) => {
+    try {
+      const launcher = new MCPLauncher();
+      await launcher.launch(options.config);
+    } catch (error) {
+      console.error(chalk.red('Error:'), error.message);
+      process.exit(1);
+    }
+  });
+
+// Setup Claude integration
+program
+  .command('setup-claude')
+  .description('Setup Claude integration')
+  .action(async () => {
+    try {
+      console.log(chalk.cyan('\n🔧 Setting up Claude integration...\n'));
+      
+      const claudeSettingsPath = path.join(require('os').homedir(), '.claude', 'settings.json');
+      
+      // Load existing settings
+      let settings = {};
+      if (await fs.pathExists(claudeSettingsPath)) {
+        settings = await fs.readJson(claudeSettingsPath);
+      }
+      
+      // Initialize mcpServers if not exists
+      if (!settings.mcpServers) {
+        settings.mcpServers = {};
+      }
+      
+      // Add Rapala MCP launcher
+      const launcherPath = path.join(__dirname, '../src/mcp/MCPLauncher.js');
+      
+      settings.mcpServers['rapala'] = {
+        command: 'node',
+        args: [launcherPath, '--launch'],
+        env: {}
+      };
+      
+      // Ask about additional MCPs
+      const { addMore } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'addMore',
+          message: 'Would you like to add more MCP servers?',
+          default: true
+        }
+      ]);
+      
+      if (addMore) {
+        const choices = [
+          { name: '📁 Filesystem - File operations', value: 'filesystem' },
+          { name: '🐙 GitHub - GitHub integration', value: 'github' },
+          { name: '💾 SQLite - SQLite database', value: 'sqlite' },
+          { name: '🧠 Memory - Knowledge graph', value: 'memory' },
+          { name: '⏰ Time - Time operations', value: 'time' },
+          { name: '🌐 Fetch - HTTP client', value: 'fetch' }
+        ];
+        
+        const { selected } = await inquirer.prompt([
+          {
+            type: 'checkbox',
+            name: 'selected',
+            message: 'Select MCP servers to include:',
+            choices
+          }
+        ]);
+        
+        // Add selected MCPs to launch config
+        const launchConfig = {
+          version: '1.0',
+          servers: [
+            {
+              name: 'rapala',
+              displayName: 'Rapala Hooks MCP',
+              enabled: true,
+              transport: 'stdio'
+            }
+          ]
+        };
+        
+        for (const mcpName of selected) {
+          const mcp = manager.registry.builtInMCPs[mcpName];
+          if (mcp) {
+            launchConfig.servers.push({
+              ...mcp,
+              enabled: true
+            });
+          }
+        }
+        
+        // Save launch config
+        const configPath = path.join(require('os').homedir(), '.rapala', 'mcp-launch.json');
+        await fs.ensureDir(path.dirname(configPath));
+        await fs.writeJson(configPath, launchConfig, { spaces: 2 });
+      }
+      
+      // Save Claude settings
+      await fs.ensureDir(path.dirname(claudeSettingsPath));
+      await fs.writeJson(claudeSettingsPath, settings, { spaces: 2 });
+      
+      console.log(chalk.green('\n✅ Claude integration setup complete!\n'));
+      console.log(chalk.cyan('Next steps:'));
+      console.log('1. Restart Claude Code');
+      console.log('2. The Rapala MCP server will be available');
+      console.log('3. Use MCP tools like rapala.hook.list, rapala.mcp.start, etc.');
+      
+    } catch (error) {
+      console.error(chalk.red('Error:'), error.message);
+      process.exit(1);
+    }
+  });
+
+// Create profile
+program
+  .command('profile-create <name>')
+  .description('Create an MCP profile')
+  .action(async (name) => {
+    try {
+      await manager.initialize();
+      
+      const list = await manager.list();
+      const choices = list.map(mcp => ({
+        name: `${mcp.displayName} (${mcp.name})`,
+        value: mcp.name
+      }));
+      
+      const { mcps } = await inquirer.prompt([
+        {
+          type: 'checkbox',
+          name: 'mcps',
+          message: 'Select MCPs for this profile:',
+          choices
+        }
+      ]);
+      
+      await manager.createProfile(name, mcps);
+      console.log(chalk.green(`✅ Created profile: ${name}`));
+    } catch (error) {
+      console.error(chalk.red('Error:'), error.message);
+      process.exit(1);
+    }
+  });
+
+// Start profile
+program
+  .command('profile-start <name>')
+  .description('Start an MCP profile')
+  .action(async (name) => {
+    try {
+      await manager.initialize();
+      const results = await manager.startProfile(name);
+      
+      if (results.success.length > 0) {
+        console.log(chalk.green(`✅ Started: ${results.success.join(', ')}`));
+      }
+      if (results.failed.length > 0) {
+        console.log(chalk.red(`❌ Failed: ${results.failed.map(f => f.name).join(', ')}`));
+      }
+    } catch (error) {
+      console.error(chalk.red('Error:'), error.message);
+      process.exit(1);
+    }
+  });
+
+// Discover capabilities
+program
+  .command('discover <name>')
+  .description('Discover capabilities of an MCP server')
+  .action(async (name) => {
+    try {
+      await manager.initialize();
+      
+      // Start if not running
+      const status = await manager.status(name);
+      if (status.status !== 'running') {
+        console.log(chalk.yellow(`Starting ${name}...`));
+        await manager.start(name);
+        // Wait for startup
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+      
+      const capabilities = await manager.discoverCapabilities(name);
+      
+      console.log(chalk.cyan(`\n📡 MCP Capabilities: ${name}\n`));
+      
+      if (capabilities.tools && capabilities.tools.length > 0) {
+        console.log(chalk.bold('Tools:'));
+        capabilities.tools.forEach(tool => {
+          console.log(`  - ${tool.name}: ${tool.description}`);
+        });
+      }
+      
+      if (capabilities.resources && capabilities.resources.length > 0) {
+        console.log(chalk.bold('\nResources:'));
+        capabilities.resources.forEach(resource => {
+          console.log(`  - ${resource.uri}: ${resource.name}`);
+        });
+      }
+      
+      if (capabilities.prompts && capabilities.prompts.length > 0) {
+        console.log(chalk.bold('\nPrompts:'));
+        capabilities.prompts.forEach(prompt => {
+          console.log(`  - ${prompt.name}: ${prompt.description}`);
+        });
+      }
+    } catch (error) {
+      console.error(chalk.red('Error:'), error.message);
+      process.exit(1);
+    }
+  });
+
+program.parse(process.argv);
