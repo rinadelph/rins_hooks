@@ -462,6 +462,125 @@ program
     }
   });
 
+// MCP Manager command - Manage Model Context Protocol servers
+program
+  .command('mcpm')
+  .alias('mcp')
+  .description('Manage Model Context Protocol (MCP) servers')
+  .option('-l, --list', 'List all MCP servers (running and available)')
+  .option('-s, --start <name>', 'Start an MCP server')
+  .option('-x, --stop <name>', 'Stop a running MCP server')
+  .option('-a, --add <preset>', 'Quick add preset MCP (filesystem, github, memory, etc.)')
+  .option('-c, --custom', 'Add custom MCP server interactively')
+  .option('-r, --remove <name>', 'Remove MCP from Claude configuration')
+  .option('-i, --interactive', 'Interactive MCP management interface')
+  .option('--status', 'Show detailed MCP system status')
+  .action(async (options) => {
+    try {
+      const MCPManager = require('./mcp/MCPManager');
+      const manager = new MCPManager();
+      
+      // Interactive mode (default if no options)
+      if (options.interactive || (!options.list && !options.start && !options.stop && 
+          !options.add && !options.custom && !options.remove && !options.status)) {
+        const MCPInterface = require('./mcp/MCPInterface');
+        const interface = new MCPInterface(manager);
+        await interface.showInteractive();
+        return;
+      }
+      
+      // List MCPs
+      if (options.list) {
+        console.log(chalk.blue('📦 MCP Servers'));
+        console.log();
+        
+        const running = await manager.getRunningServers();
+        const available = await manager.getAvailableServers();
+        
+        if (running.length > 0) {
+          console.log(chalk.green('🟢 Running Servers:'));
+          running.forEach(server => {
+            console.log(`  ${chalk.green('●')} ${server.name} (${server.transport}) - PID: ${server.pid}`);
+          });
+          console.log();
+        }
+        
+        console.log(chalk.yellow('📋 Available Servers:'));
+        available.forEach(server => {
+          const icon = server.installed ? chalk.green('✓') : chalk.gray('○');
+          console.log(`  ${icon} ${server.name} - ${server.description}`);
+        });
+      }
+      
+      // Start MCP
+      if (options.start) {
+        console.log(chalk.cyan(`Starting MCP server: ${options.start}...`));
+        const result = await manager.startServer(options.start);
+        if (result.success) {
+          console.log(chalk.green(`✅ ${result.message}`));
+        } else {
+          console.log(chalk.red(`❌ ${result.message}`));
+        }
+      }
+      
+      // Stop MCP
+      if (options.stop) {
+        console.log(chalk.yellow(`Stopping MCP server: ${options.stop}...`));
+        const result = await manager.stopServer(options.stop);
+        if (result.success) {
+          console.log(chalk.green(`✅ ${result.message}`));
+        } else {
+          console.log(chalk.red(`❌ ${result.message}`));
+        }
+      }
+      
+      // Add preset
+      if (options.add) {
+        console.log(chalk.cyan(`Adding MCP preset: ${options.add}...`));
+        const result = await manager.quickAddPreset(options.add);
+        if (result.success) {
+          console.log(chalk.green(`✅ ${result.message}`));
+          console.log(chalk.yellow('⚠️  Restart Claude to load the new MCP server'));
+        } else {
+          console.log(chalk.red(`❌ ${result.message}`));
+        }
+      }
+      
+      // Custom MCP
+      if (options.custom) {
+        const MCPInterface = require('./mcp/MCPInterface');
+        const interface = new MCPInterface(manager);
+        await interface.addCustomMCP();
+      }
+      
+      // Remove MCP
+      if (options.remove) {
+        console.log(chalk.yellow(`Removing MCP: ${options.remove}...`));
+        const result = await manager.removeFromClaude(options.remove);
+        if (result.success) {
+          console.log(chalk.green(`✅ ${result.message}`));
+        } else {
+          console.log(chalk.red(`❌ ${result.message}`));
+        }
+      }
+      
+      // Status
+      if (options.status) {
+        const status = await manager.getSystemStatus();
+        console.log(chalk.blue('📊 MCP System Status'));
+        console.log();
+        console.log(`Running Servers: ${status.runningCount}`);
+        console.log(`Available Servers: ${status.availableCount}`);
+        console.log(`Claude Integration: ${status.claudeConfigured ? chalk.green('✓') : chalk.red('✗')}`);
+        console.log(`Rapala MCP: ${status.rapalaMCPStatus}`);
+      }
+      
+    } catch (error) {
+      console.error(chalk.red('❌ MCP Manager failed:'), error.message);
+      process.exit(1);
+    }
+  });
+
 // Generate command - Create hooks from natural language descriptions
 program
   .command('generate [description]')
