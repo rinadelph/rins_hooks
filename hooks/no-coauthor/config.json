@@ -23,5 +23,5 @@
     "darwin",
     "win32"
   ],
-  "disabled": false
+  "disabled": true
 }

@@ -20,5 +20,5 @@
   ],
   "matcher": "Edit|Write|MultiEdit",
   "installationType": "generated",
-  "disabled": false
+  "disabled": true
 }

@@ -3,12 +3,23 @@
   "description": "Archives tool executions and conversations to git worktree",
   "version": "1.0.0",
   "author": "Rapala Sync System",
-  "tags": ["synced", "original-claude-code", "archiver", "git"],
-  "platforms": ["linux", "darwin", "win32"],
-  "events": ["PostToolUse"],
+  "tags": [
+    "synced",
+    "original-claude-code",
+    "archiver",
+    "git"
+  ],
+  "platforms": [
+    "linux",
+    "darwin",
+    "win32"
+  ],
+  "events": [
+    "PostToolUse"
+  ],
   "matcher": "",
   "installationType": "generated",
-  "disabled": false,
+  "disabled": true,
   "settings": {
     "worktree_path": "../rins_hooks_conversations",
     "commit_every_tool": true,

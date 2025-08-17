@@ -2,8 +2,11 @@
   "name": "dynamic-test",
   "description": "Dynamic test hook for testing immediate code changes",
   "version": "1.0.0",
-  "events": ["PostToolUse"],
+  "events": [
+    "PostToolUse"
+  ],
   "matcher": "Write",
   "timeout": 10,
-  "priority": 10
+  "priority": 10,
+  "disabled": true
 }

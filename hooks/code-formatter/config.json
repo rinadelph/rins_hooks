@@ -2,9 +2,17 @@
   "name": "code-formatter",
   "description": "Automatically format code after file modifications",
   "version": "1.0.0",
-  "tags": ["formatting", "code-quality", "automation"],
+  "tags": [
+    "formatting",
+    "code-quality",
+    "automation"
+  ],
   "requirements": [],
-  "platforms": ["linux", "darwin", "win32"],
+  "platforms": [
+    "linux",
+    "darwin",
+    "win32"
+  ],
   "matcher": "Edit|Write|MultiEdit",
   "timeout": 30,
   "defaultConfig": {
@@ -12,7 +20,7 @@
     "formatters": {
       ".js": "prettier --write",
       ".jsx": "prettier --write",
-      ".ts": "prettier --write", 
+      ".ts": "prettier --write",
       ".tsx": "prettier --write",
       ".json": "prettier --write",
       ".css": "prettier --write",
@@ -38,5 +46,6 @@
     "useProjectConfig": true,
     "failOnError": false,
     "showOutput": false
-  }
+  },
+  "disabled": true
 }

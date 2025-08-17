@@ -2,9 +2,19 @@
   "name": "auto-commit",
   "description": "Automatically commit file changes with contextual messages",
   "version": "1.0.0",
-  "tags": ["git", "automation", "commit"],
-  "requirements": ["git"],
-  "platforms": ["linux", "darwin", "win32"],
+  "tags": [
+    "git",
+    "automation",
+    "commit"
+  ],
+  "requirements": [
+    "git"
+  ],
+  "platforms": [
+    "linux",
+    "darwin",
+    "win32"
+  ],
   "matcher": "Edit|Write|MultiEdit",
   "timeout": 30,
   "installationType": "synced",

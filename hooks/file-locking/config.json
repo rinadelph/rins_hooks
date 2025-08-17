@@ -2,9 +2,19 @@
   "name": "file-locking",
   "description": "File-level locking system for multi-agent collaboration",
   "version": "1.0.0",
-  "tags": ["locking", "collaboration", "conflict-prevention"],
-  "requirements": ["node"],
-  "platforms": ["linux", "darwin", "win32"],
+  "tags": [
+    "locking",
+    "collaboration",
+    "conflict-prevention"
+  ],
+  "requirements": [
+    "node"
+  ],
+  "platforms": [
+    "linux",
+    "darwin",
+    "win32"
+  ],
   "matcher": "Edit|Write|MultiEdit",
   "timeout": 30,
   "defaultConfig": {
@@ -14,7 +24,7 @@
     "activityDirectory": ".agent-activity",
     "excludePatterns": [
       "*.log",
-      "*.tmp", 
+      "*.tmp",
       "*.temp",
       "*.lock",
       ".env*",
@@ -27,5 +37,6 @@
     "debugLogging": false,
     "cleanupExpiredLocks": true,
     "maxLockDuration": 600
-  }
+  },
+  "disabled": true
 }

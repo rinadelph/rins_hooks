@@ -1,20 +1,40 @@
 {
   "name": "rapala-router",
   "description": "Dynamic router that discovers and executes all Rapala-generated hooks",
-  "version": "1.0.0", 
+  "version": "1.0.0",
   "author": "Rapala Hook Management System",
-  "tags": ["router", "dispatcher", "dynamic", "core", "essential"],
-  "platforms": ["linux", "darwin", "win32"],
-  "events": ["PreToolUse", "PostToolUse", "Stop", "UserPromptSubmit"],
+  "tags": [
+    "router",
+    "dispatcher",
+    "dynamic",
+    "core",
+    "essential"
+  ],
+  "platforms": [
+    "linux",
+    "darwin",
+    "win32"
+  ],
+  "events": [
+    "PreToolUse",
+    "PostToolUse",
+    "Stop",
+    "UserPromptSubmit"
+  ],
   "installationType": "core",
   "alwaysEnabled": true,
   "cannotDisable": true,
   "systemCritical": true,
-  "supportedPlatforms": ["linux", "darwin", "win32"],
+  "supportedPlatforms": [
+    "linux",
+    "darwin",
+    "win32"
+  ],
   "dependencies": [],
   "settings": {
     "purpose": "Routes all hook events to dynamically discovered generated hooks",
     "scope": "global",
     "critical": "Core Rapala infrastructure - cannot be disabled"
-  }
+  },
+  "disabled": false
 }

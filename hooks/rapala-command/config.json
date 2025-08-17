@@ -3,18 +3,35 @@
   "description": "Manages and maintains the /rapala slash command for hook generation",
   "version": "2.0.0",
   "author": "Rapala Hook Management System",
-  "tags": ["command", "management", "slash-command", "core", "essential"],
-  "platforms": ["linux", "darwin", "win32"],
+  "tags": [
+    "command",
+    "management",
+    "slash-command",
+    "core",
+    "essential"
+  ],
+  "platforms": [
+    "linux",
+    "darwin",
+    "win32"
+  ],
   "requirements": [],
-  "events": ["SessionStart"],
+  "events": [
+    "SessionStart"
+  ],
   "installationType": "core",
   "alwaysEnabled": true,
   "cannotDisable": true,
   "systemCritical": true,
-  "supportedPlatforms": ["linux", "darwin", "win32"],
+  "supportedPlatforms": [
+    "linux",
+    "darwin",
+    "win32"
+  ],
   "dependencies": [],
   "settings": {
     "purpose": "Ensures /rapala slash command is available and up to date",
     "critical": "Core Rapala infrastructure - cannot be disabled"
-  }
+  },
+  "disabled": false
 }

@@ -17,7 +17,7 @@
   "timeout": null,
   "platforms": [
     "linux",
-    "darwin", 
+    "darwin",
     "win32"
   ],
   "disabled": true
