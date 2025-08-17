@@ -33,15 +33,8 @@ npm install
 echo ""
 echo -e "${GREEN}Step 2: Setting up Rapala for local use...${NC}"
 
-# Create rapala command script
-cat > rapala << 'EOF'
-#!/bin/bash
-# Rapala launcher script
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-node "$DIR/bin/rapala.js" "$@"
-EOF
-
-chmod +x rapala
+# Make bin/rapala executable
+chmod +x bin/rapala
 
 echo ""
 echo -e "${GREEN}Step 3: Enabling only router and command hooks...${NC}"
