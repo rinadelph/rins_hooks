@@ -44,7 +44,8 @@
     "fs-extra": "^11.0.0",
     "glob": "^10.0.0",
     "inquirer": "^8.2.6",
-    "semver": "^7.5.0"
+    "semver": "^7.5.0",
+    "zod": "^3.25.76"
   },
   "optionalDependencies": {
     "node-notifier": "^10.0.0"
